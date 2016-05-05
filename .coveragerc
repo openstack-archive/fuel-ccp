@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = microservices
+omit = microservices/openstack/*
+
+[report]
+ignore_errors = True
