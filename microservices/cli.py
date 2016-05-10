@@ -3,6 +3,7 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from microservices import build
 from microservices import fetch
 
 
@@ -12,9 +13,10 @@ CONF.import_opt('action', 'microservices.config.cli')
 
 
 def do_build():
+    components = CONF.action.components
     if CONF.repositories.clone:
-        fetch.fetch_repositories(components=CONF.action.components)
-    # TODO(mrostecki): implement build
+        fetch.fetch_repositories(components=components)
+    build.build_repositories(components=components)
 
 
 def do_fetch():

@@ -8,6 +8,10 @@ repositories_opts = [
     cfg.BoolOpt('clone',
                 default=True,
                 help='Automatic cloning of microservices repositories'),
+    cfg.BoolOpt('skip-empty',
+                default=True,
+                help='Skip repositories not containing Dockerfiles without '
+                     'error'),
     cfg.StrOpt('path',
                default=os.path.expanduser('~/microservices-repos/'),
                help='Path where the microservice repositories are cloned'),
