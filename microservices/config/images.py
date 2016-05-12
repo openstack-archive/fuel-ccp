@@ -8,7 +8,15 @@ images_opts = [
                help='Namespace for Docker images'),
     cfg.StrOpt('tag',
                default='latest',
-               help='Tag for Docker images')
+               help='Tag for Docker images'),
+    cfg.StrOpt('base_distro',
+               default='debian',
+               help='Base distribution and image'),
+    cfg.StrOpt('base_tag',
+               default='jessie',
+               help='Tag of the base image'),
+    cfg.StrOpt('maintainer',
+               default='MOS Microservices <mos-microservices@mirantis.com>')
 ]
 images_opt_group = cfg.OptGroup(name='images',
                                 title='Docker images')

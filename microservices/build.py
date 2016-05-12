@@ -1,13 +1,17 @@
 import contextlib
 import json
 import os
+import shutil
 import sys
+import tempfile
 import threading
 
 import docker
 from oslo_config import cfg
 from oslo_log import log as logging
 import six
+
+from microservices.common import jinja_utils
 
 
 CONF = cfg.CONF
@@ -18,7 +22,18 @@ CONF.import_group('repositories', 'microservices.config.repositories')
 LOG = logging.getLogger(__name__)
 
 
-def find_dockerfiles(component):
+def create_rendered_dockerfile(path, name, tmp_path):
+    content = jinja_utils.jinja_render(path)
+    dirname = os.path.join(tmp_path, name)
+    os.makedirs(dirname)
+    filename = os.path.join(dirname, 'Dockerfile')
+    with open(filename, 'w') as f:
+        f.write(content)
+
+    return filename
+
+
+def find_dockerfiles(component, tmp_dir):
     dockerfiles = {}
     component_dir = os.path.join(CONF.repositories.path, component)
     for root, __, files in os.walk(component_dir):
@@ -31,10 +46,11 @@ def find_dockerfiles(component):
         else:
             continue
         name = os.path.basename(os.path.dirname(path))
+        if is_jinja2:
+            path = create_rendered_dockerfile(path, name, tmp_dir)
         dockerfiles[name] = {
             'name': name,
             'path': path,
-            'is_jinja2': is_jinja2,
             'parent': None,
             'children': []
         }
@@ -77,11 +93,8 @@ def create_initial_queue(dockerfiles):
 
 def build_dockerfile(queue):
     dockerfile = queue.get()
-    with contextlib.closing(docker.Client()) as dc:
-        if dockerfile['is_jinja2']:
-            # TODO(mrostecki): Write jinja2 templating functionality.
-            pass
 
+    with contextlib.closing(docker.Client()) as dc:
         for line in dc.build(fileobj=open(dockerfile['path'], 'r'), rm=True,
                              tag='%s/%s:%s' % (CONF.images.namespace,
                                                dockerfile['name'],
@@ -91,8 +104,10 @@ def build_dockerfile(queue):
                 LOG.info(build_data['stream'].rstrip())
             if 'errorDetail' in build_data:
                 LOG.error(build_data['errorDetail']['message'])
+
     for child in dockerfile['children']:
         queue.put(child)
+
     queue.task_done()
 
 
@@ -100,9 +115,11 @@ def build_repositories(components=None):
     if components is None:
         components = CONF.repositories.components
 
+    tmp_dir = tempfile.mkdtemp()
+
     dockerfiles = {}
     for component in components:
-        dockerfiles.update(find_dockerfiles(component))
+        dockerfiles.update(find_dockerfiles(component, tmp_dir))
 
     find_dependencies(dockerfiles)
     # TODO(mrostecki): Try to use multiprocessing there.
@@ -117,3 +134,5 @@ def build_repositories(components=None):
         thread.daemon = True
         thread.start()
     queue.join()
+
+    shutil.rmtree(tmp_dir)
