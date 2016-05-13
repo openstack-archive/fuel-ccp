@@ -24,13 +24,21 @@ LOG = logging.getLogger(__name__)
 
 def create_rendered_dockerfile(path, name, tmp_path):
     content = jinja_utils.jinja_render(path)
-    dirname = os.path.join(tmp_path, name)
-    os.makedirs(dirname)
-    filename = os.path.join(dirname, 'Dockerfile')
-    with open(filename, 'w') as f:
+    src_dir = os.path.dirname(path)
+    dest_dir = os.path.join(tmp_path, name)
+    os.makedirs(dest_dir)
+    dockerfilename = os.path.join(dest_dir, 'Dockerfile')
+    with open(dockerfilename, 'w') as f:
         f.write(content)
 
-    return filename
+    for filename in os.listdir(src_dir):
+        if 'Dockerfile' in filename:
+            continue
+        full_filename = os.path.join(src_dir, filename)
+        if os.path.isfile(full_filename):
+            shutil.copy(full_filename, dest_dir)
+
+    return dockerfilename
 
 
 def find_dockerfiles(component, tmp_dir):
@@ -95,10 +103,11 @@ def build_dockerfile(queue):
     dockerfile = queue.get()
 
     with contextlib.closing(docker.Client()) as dc:
-        for line in dc.build(fileobj=open(dockerfile['path'], 'r'), rm=True,
+        for line in dc.build(rm=True,
                              tag='%s/%s:%s' % (CONF.images.namespace,
                                                dockerfile['name'],
-                                               CONF.images.tag)):
+                                               CONF.images.tag),
+                             path=os.path.dirname(dockerfile['path'])):
             build_data = json.loads(line)
             if 'stream' in build_data:
                 LOG.info(build_data['stream'].rstrip())
