@@ -104,6 +104,7 @@ def build_dockerfile(queue):
 
     with contextlib.closing(docker.Client()) as dc:
         for line in dc.build(rm=True,
+                             forcerm=True,
                              tag='%s/%s:%s' % (CONF.images.namespace,
                                                dockerfile['name'],
                                                CONF.images.tag),
