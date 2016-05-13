@@ -111,9 +111,11 @@ def build_dockerfile(queue):
                              path=os.path.dirname(dockerfile['path'])):
             build_data = json.loads(line)
             if 'stream' in build_data:
-                LOG.info(build_data['stream'].rstrip())
+                LOG.info('%s: %s' % (dockerfile['name'],
+                                     build_data['stream'].rstrip()))
             if 'errorDetail' in build_data:
-                LOG.error(build_data['errorDetail']['message'])
+                LOG.error('%s: %s' % (dockerfile['name'],
+                                      build_data['errorDetail']['message']))
 
     for child in dockerfile['children']:
         queue.put(child)
