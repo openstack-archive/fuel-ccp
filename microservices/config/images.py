@@ -16,7 +16,10 @@ images_opts = [
                default='jessie',
                help='Tag of the base image'),
     cfg.StrOpt('maintainer',
-               default='MOS Microservices <mos-microservices@mirantis.com>')
+               default='MOS Microservices <mos-microservices@mirantis.com>'),
+    cfg.StrOpt('branch',
+               default='master',
+               help='Branch to use in OpenStack sources')
 ]
 images_opt_group = cfg.OptGroup(name='images',
                                 title='Docker images')
