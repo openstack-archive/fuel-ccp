@@ -44,6 +44,11 @@ def create_rendered_dockerfile(path, name, tmp_path):
 def find_dockerfiles(component, tmp_dir):
     dockerfiles = {}
     component_dir = os.path.join(CONF.repositories.path, component)
+
+    namespace = CONF.images.namespace
+    if CONF.builder.push:
+        namespace = '%s/%s' % (CONF.builder.registry, namespace)
+
     for root, __, files in os.walk(component_dir):
         if 'Dockerfile.j2' in files:
             path = os.path.join(root, 'Dockerfile.j2')
@@ -58,6 +63,7 @@ def find_dockerfiles(component, tmp_dir):
             path = create_rendered_dockerfile(path, name, tmp_dir)
         dockerfiles[name] = {
             'name': name,
+            'full_name': '%s/%s' % (namespace, name),
             'path': path,
             'parent': None,
             'children': []
@@ -99,23 +105,44 @@ def create_initial_queue(dockerfiles):
     return queue
 
 
-def build_dockerfile(queue):
+def build_dockerfile(dc, dockerfile):
+    for line in dc.build(rm=True,
+                         forcerm=True,
+                         tag=dockerfile['full_name'],
+                         path=os.path.dirname(dockerfile['path'])):
+        build_data = json.loads(line)
+        if 'stream' in build_data:
+            LOG.info('%s: %s' % (dockerfile['name'],
+                                 build_data['stream'].rstrip()))
+        if 'errorDetail' in build_data:
+            LOG.error('%s: %s' % (dockerfile['name'],
+                                  build_data['errorDetail']['message']))
+
+
+def push_dockerfile(dc, dockerfile):
+    if CONF.auth.registry:
+        dc.login(username=CONF.auth.registry_username,
+                 password=CONF.auth.registry_password,
+                 registry=CONF.builder.registry)
+    for line in dc.push(dockerfile['full_name'],
+                        stream=True,
+                        insecure_registry=CONF.builder.insecure_registry):
+        build_data = json.loads(line)
+        if 'stream' in build_data:
+            LOG.info('%s: %s', dockerfile['name'],
+                     build_data['stream'].rstrip())
+        if 'errorDetail' in build_data:
+            LOG.error('%s: %s', dockerfile['name'],
+                      build_data['errorDetail']['message'])
+
+
+def process_dockerfile(queue):
     dockerfile = queue.get()
 
     with contextlib.closing(docker.Client()) as dc:
-        for line in dc.build(rm=True,
-                             forcerm=True,
-                             tag='%s/%s:%s' % (CONF.images.namespace,
-                                               dockerfile['name'],
-                                               CONF.images.tag),
-                             path=os.path.dirname(dockerfile['path'])):
-            build_data = json.loads(line)
-            if 'stream' in build_data:
-                LOG.info('%s: %s' % (dockerfile['name'],
-                                     build_data['stream'].rstrip()))
-            if 'errorDetail' in build_data:
-                LOG.error('%s: %s' % (dockerfile['name'],
-                                      build_data['errorDetail']['message']))
+        build_dockerfile(dc, dockerfile)
+        if CONF.builder.push:
+            push_dockerfile(dc, dockerfile)
 
     for child in dockerfile['children']:
         queue.put(child)
@@ -140,7 +167,7 @@ def build_repositories(components=None):
     # work well with docker-py - each process exits before the image build
     # is done.
     queue = create_initial_queue(dockerfiles)
-    threads = [threading.Thread(target=build_dockerfile, args=(queue,))
+    threads = [threading.Thread(target=process_dockerfile, args=(queue,))
                for __ in range(CONF.builder.workers)]
     for thread in threads:
         thread.daemon = True
