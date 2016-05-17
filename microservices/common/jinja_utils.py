@@ -5,6 +5,7 @@ from oslo_config import cfg
 
 
 CONF = cfg.CONF
+CONF.import_group('builder', 'microservices.config.builder')
 CONF.import_group('images', 'microservices.config.images')
 
 
@@ -14,6 +15,9 @@ def str_to_bool(text):
 
 def jinja_render(path):
     variables = {k: v for k, v in CONF.images.items()}
+    if CONF.builder.push:
+        variables['namespace'] = '%s/%s' % (CONF.builder.registry,
+                                            variables['namespace'])
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)))
