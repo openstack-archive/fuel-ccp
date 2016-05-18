@@ -1,3 +1,4 @@
+import functools
 import sys
 
 from oslo_config import cfg
@@ -13,14 +14,23 @@ CONF.import_group('repositories', 'microservices.config.repositories')
 CONF.import_opt('action', 'microservices.config.cli')
 
 
-def do_build():
-    components = CONF.action.components
-    if CONF.repositories.clone:
-        fetch.fetch_repositories(components=components)
+def command_prerequisites(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        components = CONF.action.components
+        if CONF.repositories.clone:
+            fetch.fetch_repositories(components=components)
+        return f(components, *args, **kwargs)
+    return wrapper
+
+
+@command_prerequisites
+def do_build(components):
     build.build_repositories(components=components)
 
 
-def do_deploy():
+@command_prerequisites
+def do_deploy(components):
     deploy.deploy_repositories(components=CONF.action.components)
 
 
