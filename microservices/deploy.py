@@ -3,6 +3,7 @@ import re
 import shutil
 # TODO(mrostecki): Use python-k8sclient insead of subprocess.
 import subprocess
+import sys
 import tempfile
 
 from oslo_config import cfg
@@ -56,7 +57,9 @@ def find_k8s_yamls(component, tmp_dir):
 def process_k8s_yaml(k8s_yaml):
     cmd = ['kubectl', 'create', '-f', k8s_yaml]
     LOG.info('Executing %r', cmd)
-    subprocess.call(cmd)
+    status = subprocess.call(cmd)
+    if status != 0:
+        sys.exit(status)
 
 
 def process_k8s_yamls(k8s_yamls):
