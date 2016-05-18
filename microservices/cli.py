@@ -4,6 +4,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from microservices import build
+from microservices import deploy
 from microservices import fetch
 
 
@@ -17,6 +18,10 @@ def do_build():
     if CONF.repositories.clone:
         fetch.fetch_repositories(components=components)
     build.build_repositories(components=components)
+
+
+def do_deploy():
+    deploy.deploy_repositories(components=CONF.action.components)
 
 
 def do_fetch():
