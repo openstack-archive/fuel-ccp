@@ -13,6 +13,7 @@ from microservices.common import jinja_utils
 
 
 CONF = cfg.CONF
+CONF.import_group('kubernetes', 'microservices.config.kubernetes')
 CONF.import_group('repositories', 'microservices.config.repositories')
 
 LOG = logging.getLogger(__name__)
@@ -55,7 +56,11 @@ def find_k8s_yamls(component, tmp_dir):
 
 
 def process_k8s_yaml(k8s_yaml):
-    cmd = ['kubectl', 'create', '-f', k8s_yaml]
+    kube_apiserver = CONF.kubernetes.server
+    if kube_apiserver:
+        cmd = ['kubectl', 'create', '-f', k8s_yaml, '-s', kube_apiserver]
+    else:
+        cmd = ['kubectl', 'create', '-f', k8s_yaml]
     LOG.info('Executing %r', cmd)
     status = subprocess.call(cmd)
     if status != 0:
