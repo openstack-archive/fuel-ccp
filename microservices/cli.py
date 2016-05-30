@@ -40,8 +40,8 @@ def do_fetch():
 
 def main():
     logging.register_options(CONF)
-    logging.setup(CONF, 'microservices')
     CONF(sys.argv[1:])
+    logging.setup(CONF, 'microservices')
 
     func = globals()['do_%s' % CONF.action.name]
     func()
