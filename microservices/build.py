@@ -137,17 +137,18 @@ def push_dockerfile(dc, dockerfile):
 
 
 def process_dockerfile(queue):
-    dockerfile = queue.get()
+    while True:
+        dockerfile = queue.get()
 
-    with contextlib.closing(docker.Client()) as dc:
-        build_dockerfile(dc, dockerfile)
-        if CONF.builder.push:
-            push_dockerfile(dc, dockerfile)
+        with contextlib.closing(docker.Client()) as dc:
+            build_dockerfile(dc, dockerfile)
+            if CONF.builder.push:
+                push_dockerfile(dc, dockerfile)
 
-    for child in dockerfile['children']:
-        queue.put(child)
+        for child in dockerfile['children']:
+            queue.put(child)
 
-    queue.task_done()
+        queue.task_done()
 
 
 def build_repositories(components=None):
