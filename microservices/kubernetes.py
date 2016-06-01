@@ -1,4 +1,5 @@
 from k8sclient.client import api_client
+from k8sclient.client.apis import apisbatchv_api
 from k8sclient.client.apis import apisextensionsvbeta_api
 from k8sclient.client.apis import apiv_api
 
@@ -30,6 +31,10 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
         api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
         resp = api.create_namespaced_deployment(
             body=object_dict, namespace=namespace)
+    elif object_dict['kind'] == 'DaemonSet':
+        api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
+        resp = api.create_namespaced_daemon_set(
+            body=object_dict, namespace=namespace)
     elif object_dict['kind'] == 'Service':
         api = apiv_api.ApivApi(client)
         resp = api.create_namespaced_service(
@@ -37,6 +42,14 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
     elif object_dict['kind'] == 'Pod':
         api = apiv_api.ApivApi(client)
         resp = api.create_namespaced_pod(
+            body=object_dict, namespace=namespace)
+    elif object_dict["kind"] == "Job":
+        api = apisbatchv_api.ApisbatchvApi(client)
+        resp = api.create_namespaced_job(
+            body=object_dict, namespace=namespace)
+    elif object_dict["kind"] == "ConfigMap":
+        api = apiv_api.ApivApi(client)
+        resp = api.create_namespaced_config_map(
             body=object_dict, namespace=namespace)
     else:
         LOG.warning('"%s" object is not supported, skipping.'
