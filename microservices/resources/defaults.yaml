@@ -1,0 +1,2 @@
+configs:
+    etcd_urls: http://etcd-client:2379

@@ -2,7 +2,7 @@ from k8sclient.client import api_client
 from k8sclient.client.apis import apisbatchv_api
 from k8sclient.client.apis import apisextensionsvbeta_api
 from k8sclient.client.apis import apiv_api
-
+import k8sclient.client.rest
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -25,6 +25,8 @@ def get_client(kube_apiserver=None, key_file=None, cert_file=None,
 
 
 def create_object_from_definition(object_dict, namespace=None, client=None):
+    LOG.info("Deploying %s: \"%s\"",
+             object_dict["kind"], object_dict["metadata"]["name"])
     namespace = namespace or CONF.kubernetes.environment
     client = client or get_client()
     if object_dict['kind'] == 'Deployment':
@@ -63,3 +65,13 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
 
 def get_v1_api(client):
     return apiv_api.ApivApi(client)
+
+
+def handle_exists(fct, *args, **kwargs):
+    try:
+        fct(*args, **kwargs)
+    except k8sclient.client.rest.ApiException as e:
+        if e.status == 409:
+            LOG.debug("Resource exists")
+        else:
+            raise e
