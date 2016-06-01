@@ -37,6 +37,8 @@ def create_rendered_dockerfile(path, name, tmp_path):
         full_filename = os.path.join(src_dir, filename)
         if os.path.isfile(full_filename):
             shutil.copy(full_filename, dest_dir)
+        elif os.path.isdir(full_filename):
+            shutil.copytree(full_filename, os.path.join(dest_dir, filename))
 
     return dockerfilename
 
