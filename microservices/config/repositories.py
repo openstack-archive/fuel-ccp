@@ -24,12 +24,15 @@ repositories_opts = [
                          'ms-designate',
                          'ms-elasticsearch',
                          'ms-glance',
+                         'ms-grafana',
                          'ms-heat',
                          'ms-heka',
                          'ms-horizon',
                          'ms-ironic',
+                         'ms-influxdb',
                          'ms-keystone',
                          'ms-kibana',
+                         'ms-lma',
                          'ms-magnum',
                          'ms-manila',
                          'ms-mariadb',
@@ -73,6 +76,9 @@ repositories_opts = [
     cfg.StrOpt('ms-glance',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-glance'),
+    cfg.StrOpt('ms-grafana',
+               default='ssh://%s@review.fuel-infra.org:29418/'
+                       'nextgen/ms-grafana'),
     cfg.StrOpt('ms-heat',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-heat'),
@@ -85,12 +91,18 @@ repositories_opts = [
     cfg.StrOpt('ms-ironic',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-ironic'),
+    cfg.StrOpt('ms-influxdb',
+               default='ssh://%s@review.fuel-infra.org:29418/'
+                       'nextgen/ms-influxdb'),
     cfg.StrOpt('ms-keystone',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-keystone'),
     cfg.StrOpt('ms-kibana',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-kibana'),
+    cfg.StrOpt('ms-lma',
+               default='ssh://%s@review.fuel-infra.org:29418/'
+                       'nextgen/ms-lma'),
     cfg.StrOpt('ms-magnum',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-magnum'),
