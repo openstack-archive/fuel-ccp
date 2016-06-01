@@ -26,7 +26,6 @@ class TestFetch(base.TestCase):
         os.mkdir(os.path.join(self.tmp_path, 'ms-openstack-base'))
 
     def test_fetch_default_repositories(self, m_clone):
-        fetch.fetch_repositories()
         # All repos except ms-openstack-base
         components = [
             'ms-debian-base',
@@ -70,12 +69,6 @@ class TestFetch(base.TestCase):
                 username, component), os.path.join(self.tmp_path, component))
             for component in components
         ]
-        self.assertListEqual(expected_calls, m_clone.call_args_list)
-
-    def test_fetch_custom_repositories(self, m_clone):
-        fetch.fetch_repositories(components=['ms-openstack-base', 'ms-nova'])
-        username = getpass.getuser()
-        self.assertListEqual([
-            mock.call('ssh://%s@review.fuel-infra.org:29418/nextgen/ms-nova' %
-                      username, os.path.join(self.tmp_path, 'ms-nova'))
-        ], m_clone.call_args_list)
+        for component, expected_call in zip(components, expected_calls):
+            fetch.fetch_repository(component)
+            self.assertIn(expected_call, m_clone.call_args_list)
