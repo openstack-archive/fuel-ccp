@@ -1,6 +1,7 @@
 import contextlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -43,7 +44,7 @@ def create_rendered_dockerfile(path, name, tmp_path):
     return dockerfilename
 
 
-def find_dockerfiles(component, tmp_dir):
+def find_dockerfiles(component, tmp_dir, match=True):
     dockerfiles = {}
     component_dir = os.path.join(CONF.repositories.path, component)
 
@@ -68,7 +69,8 @@ def find_dockerfiles(component, tmp_dir):
             'full_name': '%s/%s' % (namespace, name),
             'path': path,
             'parent': None,
-            'children': []
+            'children': [],
+            'match': match
         }
 
     if len(dockerfiles) == 0:
@@ -102,7 +104,7 @@ def find_dependencies(dockerfiles):
 def create_initial_queue(dockerfiles):
     queue = six.moves.queue.Queue()
     for dockerfile in dockerfiles.values():
-        if dockerfile['parent'] is None:
+        if dockerfile['parent'] is None and dockerfile['match']:
             queue.put(dockerfile)
     return queue
 
@@ -148,22 +150,45 @@ def process_dockerfile(queue):
                 push_dockerfile(dc, dockerfile)
 
         for child in dockerfile['children']:
-            queue.put(child)
+            if child['match']:
+                queue.put(child)
 
         queue.task_done()
 
 
-def build_repositories(components=None):
-    if components is None:
-        components = CONF.repositories.components
+def find_matched_dockerfiles_ancestors(dockerfile):
+    while True:
+        parent = dockerfile['parent']
+        if parent is None:
+            break
+        parent['match'] = True
+        dockerfile = parent
 
+
+def match_dockerfiles_by_component(dockerfiles, component):
+    pattern = re.compile(re.escape(component))
+
+    for key, dockerfile in dockerfiles.items():
+        if not pattern.search(key):
+            continue
+        dockerfile['match'] = True
+        find_matched_dockerfiles_ancestors(dockerfile)
+
+
+def build_repositories(components=None):
     tmp_dir = tempfile.mkdtemp()
 
     dockerfiles = {}
-    for component in components:
-        dockerfiles.update(find_dockerfiles(component, tmp_dir))
+    match = not bool(components)
+    for component in CONF.repositories.components:
+        dockerfiles.update(find_dockerfiles(component, tmp_dir, match=match))
 
     find_dependencies(dockerfiles)
+
+    if components is not None:
+        for component in components:
+            match_dockerfiles_by_component(dockerfiles, component)
+
     # TODO(mrostecki): Try to use multiprocessing there.
     # NOTE(mrostecki): Unfortunately, just using multiprocessing pool
     # with multiprocessing.Queue, while keeping the same logic, doesn't

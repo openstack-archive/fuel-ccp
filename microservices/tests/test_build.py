@@ -53,3 +53,21 @@ class TestBuild(base.TestCase):
                              dockerfiles['ms-debian-base']['children'])
         self.assertDictEqual(dockerfiles['ms-debian-base'],
                              dockerfiles['ms-mysql']['parent'])
+
+    def test_find_matched_dockerfiles_ancestors(self):
+        dockerfile = {
+            'name': 'mariadb',
+            'match': True,
+            'parent': {
+                'name': 'base-tools',
+                'match': False,
+                'parent': {
+                    'name': 'base',
+                    'match': False,
+                    'parent': None
+                }
+            }
+        }
+        build.find_matched_dockerfiles_ancestors(dockerfile)
+        self.assertEqual(dockerfile['parent']['match'], True)
+        self.assertEqual(dockerfile['parent']['parent']['match'], True)
