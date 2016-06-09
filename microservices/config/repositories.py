@@ -26,7 +26,6 @@ repositories_opts = [
                          'ms-glance',
                          'ms-grafana',
                          'ms-heat',
-                         'ms-heka',
                          'ms-horizon',
                          'ms-ironic',
                          'ms-influxdb',
@@ -82,9 +81,6 @@ repositories_opts = [
     cfg.StrOpt('ms-heat',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-heat'),
-    cfg.StrOpt('ms-heka',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-heka'),
     cfg.StrOpt('ms-horizon',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-horizon'),

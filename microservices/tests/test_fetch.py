@@ -38,7 +38,6 @@ class TestFetch(base.TestCase):
             'ms-glance',
             'ms-grafana',
             'ms-heat',
-            'ms-heka',
             'ms-horizon',
             'ms-ironic',
             'ms-influxdb',
