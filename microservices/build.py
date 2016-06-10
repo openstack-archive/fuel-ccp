@@ -44,15 +44,15 @@ def create_rendered_dockerfile(path, name, tmp_path):
     return dockerfilename
 
 
-def find_dockerfiles(component, tmp_dir, match=True):
+def find_dockerfiles(repository_name, tmp_dir, match=True):
     dockerfiles = {}
-    component_dir = os.path.join(CONF.repositories.path, component)
+    repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
     namespace = CONF.images.namespace
     if CONF.builder.push:
         namespace = '%s/%s' % (CONF.builder.registry, namespace)
 
-    for root, __, files in os.walk(component_dir):
+    for root, __, files in os.walk(repository_dir):
         if 'Dockerfile.j2' in files:
             path = os.path.join(root, 'Dockerfile.j2')
             is_jinja2 = True
@@ -76,9 +76,9 @@ def find_dockerfiles(component, tmp_dir, match=True):
     if len(dockerfiles) == 0:
         msg = 'No dockerfile for %s found'
         if CONF.repositories.skip_empty:
-            LOG.warn(msg, component)
+            LOG.warn(msg, repository_name)
         else:
-            LOG.error(msg, component)
+            LOG.error(msg, repository_name)
             sys.exit(1)
 
     return dockerfiles
@@ -175,13 +175,14 @@ def match_dockerfiles_by_component(dockerfiles, component):
         find_matched_dockerfiles_ancestors(dockerfile)
 
 
-def build_repositories(components=None):
+def build_components(components=None):
     tmp_dir = tempfile.mkdtemp()
 
     dockerfiles = {}
     match = not bool(components)
-    for component in CONF.repositories.components:
-        dockerfiles.update(find_dockerfiles(component, tmp_dir, match=match))
+    for repository_name in CONF.repositories.names:
+        dockerfiles.update(
+            find_dockerfiles(repository_name, tmp_dir, match=match))
 
     find_dependencies(dockerfiles)
 

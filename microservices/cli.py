@@ -17,21 +17,21 @@ CONF.import_opt('action', 'microservices.config.cli')
 def command_prerequisites(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        components = CONF.action.components
+        repository_names = CONF.repositories.names
         if CONF.repositories.clone:
-            fetch.fetch_repositories(components=components)
-        return f(components, *args, **kwargs)
+            fetch.fetch_repositories(repository_names=repository_names)
+        return f(*args, **kwargs)
     return wrapper
 
 
 @command_prerequisites
-def do_build(components):
-    build.build_repositories(components=components)
+def do_build():
+    build.build_components(components=CONF.action.components)
 
 
 @command_prerequisites
-def do_deploy(components):
-    deploy.deploy_repositories(components=CONF.action.components)
+def do_deploy():
+    deploy.deploy_components(components=CONF.action.components)
 
 
 def do_fetch():

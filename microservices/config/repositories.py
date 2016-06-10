@@ -15,7 +15,7 @@ repositories_opts = [
     cfg.StrOpt('path',
                default=os.path.expanduser('~/microservices-repos/'),
                help='Path where the microservice repositories are cloned'),
-    cfg.ListOpt('components',
+    cfg.ListOpt('names',
                 default=['ms-debian-base',
                          'ms-aodh',
                          'ms-ceilometer',
@@ -50,7 +50,7 @@ repositories_opts = [
                          'ms-toolbox',
                          'ms-trove',
                          'ms-zaqar'],
-                help='List of repositories'),
+                help='List of repository names'),
     cfg.StrOpt('ms-debian-base',
                default='ssh://%s@review.fuel-infra.org:29418/'
                        'nextgen/ms-debian-base'),

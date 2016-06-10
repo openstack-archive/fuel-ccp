@@ -47,9 +47,9 @@ def deploy_component(component):
         create_k8s_objects(k8s_objects)
 
 
-def deploy_repositories(components=None):
+def deploy_components(components=None):
     if components is None:
-        components = CONF.repositories.components
+        components = CONF.repositories.names
 
     for component in components:
         deploy_component(component)
