@@ -33,7 +33,7 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
     if CONF.action.dry_run:
         LOG.info(yaml.dump(object_dict, default_flow_style=False))
         return
-    namespace = namespace or CONF.kubernetes.environment
+    namespace = namespace or CONF.kubernetes.namespace
     client = client or get_client()
     if object_dict['kind'] == 'Deployment':
         api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
