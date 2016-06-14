@@ -15,5 +15,5 @@
 import pbr.version
 
 
-__version__ = pbr.version.VersionInfo(
-    'microservices').version_string()
+version_info = pbr.version.VersionInfo("microservices")
+__version__ = version_info.version_string()
