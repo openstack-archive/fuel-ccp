@@ -59,3 +59,7 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
     LOG.info('%s "%s" has been created' % (
         object_dict['kind'], object_dict['metadata']['name']))
     return resp
+
+
+def get_v1_api(client):
+    return apiv_api.ApivApi(client)

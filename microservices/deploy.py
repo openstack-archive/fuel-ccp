@@ -47,9 +47,27 @@ def deploy_component(component):
         create_k8s_objects(k8s_objects)
 
 
+def _create_namespace():
+    namespace = CONF.kubernetes.environment
+    client = kubernetes.get_client()
+    api = kubernetes.get_v1_api(client)
+    # TODO(sreshetniak): add selector??
+    namespaces = api.list_namespaced_namespace().items
+    for ns in namespaces:
+        if ns.metadata.name == namespace:
+            LOG.info("Namespace \"%s\" exists", namespace)
+            break
+    else:
+        LOG.info("Create namespace \"%s\"", namespace)
+        api.create_namespaced_namespace(
+            body={"metadata": {"name": namespace}})
+
+
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
+
+    _create_namespace()
 
     for component in components:
         deploy_component(component)
