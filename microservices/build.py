@@ -138,6 +138,8 @@ def push_dockerfile(dc, dockerfile):
         if 'errorDetail' in build_data:
             LOG.error('%s: %s', dockerfile['name'],
                       build_data['errorDetail']['message'])
+    LOG.info("%s - Push into %s registry finished", dockerfile['name'],
+             CONF.builder.registry)
 
 
 def process_dockerfile(queue):
