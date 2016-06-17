@@ -2,9 +2,12 @@ import os
 import re
 import yaml
 
+import k8sclient.client.rest
 from oslo_config import cfg
 from oslo_log import log as logging
+import pkg_resources
 
+import microservices
 from microservices.common import jinja_utils
 from microservices import kubernetes
 
@@ -63,11 +66,36 @@ def _create_namespace():
             body={"metadata": {"name": namespace}})
 
 
+def _deploy_etcd():
+    def get_path(path):
+        return pkg_resources.resource_filename(
+            microservices.version_info.package, path)
+
+    LOG.info("Creating etcd cluster")
+
+    dp_path = get_path("resources/etcd-deployment.yaml")
+    with open(dp_path) as f:
+        obj = yaml.load(f)
+        kubernetes.create_object_from_definition(obj)
+
+    svc_path = get_path("resources/etcd-service.yaml")
+    with open(svc_path) as f:
+        obj = yaml.load(f)
+        kubernetes.create_object_from_definition(obj)
+
+
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
 
     _create_namespace()
+    try:
+        _deploy_etcd()
+    except k8sclient.client.rest.ApiException as e:
+        if e.status == 409:
+            LOG.info("Etcd already deployed, skipping")
+        else:
+            raise e
 
     for component in components:
         deploy_component(component)
