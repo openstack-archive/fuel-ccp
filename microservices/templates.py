@@ -1,3 +1,5 @@
+import copy
+
 from oslo_config import cfg
 
 from microservices import utils
@@ -80,17 +82,23 @@ def serialize_container_spec(service, name, cmd, globals_name, restart_policy):
         }
     if service.get("container", {}).get("privileged"):
         container["securityContext"] = {"privileged": True}
-    return {
+
+    cont_spec = {
         "metadata": {
             "name": name
         },
         "spec": {
             "containers": [container],
             "volumes": serialize_volumes(service, cmd, globals_name),
-            "restartPolicy": restart_policy,
-            "hostNetwork": service.get("container", {}).get("host-net", False)
+            "restartPolicy": restart_policy
         }
     }
+    if service.get("container", {}).get("host-net"):
+        cont_spec["spec"]["hostNetwork"] = True
+    if service.get("container", {}).get("node-selector"):
+        cont_spec["spec"]["nodeSelector"] = copy.deepcopy(
+            service["container"]["node-selector"])
+    return cont_spec
 
 
 def serialize_volumes(service, cmd, globals_name):
