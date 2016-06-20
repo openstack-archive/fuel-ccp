@@ -68,6 +68,8 @@ def serialize_container_spec(service, name, cmd, globals_name, restart_policy):
             },
             "timeoutSeconds": 1
         }
+    if service.get("container", {}).get("privileged"):
+        container["securityContext"] = {"privileged": True}
     return {
         "metadata": {
             "name": name
