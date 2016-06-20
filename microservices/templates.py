@@ -185,6 +185,27 @@ def serialize_deployment(name, spec):
     }
 
 
+def serialize_daemonset(name, spec):
+    return {
+        "apiVersion": "extensions/v1beta1",
+        "kind": "DaemonSet",
+        "metadata": {
+            "name": name
+        },
+        "spec": {
+            "template": {
+                "metadata": {
+                    "labels": {
+                        "mcp": "true",
+                        "app": name
+                    }
+                },
+                "spec": spec["spec"]
+            }
+        }
+    }
+
+
 def serialize_service(name, ports):
     ports_spec = [{"protocol": "TCP", "port": p["port"],
                    "targetPort": p["port"], "name": utils.k8s_name(p["name"])}

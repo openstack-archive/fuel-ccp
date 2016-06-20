@@ -50,8 +50,11 @@ def parse_role(service_dir, role):
 
     cont_spec = templates.serialize_container_spec(
         service, service["name"], daemon_cmd, DEFAULT_CONFIGMAP, "Always")
-    dp = templates.serialize_deployment(service["name"], cont_spec)
-    kubernetes.create_object_from_definition(dp)
+    if service.get("container", {}).get("daemonset", False):
+        obj = templates.serialize_daemonset(service["name"], cont_spec)
+    else:
+        obj = templates.serialize_deployment(service["name"], cont_spec)
+    kubernetes.create_object_from_definition(obj)
 
     _create_service(service)
 
