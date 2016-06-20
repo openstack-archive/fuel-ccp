@@ -77,7 +77,8 @@ def serialize_container_spec(service, name, cmd, globals_name, restart_policy):
         "spec": {
             "containers": [container],
             "volumes": serialize_volumes(service, cmd, globals_name),
-            "restartPolicy": restart_policy
+            "restartPolicy": restart_policy,
+            "hostNetwork": service.get("container", {}).get("host-net", False)
         }
     }
 
