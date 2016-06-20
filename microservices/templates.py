@@ -29,31 +29,41 @@ def serialize_configmap(name, data):
     }
 
 
+def serialize_volume_mounts(service, cmd):
+    spec = [
+        {
+            "name": GLOBAL_VOLUME,
+            "mountPath": "/etc/mcp/globals"
+        },
+        {
+            "name": ROLE_VOLUME,
+            "mountPath": "/etc/mcp/role"
+        },
+        {
+            "name": SCRIPT_VOLUME,
+            "mountPath": "/opt/mcp_start_script/bin"
+        }
+    ]
+    if "files" in cmd:
+        spec.append({
+            "name": FILES_VOLUME,
+            "mountPath": "/etc/mcp/files"
+        })
+    for v in service.get("volumes", ()):
+        spec.append({
+            "name": v["name"],
+            "mountPath": v["path"]
+        })
+    return spec
+
+
 def serialize_container_spec(service, name, cmd, globals_name, restart_policy):
     container = {
         "name": name,
         "image": _get_image_name(service),
         "command": START_CMD,
-        "volumeMounts": [
-            {
-                "name": GLOBAL_VOLUME,
-                "mountPath": "/etc/mcp/globals"
-            },
-            {
-                "name": ROLE_VOLUME,
-                "mountPath": "/etc/mcp/role"
-            },
-            {
-                "name": SCRIPT_VOLUME,
-                "mountPath": "/opt/mcp_start_script/bin"
-            }
-        ]
+        "volumeMounts": serialize_volume_mounts(service, cmd)
     }
-    if "files" in cmd:
-        container["volumeMounts"].append({
-            "name": FILES_VOLUME,
-            "mountPath": "/etc/mcp/files"
-        })
     if service.get("probes", {}).get("readiness"):
         container["readinessProbe"] = {
             "exec": {
@@ -84,7 +94,7 @@ def serialize_container_spec(service, name, cmd, globals_name, restart_policy):
 
 
 def serialize_volumes(service, cmd, globals_name):
-    vol = [
+    vol_spec = [
         {
             "name": GLOBAL_VOLUME,
             "configMap": {
@@ -110,14 +120,25 @@ def serialize_volumes(service, cmd, globals_name):
         }
     ]
     if "files" in cmd:
-        vol.append({
+        vol_spec.append({
             "name": FILES_VOLUME,
             "configMap": {
                 "name": cmd["name"],
                 "items": [{"key": k, "path": k} for k in cmd["files"]]
             }
         })
-    return vol
+    for v in service.get("volumes", ()):
+        if v["type"] == "host":
+            vol_spec.append({
+                "name": v["name"],
+                "hostPath": {
+                    "path": v["path"]
+                }
+            })
+        else:
+            # TODO(sreshetniak): move it to validation
+            raise ValueError("Volume type \"%s\" not supported" % v["type"])
+    return vol_spec
 
 
 def serialize_job(name, spec):
