@@ -14,6 +14,9 @@ def add_parsers(subparsers):
     deploy_action.add_argument('-c', '--components',
                                nargs='+',
                                help='MCP component to deploy')
+    deploy_action.add_argument("-t", "--network-topology",
+                               nargs="?",
+                               help="Network topology file")
 
     fetch_action = subparsers.add_parser('fetch')
     fetch_action.add_argument('-c', '--components',

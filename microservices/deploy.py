@@ -13,6 +13,7 @@ from microservices import templates
 
 CONF = cfg.CONF
 CONF.import_group('repositories', 'microservices.config.repositories')
+CONF.import_opt("action", "microservices.config.cli")
 
 LOG = logging.getLogger(__name__)
 
@@ -208,10 +209,18 @@ def _push_defaults():
                                   "ms_ext_config", "start_script.py")
     with open(start_scr_path, "r") as f:
         start_scr_data = f.read()
+
+    topology_data = ""
+    if CONF.action.network_topology:
+        if os.path.isfile(CONF.action.network_topology):
+            with open(CONF.action.network_topology, "r") as f:
+                topology_data = f.read()
     cm_data = {
         "configs": yaml.dump(cfg),
-        "start-script": start_scr_data
+        "start-script": start_scr_data,
+        "network": topology_data
     }
+
     cm = templates.serialize_configmap(DEFAULT_CONFIGMAP, cm_data)
     kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
 

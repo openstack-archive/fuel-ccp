@@ -108,7 +108,9 @@ def serialize_volumes(service, cmd, globals_name):
             "configMap": {
                 "name": globals_name,
                 "items": [{"key": "configs",
-                           "path": "globals.yaml"}]
+                           "path": "globals.yaml"},
+                          {"key": "network",
+                           "path": "network_topology.yaml"}]
             }
         },
         {
