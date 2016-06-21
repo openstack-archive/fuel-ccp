@@ -74,9 +74,12 @@ def _create_workflow(workflow, name):
 
 
 def _create_service(service):
+    if not service.get("ports"):
+        LOG.debug("Ports is not specified for service %s", service["name"])
+        return
     ports = []
     defaults = _get_defaults()
-    for port in service.get("ports", ()):
+    for port in service["ports"]:
         p = defaults.get(port)
         if p:
             ports.append({"port": int(p), "name": port})
