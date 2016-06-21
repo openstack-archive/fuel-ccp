@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 
 from oslo_config import cfg
@@ -8,6 +9,10 @@ repositories_opts = [
     cfg.BoolOpt('clone',
                 default=True,
                 help='Automatic cloning of microservices repositories'),
+    cfg.IntOpt('clone-concurrency',
+               default=multiprocessing.cpu_count(),
+               help="Define how many 'git clone' processes will run "
+                    "concurrently"),
     cfg.BoolOpt('skip-empty',
                 default=True,
                 help='Skip repositories not containing Dockerfiles without '

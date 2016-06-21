@@ -1,6 +1,6 @@
-import multiprocessing
 import os
 
+from concurrent import futures
 import git
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -37,17 +37,20 @@ def fetch_repositories(repository_names=None):
 
     LOG.info('Cloning repositories into %s', CONF.repositories.path)
 
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+    with futures.ThreadPoolExecutor(
+            max_workers=CONF.repositories.clone_concurrency) as executor:
+        future_list = []
+        for repository_name in repository_names:
+            future_list.append(executor.submit(
+                fetch_repository, repository_name
+            ))
 
-    tasks = [pool.apply_async(fetch_repository, (repository_name,))
-             for repository_name in repository_names]
-    errors = 0
-    for task in tasks:
-        task.wait()
-        try:
-            task.get()
-        except Exception as ex:
-            LOG.error("Failed to fetch: %s" % ex)
-            errors += 1
-    if errors:
-        raise Exception("Failed to fetch %d repos" % errors)
+        errors = 0
+        for future in future_list:
+            try:
+                future.result()
+            except Exception as ex:
+                LOG.error("Failed to fetch: %s" % ex)
+                errors += 1
+        if errors:
+            raise Exception("Failed to fetch %d repos" % errors)
