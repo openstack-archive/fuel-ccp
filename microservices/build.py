@@ -112,6 +112,7 @@ def create_initial_queue(dockerfiles):
 def build_dockerfile(dc, dockerfile):
     for line in dc.build(rm=True,
                          forcerm=True,
+                         nocache=CONF.builder.no_cache,
                          tag=dockerfile['full_name'],
                          path=os.path.dirname(dockerfile['path'])):
         build_data = json.loads(line)
