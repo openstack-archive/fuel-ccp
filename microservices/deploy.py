@@ -80,11 +80,16 @@ def _create_service(service):
     ports = []
     defaults = _get_defaults()
     for port in service["ports"]:
-        p = defaults.get(port)
-        if p:
-            ports.append({"port": int(p), "name": port})
+        source_port, _, node_port = str(port).partition(":")
+        source_port = int(defaults.get(source_port, source_port))
+        if node_port:
+            node_port = int(defaults.get(node_port, node_port))
+        name_port = str(source_port)
+        if node_port:
+            ports.append({"port": source_port, "name": name_port,
+                          "node-port": node_port})
         else:
-            ports.append({"port": int(port), "name": str(port)})
+            ports.append({"port": source_port, "name": name_port})
     template = templates.serialize_service(service["name"], ports)
     kubernetes.create_object_from_definition(template)
 
