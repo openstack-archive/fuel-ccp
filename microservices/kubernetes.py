@@ -1,3 +1,5 @@
+import yaml
+
 from k8sclient.client import api_client
 from k8sclient.client.apis import apisbatchv_api
 from k8sclient.client.apis import apisextensionsvbeta_api
@@ -8,6 +10,7 @@ from oslo_log import log as logging
 
 
 CONF = cfg.CONF
+CONF.import_opt("action", "microservices.config.cli")
 CONF.import_group('kubernetes', 'microservices.config.kubernetes')
 
 LOG = logging.getLogger(__name__)
@@ -27,6 +30,9 @@ def get_client(kube_apiserver=None, key_file=None, cert_file=None,
 def create_object_from_definition(object_dict, namespace=None, client=None):
     LOG.info("Deploying %s: \"%s\"",
              object_dict["kind"], object_dict["metadata"]["name"])
+    if CONF.action.dry_run:
+        LOG.info(yaml.dump(object_dict, default_flow_style=False))
+        return
     namespace = namespace or CONF.kubernetes.environment
     client = client or get_client()
     if object_dict['kind'] == 'Deployment':

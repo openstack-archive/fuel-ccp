@@ -229,6 +229,8 @@ def _push_defaults():
 
 
 def _create_namespace():
+    if CONF.action.dry_run:
+        return
     namespace = CONF.kubernetes.environment
     client = kubernetes.get_client()
     api = kubernetes.get_v1_api(client)

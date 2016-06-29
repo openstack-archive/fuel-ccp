@@ -17,6 +17,10 @@ def add_parsers(subparsers):
     deploy_action.add_argument("-t", "--network-topology",
                                nargs="?",
                                help="Network topology file")
+    deploy_action.add_argument("--dry-run",
+                               action='store_true',
+                               help="Print k8s objects definitions without"
+                                    "actual creation")
 
     fetch_action = subparsers.add_parser('fetch')
     fetch_action.add_argument('-c', '--components',
