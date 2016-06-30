@@ -205,7 +205,7 @@ def _create_files_configmap(service_dir, service_name, configs):
     if configs:
         for filename, f in configs.items():
             with open(os.path.join(
-                service_dir, "files", f["content"]), "r") as f:
+                    service_dir, "files", f["content"]), "r") as f:
                 data[filename] = f.read()
     data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
