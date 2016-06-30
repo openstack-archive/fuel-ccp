@@ -56,7 +56,7 @@ def serialize_volume_mounts(container):
     for v in container.get("volumes", ()):
         spec.append({
             "name": v["name"],
-            "mountPath": v["path"]
+            "mountPath": v.get("mount-path", v["path"])
         })
     return spec
 
