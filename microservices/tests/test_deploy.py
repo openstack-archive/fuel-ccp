@@ -26,16 +26,18 @@ class TestDeploy(base.TestCase):
 
     def test_expand_files(self):
         service = {
-            "daemon": {
-                "command": "ps",
-                "files": ["conf1"]
-            },
-            "pre": [
-                {"files": ["conf2"], "command": "cmd"}
-            ],
-            "post": [
-                {"files": ["conf3"], "command": "cmd"}
-            ]
+            "containers": [{
+                "daemon": {
+                    "command": "ps",
+                    "files": ["conf1"]
+                },
+                "pre": [
+                    {"files": ["conf2"], "command": "cmd"}
+                ],
+                "post": [
+                    {"files": ["conf3"], "command": "cmd"}
+                ]
+            }]
         }
         files = {
             "conf1": {
@@ -53,37 +55,39 @@ class TestDeploy(base.TestCase):
         }
         deploy._expand_files(service, files)
         expected = {
-            "daemon": {
-                "command": "ps",
-                "files": {
-                    "conf1": {
-                        "path": "/etc/syslog.conf",
-                        "content": "pig"
+            "containers": [{
+                "daemon": {
+                    "command": "ps",
+                    "files": {
+                        "conf1": {
+                            "path": "/etc/syslog.conf",
+                            "content": "pig"
+                        }
                     }
-                }
-            },
-            "pre": [
-                {
-                    "files": {
-                        "conf2": {
-                            "path": "/spam",
-                            "content": "eggs"
-                        }
-                    },
-                    "command": "cmd"
-                }
-            ],
-            "post": [
-                {
-                    "files": {
-                        "conf3": {
-                            "path": "/lelik",
-                            "content": "bolik"
-                        }
-                    },
-                    "command": "cmd"
-                }
-            ]
+                },
+                "pre": [
+                    {
+                        "files": {
+                            "conf2": {
+                                "path": "/spam",
+                                "content": "eggs"
+                            }
+                        },
+                        "command": "cmd"
+                    }
+                ],
+                "post": [
+                    {
+                        "files": {
+                            "conf3": {
+                                "path": "/lelik",
+                                "content": "bolik"
+                            }
+                        },
+                        "command": "cmd"
+                    }
+                ]
+            }]
         }
         self.assertDictEqual(expected, service)
 

@@ -11,12 +11,15 @@ FILES_VOLUME = "files-volume"
 GLOBAL_VOLUME = "global-volume"
 ROLE_VOLUME = "role-volume"
 SCRIPT_VOLUME = "script-volume"
-START_CMD = ["python", "/opt/mcp_start_script/bin/start_script.py"]
 
 
-def _get_image_name(service):
+def _get_image_name(image_name):
     return "%s/%s/%s:%s" % (CONF.builder.registry, CONF.images.namespace,
-                            service["name"], CONF.images.tag)
+                            image_name, CONF.images.tag)
+
+
+def _get_start_cmd(cmd_name):
+    return ["python", "/opt/mcp_start_script/bin/start_script.py", cmd_name]
 
 
 def serialize_configmap(name, data):
@@ -31,7 +34,7 @@ def serialize_configmap(name, data):
     }
 
 
-def serialize_volume_mounts(service, cmd):
+def serialize_volume_mounts(container):
     spec = [
         {
             "name": GLOBAL_VOLUME,
@@ -44,14 +47,13 @@ def serialize_volume_mounts(service, cmd):
         {
             "name": SCRIPT_VOLUME,
             "mountPath": "/opt/mcp_start_script/bin"
-        }
-    ]
-    if "files" in cmd:
-        spec.append({
+        },
+        {
             "name": FILES_VOLUME,
             "mountPath": "/etc/mcp/files"
-        })
-    for v in service.get("volumes", ()):
+        }
+    ]
+    for v in container.get("volumes", ()):
         spec.append({
             "name": v["name"],
             "mountPath": v["path"]
@@ -59,49 +61,93 @@ def serialize_volume_mounts(service, cmd):
     return spec
 
 
-def serialize_container_spec(service, name, cmd, globals_name, restart_policy):
-    container = {
-        "name": name,
-        "image": _get_image_name(service),
-        "command": START_CMD,
-        "volumeMounts": serialize_volume_mounts(service, cmd)
-    }
-    if service.get("probes", {}).get("readiness"):
-        container["readinessProbe"] = {
-            "exec": {
-                "command": [service["probes"]["readiness"]]
-            },
-            "timeoutSeconds": 1
-        }
-    if service.get("probes", {}).get("liveness"):
-        container["livenessProbe"] = {
-            "exec": {
-                "command": [service["probes"]["liveness"]]
-            },
-            "timeoutSeconds": 1
-        }
-    if service.get("container", {}).get("privileged"):
-        container["securityContext"] = {"privileged": True}
-
+def serialize_daemon_container_spec(container):
     cont_spec = {
-        "metadata": {
-            "name": name
-        },
-        "spec": {
-            "containers": [container],
-            "volumes": serialize_volumes(service, cmd, globals_name),
-            "restartPolicy": restart_policy
-        }
+        "name": container["name"],
+        "image": _get_image_name(container["image"]),
+        "command": _get_start_cmd(container["name"]),
+        "volumeMounts": serialize_volume_mounts(container)
     }
-    if service.get("container", {}).get("host-net"):
-        cont_spec["spec"]["hostNetwork"] = True
-    if service.get("container", {}).get("node-selector"):
-        cont_spec["spec"]["nodeSelector"] = copy.deepcopy(
-            service["container"]["node-selector"])
+    if container.get("probes", {}).get("readiness"):
+        cont_spec["readinessProbe"] = {
+            "exec": {
+                "command": [container["probes"]["readiness"]]
+            },
+            "timeoutSeconds": 1
+        }
+    if container.get("probes", {}).get("liveness"):
+        cont_spec["livenessProbe"] = {
+            "exec": {
+                "command": [container["probes"]["liveness"]]
+            },
+            "timeoutSeconds": 1
+        }
+    cont_spec["securityContext"] = {"privileged":
+                                    container.get("privileged", False)}
     return cont_spec
 
 
-def serialize_volumes(service, cmd, globals_name):
+def serialize_job_container_spec(container, job):
+    return {
+        "name": job["name"],
+        "image": _get_image_name(container["image"]),
+        "command": _get_start_cmd(job["name"]),
+        "volumeMounts": serialize_volume_mounts(container)
+    }
+
+
+def serialize_job_pod_spec(service, job, cont_spec, globals_name):
+    return {
+        "metadata": {
+            "name": job["name"]
+        },
+        "spec": {
+            "containers": [cont_spec],
+            "volumes": serialize_volumes(service, globals_name),
+            "restartPolicy": "OnFailure"
+        }
+    }
+
+
+def serialize_daemon_containers(service):
+    return [serialize_daemon_container_spec(c) for c in service["containers"]]
+
+
+def serialize_daemon_pod_spec(service, globals_name):
+    cont_spec = {
+        "containers": serialize_daemon_containers(service),
+        "volumes": serialize_volumes(service, globals_name),
+        "restartPolicy": "Always"
+    }
+
+    if service.get("host-net"):
+        cont_spec["hostNetwork"] = True
+    if service.get("node-selector"):
+        cont_spec["nodeSelector"] = copy.deepcopy(service["node-selector"])
+    return cont_spec
+
+
+def serialize_volumes(service, globals_name):
+    workflow_items = []
+    for cont in service["containers"]:
+        workflow_items.append(
+            {"key": cont["name"], "path": "%s.yaml" % cont["name"]})
+        for job_type in ("pre", "post"):
+            for job in cont.get(job_type, ()):
+                if job.get("type", "local") == "single":
+                    workflow_items.append(
+                        {"key": job["name"], "path": "%s.yaml" % job["name"]})
+
+    file_items = []
+    for c in service["containers"]:
+        for f_name, f_item in c["daemon"].get("files", {}).items():
+            file_items.append({"key": f_name, "path": f_name})
+        for job_type in ("pre", "post"):
+            for job in c.get(job_type, ()):
+                if job.get("type", "local") == "single" and job.get("files"):
+                    for f_name in job["files"].keys():
+                        file_items.append({"key": f_name, "path": f_name})
+    file_items.append({"key": "placeholder", "path": ".placeholder"})
     vol_spec = [
         {
             "name": GLOBAL_VOLUME,
@@ -116,8 +162,8 @@ def serialize_volumes(service, cmd, globals_name):
         {
             "name": ROLE_VOLUME,
             "configMap": {
-                "name": "%s-workflow" % cmd["name"],
-                "items": [{"key": "workflow", "path": "role.yaml"}]
+                "name": "%s-workflow" % service["name"],
+                "items": workflow_items
             }
         },
         {
@@ -127,33 +173,37 @@ def serialize_volumes(service, cmd, globals_name):
                 "items": [{"key": "start-script",
                            "path": "start_script.py"}]
             }
-        }
-    ]
-    if "files" in cmd:
-        vol_spec.append({
+        },
+        {
             "name": FILES_VOLUME,
             "configMap": {
-                "name": cmd["name"],
-                "items": [{"key": k, "path": k} for k in cmd["files"]]
+                "name": "%s-configs" % service["name"],
+                "items": file_items
             }
-        })
-    for v in service.get("volumes", ()):
-        vol_type = v["type"]
-        if vol_type == "host":
-            vol_spec.append({
-                "name": v["name"],
-                "hostPath": {
-                    "path": v["path"]
-                }
-            })
-        elif vol_type == "empty-dir":
-            vol_spec.append({
-                "name": v["name"],
-                "emptyDir": {}
-            })
-        else:
-            # TODO(sreshetniak): move it to validation
-            raise ValueError("Volume type \"%s\" not supported" % vol_type)
+        }
+    ]
+    volume_names = [GLOBAL_VOLUME, ROLE_VOLUME, SCRIPT_VOLUME, FILES_VOLUME]
+    for cont in service["containers"]:
+        for v in cont.get("volumes", ()):
+            if v["name"] in volume_names:
+                continue
+            if v["type"] == "host":
+                vol_spec.append({
+                    "name": v["name"],
+                    "hostPath": {
+                        "path": v["path"]
+                    }
+                })
+            elif v["type"] == "empty-dir":
+                vol_spec.append({
+                    "name": v["name"],
+                    "emptyDir": {}
+                })
+            else:
+                # TODO(sreshetniak): move it to validation
+                raise ValueError("Volume type \"%s\" not supported" %
+                                 v["type"])
+            volume_names.append(v["name"])
     return vol_spec
 
 
@@ -187,7 +237,7 @@ def serialize_deployment(name, spec):
                         "app": name
                     }
                 },
-                "spec": spec["spec"]
+                "spec": spec
             }
         }
     }
@@ -208,7 +258,7 @@ def serialize_daemonset(name, spec):
                         "app": name
                     }
                 },
-                "spec": spec["spec"]
+                "spec": spec
             }
         }
     }

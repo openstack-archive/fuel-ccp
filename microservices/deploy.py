@@ -27,37 +27,61 @@ def _expand_files(service, files):
         if cmd.get("files"):
             cmd["files"] = {f: files[f] for f in cmd["files"]}
 
-    _expand(service["daemon"])
-    for cmd in service.get("pre", ()):
-        _expand(cmd)
-    for cmd in service.get("post", ()):
-        _expand(cmd)
+    for cont in service["containers"]:
+        _expand(cont["daemon"])
+        for cmd in cont.get("pre", ()):
+            _expand(cmd)
+        for cmd in cont.get("post", ()):
+            _expand(cmd)
 
 
 def parse_role(service_dir, role):
     service = role["service"]
+    LOG.info("Using service %s", service["name"])
     _expand_files(service, role.get("files"))
 
-    workflow = {}
+    _create_files_configmap(service_dir, service["name"], role.get("files"))
 
-    create_pre_commands(workflow, service_dir, service)
-    create_daemon(workflow, service_dir, service)
-    create_post_commands(workflow, service_dir, service)
-    _create_workflow(workflow, service["name"])
+    workflows = {}
+    for cont in service["containers"]:
+        job_wfs = _create_job_wfs(cont, service["name"])
+        workflows.update(job_wfs)
 
-    daemon_cmd = service["daemon"]
-    daemon_cmd["name"] = service["name"]
-    create_configmap(service_dir, service, daemon_cmd)
+        wf = {}
+        _create_pre_commands(wf, cont)
+        _create_daemon(wf, cont)
+        _create_post_commands(wf, cont)
+        workflows.update({cont["name"]: yaml.dump({"workflow": wf})})
 
-    cont_spec = templates.serialize_container_spec(
-        service, service["name"], daemon_cmd, DEFAULT_CONFIGMAP, "Always")
-    if service.get("container", {}).get("daemonset", False):
+    _create_workflow(workflows, service["name"])
+
+    for cont in service["containers"]:
+        daemon_cmd = cont["daemon"]
+        daemon_cmd["name"] = cont["name"]
+
+        _create_pre_jobs(service, cont)
+        _create_post_jobs(service, cont)
+
+    cont_spec = templates.serialize_daemon_pod_spec(service, DEFAULT_CONFIGMAP)
+
+    if service.get("daemonset", False):
         obj = templates.serialize_daemonset(service["name"], cont_spec)
     else:
         obj = templates.serialize_deployment(service["name"], cont_spec)
     kubernetes.create_object_from_definition(obj)
 
     _create_service(service)
+
+
+def _create_job_wfs(container, service_name):
+    wfs = {}
+    for job in container.get("pre", ()):
+        if _is_single_job(job):
+            wfs.update(_create_job_wf(container, job))
+    for job in container.get("post", ()):
+        if _is_single_job(job):
+            wfs.update(_create_job_wf(container, job, True, service_name))
+    return wfs
 
 
 def _fill_cmd(workflow, cmd):
@@ -68,14 +92,14 @@ def _fill_cmd(workflow, cmd):
 
 def _create_workflow(workflow, name):
     template = templates.serialize_configmap(
-        "%s-workflow" % name, {"workflow": yaml.dump({"workflow": workflow})})
+        "%s-workflow" % name, workflow)
     kubernetes.handle_exists(
         kubernetes.create_object_from_definition, template)
 
 
 def _create_service(service):
-    if not service.get("ports"):
-        LOG.debug("Ports is not specified for service %s", service["name"])
+    template_ports = service.get("ports")
+    if not template_ports:
         return
     ports = []
     defaults = _get_defaults()
@@ -94,63 +118,77 @@ def _create_service(service):
     kubernetes.create_object_from_definition(template)
 
 
-def create_pre_commands(workflow, service_dir, service):
-    LOG.debug("Create pre jobs")
+def _create_pre_commands(workflow, container):
     workflow["pre"] = []
-    for cmd in service.get("pre", ()):
-        create_command(workflow["pre"], service_dir, service, cmd)
+    for cmd in container.get("pre", ()):
+        _create_command(workflow["pre"], container, cmd)
 
 
-def create_daemon(workflow, service_dir, service):
-    workflow["name"] = service["name"]
-    daemon = service["daemon"]
+def _create_daemon(workflow, container):
+    workflow["name"] = container["name"]
+    daemon = container["daemon"]
     workflow["dependencies"] = []
-    for cmd in service.get("pre", ()):
+    # TODO(sreshetniak): add files from job
+    for cmd in container.get("pre", ()):
         if cmd.get("type", "local") == "single":
             workflow["dependencies"].append(cmd["name"])
     workflow["dependencies"].extend(daemon.get("dependencies", ()))
     workflow["daemon"] = {}
     _fill_cmd(workflow["daemon"], daemon)
-    push_files_to_workflow(workflow, daemon.get("files"))
+    _push_files_to_workflow(workflow, daemon.get("files"))
 
 
-def create_post_commands(workflow, service_dir, service):
+def _create_post_commands(workflow, container):
     LOG.debug("Create post jobs")
     workflow["post"] = []
-    for cmd in service.get("post", ()):
-        create_command(workflow["post"], service_dir, service, cmd, "post")
+    for cmd in container.get("post", ()):
+        _create_command(workflow["post"], container, cmd)
 
 
-def create_command(workflow, service_dir, service, cmd, cmd_type=None):
+def _is_single_job(job):
+    return job.get("type", "local") == "single"
+
+
+def _create_pre_jobs(service, container):
+    for job in container.get("pre", ()):
+        if _is_single_job(job):
+            _create_job(service, container, job)
+
+
+def _create_post_jobs(service, container):
+    for job in container.get("post", ()):
+        if _is_single_job(job):
+            _create_job(service, container, job)
+
+
+def _create_job(service, container, job):
+    cont_spec = templates.serialize_job_container_spec(container, job)
+    pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec,
+                                                DEFAULT_CONFIGMAP)
+    job_spec = templates.serialize_job(job["name"], pod_spec)
+    kubernetes.create_object_from_definition(job_spec)
+
+
+def _create_command(workflow, container, cmd):
     if cmd.get("type", "local") == "local":
         cmd_flow = {}
         _fill_cmd(cmd_flow, cmd)
         workflow.append(cmd_flow)
-    else:
-        create_job(service_dir, service, cmd, cmd_type)
 
 
-def create_job(service_dir, service, cmd, cmd_type=None):
-    LOG.debug("Create %s job", cmd["name"])
+def _create_job_wf(container, job, post=False, service_name=None):
     wrk = {}
-    wrk["name"] = cmd["name"]
-    wrk["dependencies"] = cmd.get("dependencies", [])
-    if cmd_type == "post":
-        wrk["dependencies"].append(service["name"])
+    wrk["name"] = job["name"]
+    wrk["dependencies"] = job.get("dependencies", [])
+    if post:
+        wrk["dependencies"].append(service_name)
     wrk["job"] = {}
-    _fill_cmd(wrk["job"], cmd)
-    push_files_to_workflow(wrk, cmd.get("files"))
-
-    _create_workflow(wrk, cmd["name"])
-    create_configmap(service_dir, service, cmd)
-    cont_spec = templates.serialize_container_spec(
-        service, cmd["name"], cmd, DEFAULT_CONFIGMAP, "OnFailure")
-    job_template = templates.serialize_job(cmd["name"], cont_spec)
-    LOG.debug("Job: %s", cmd["name"])
-    kubernetes.create_object_from_definition(job_template)
+    _fill_cmd(wrk["job"], job)
+    _push_files_to_workflow(wrk, job.get("files"))
+    return {job["name"]: yaml.dump({"workflow": wrk})}
 
 
-def push_files_to_workflow(workflow, files):
+def _push_files_to_workflow(workflow, files):
     if not files:
         return
     workflow["files"] = [{
@@ -161,15 +199,15 @@ def push_files_to_workflow(workflow, files):
     } for filename, f in files.items()]
 
 
-def create_configmap(service_dir, service, cmd):
-    configmap_name = cmd["name"]
-    LOG.debug("Create configmap %s", configmap_name)
+def _create_files_configmap(service_dir, service_name, configs):
+    configmap_name = "%s-configs" % service_name
     data = {}
-    if "files" not in cmd:
-        return
-    for filename, f in cmd["files"].items():
-        with open(os.path.join(service_dir, "files", f["content"]), "r") as f:
-            data[filename] = f.read()
+    if configs:
+        for filename, f in configs.items():
+            with open(os.path.join(
+                service_dir, "files", f["content"]), "r") as f:
+                data[filename] = f.read()
+    data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
     kubernetes.handle_exists(
         kubernetes.create_object_from_definition, template)
@@ -219,10 +257,9 @@ def _push_defaults():
         start_scr_data = f.read()
 
     topology_data = ""
-    if CONF.action.network_topology:
-        if os.path.isfile(CONF.action.network_topology):
-            with open(CONF.action.network_topology, "r") as f:
-                topology_data = f.read()
+    if os.path.isfile(CONF.action.network_topology):
+        with open(CONF.action.network_topology, "r") as f:
+            topology_data = f.read()
     cm_data = {
         "configs": yaml.dump(cfg),
         "start-script": start_scr_data,
