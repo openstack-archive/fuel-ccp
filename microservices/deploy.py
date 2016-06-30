@@ -257,7 +257,8 @@ def _push_defaults():
         start_scr_data = f.read()
 
     topology_data = ""
-    if os.path.isfile(CONF.action.network_topology):
+    if (CONF.action.network_topology and
+            os.path.isfile(CONF.action.network_topology)):
         with open(CONF.action.network_topology, "r") as f:
             topology_data = f.read()
     cm_data = {
