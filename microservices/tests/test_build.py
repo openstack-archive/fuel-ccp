@@ -1,6 +1,8 @@
 import collections
 import io
+
 import mock
+from oslo_config import fixture as conf_fixture
 
 from microservices import build
 from microservices.tests import base
@@ -21,6 +23,15 @@ RUN apt-get -y install \
 
 
 class TestBuild(base.TestCase):
+
+    def setUp(self):
+        super(TestBuild, self).setUp()
+        self.cfg = conf_fixture.Config()
+        self.cfg.setUp()
+
+    def tearDown(self):
+        super(TestBuild, self).tearDown()
+        self.cfg.cleanUp()
 
     def test_find_dependencies(self):
         m_open = mock.mock_open()
@@ -54,7 +65,94 @@ class TestBuild(base.TestCase):
         self.assertDictEqual(dockerfiles['ms-debian-base'],
                              dockerfiles['ms-mysql']['parent'])
 
-    def test_find_matched_dockerfiles_ancestors(self):
+    @mock.patch("docker.Client")
+    @mock.patch("microservices.build.build_dockerfile")
+    @mock.patch("microservices.build.submit_dockerfile_processing")
+    def test_process_dockerfile_middle(self, submit_dockerfile_processing_mock,
+                                       build_dockerfile_mock, dc_mock):
+        dockerfiles = {
+            'root': {
+                'name': 'root',
+                'full_name': 'ms/root',
+                'parent': None,
+                'children': ['middle'],
+                'match': False
+            },
+            'middle': {
+                'name': 'middle',
+                'full_name': 'ms/middle',
+                'parent': 'root',
+                'children': ['leaf'],
+                'match': True
+            },
+            'leaf': {
+                'name': 'leaf',
+                'full_name': 'ms/leaf',
+                'parent': 'middle',
+                'children': [],
+                'match': False
+            }
+        }
+
+        for dockerfile in dockerfiles.values():
+            if dockerfile['parent']:
+                dockerfile['parent'] = dockerfiles[dockerfile['parent']]
+            for i in range(len(dockerfile['children'])):
+                dockerfile['children'][i] = (
+                    dockerfiles[dockerfile['children'][i]]
+                )
+
+        build.process_dockerfile(dockerfiles["middle"], mock.ANY, mock.ANY,
+                                 ["root", "middle", "leaf"])
+
+        submit_dockerfile_processing_mock.assert_called_once_with(
+            dockerfiles["leaf"], mock.ANY, mock.ANY, mock.ANY)
+
+    @mock.patch("docker.Client")
+    @mock.patch("microservices.build.build_dockerfile")
+    @mock.patch("microservices.build.submit_dockerfile_processing")
+    def test_process_dockerfile_middle_keep_consistency_off(
+            self, submit_dockerfile_processing_mock,
+            build_dockerfile_mock, dc_mock):
+        dockerfiles = {
+            'root': {
+                'name': 'root',
+                'full_name': 'ms/root',
+                'parent': None,
+                'children': ['middle'],
+                'match': False
+            },
+            'middle': {
+                'name': 'middle',
+                'full_name': 'ms/middle',
+                'parent': 'root',
+                'children': ['leaf'],
+                'match': True
+            },
+            'leaf': {
+                'name': 'leaf',
+                'full_name': 'ms/leaf',
+                'parent': 'middle',
+                'children': [],
+                'match': False
+            }
+        }
+
+        self.cfg.config(group="builder", keep_image_tree_consistency=False)
+
+        for dockerfile in dockerfiles.values():
+            if dockerfile['parent']:
+                dockerfile['parent'] = dockerfiles[dockerfile['parent']]
+            for i in range(len(dockerfile['children'])):
+                dockerfile['children'][i] = (
+                    dockerfiles[dockerfile['children'][i]]
+                )
+
+        build.process_dockerfile(dockerfiles["middle"], mock.ANY, mock.ANY, [])
+
+        self.assertTrue(not submit_dockerfile_processing_mock.called)
+
+    def test_match_not_ready_base_dockerfiles(self):
         dockerfile = {
             'name': 'mariadb',
             'match': True,
@@ -68,6 +166,6 @@ class TestBuild(base.TestCase):
                 }
             }
         }
-        build.find_matched_dockerfiles_ancestors(dockerfile)
+        build.match_not_ready_base_dockerfiles(dockerfile, [])
         self.assertEqual(dockerfile['parent']['match'], True)
         self.assertEqual(dockerfile['parent']['parent']['match'], True)

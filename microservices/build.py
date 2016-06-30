@@ -1,3 +1,4 @@
+from concurrent import futures
 import contextlib
 import json
 import os
@@ -5,12 +6,10 @@ import re
 import shutil
 import sys
 import tempfile
-import threading
 
 import docker
 from oslo_config import cfg
 from oslo_log import log as logging
-import six
 
 from microservices.common import jinja_utils
 
@@ -84,29 +83,32 @@ def find_dockerfiles(repository_name, tmp_dir, match=True):
     return dockerfiles
 
 
+IMAGE_FULL_NAME_RE = "(([\\w_-]+)\\/)?([\\w_-]+)(:([\\w_.-]+))?"
+IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
+
+DOCKER_FILE_FROM_PATTERN = re.compile(
+    "^\\s?FROM\\s+{}\\s?$".format(IMAGE_FULL_NAME_RE), re.MULTILINE
+)
+
+
 def find_dependencies(dockerfiles):
     for name, dockerfile in dockerfiles.items():
         with open(dockerfile['path']) as f:
             content = f.read()
 
-        parent = content.split(' ')[1].split('\n')[0]
-        if CONF.images.namespace not in parent:
+        matcher = DOCKER_FILE_FROM_PATTERN.search(content)
+        if not matcher:
+            raise RuntimeError(
+                "FROM clause was not found in dockerfile for image: " + name
+            )
+
+        parent_ns, parent_name, parent_tag = matcher.group(2, 3, 5)
+
+        if CONF.images.namespace != parent_ns:
             continue
-        if '/' in parent:
-            parent = parent.split('/')[-1]
-        if ':' in parent:
-            parent = parent.split(':')[0]
 
-        dockerfile['parent'] = dockerfiles[parent]
-        dockerfiles[parent]['children'].append(dockerfile)
-
-
-def create_initial_queue(dockerfiles):
-    queue = six.moves.queue.Queue()
-    for dockerfile in dockerfiles.values():
-        if dockerfile['parent'] is None and dockerfile['match']:
-            queue.put(dockerfile)
-    return queue
+        dockerfile['parent'] = dockerfiles[parent_name]
+        dockerfiles[parent_name]['children'].append(dockerfile)
 
 
 def build_dockerfile(dc, dockerfile):
@@ -143,39 +145,56 @@ def push_dockerfile(dc, dockerfile):
              CONF.builder.registry)
 
 
-def process_dockerfile(queue):
-    while True:
-        dockerfile = queue.get()
+def process_dockerfile(dockerfile, executor, future_list, ready_images):
+    with contextlib.closing(docker.Client()) as dc:
+        build_dockerfile(dc, dockerfile)
+        if CONF.builder.push:
+            push_dockerfile(dc, dockerfile)
 
-        with contextlib.closing(docker.Client()) as dc:
-            build_dockerfile(dc, dockerfile)
-            if CONF.builder.push:
-                push_dockerfile(dc, dockerfile)
-
-        for child in dockerfile['children']:
-            if child['match']:
-                queue.put(child)
-
-        queue.task_done()
+    for child in dockerfile['children']:
+        if child['match'] or (CONF.builder.keep_image_tree_consistency and
+                              child['name'] in ready_images):
+            submit_dockerfile_processing(child, executor, future_list,
+                                         ready_images)
 
 
-def find_matched_dockerfiles_ancestors(dockerfile):
+def submit_dockerfile_processing(dockerfile, executor, future_list,
+                                 ready_images):
+    future_list.append(executor.submit(
+        process_dockerfile, dockerfile, executor, future_list, ready_images
+    ))
+
+
+def match_not_ready_base_dockerfiles(dockerfile, ready_images):
     while True:
         parent = dockerfile['parent']
-        if parent is None:
+        if parent is None or parent['match'] or parent['name'] in ready_images:
             break
         parent['match'] = True
         dockerfile = parent
 
 
-def match_dockerfiles_by_component(dockerfiles, component):
+def get_ready_image_names():
+    with contextlib.closing(docker.Client()) as dc:
+        ready_images = []
+        for image in dc.images():
+            matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
+            if not matcher:
+                continue
+            ns, name, tag = matcher.group(2, 3, 5)
+            if CONF.images.namespace == ns:
+                ready_images.append(name)
+    return ready_images
+
+
+def match_dockerfiles_by_component(dockerfiles, component, ready_images):
     pattern = re.compile(re.escape(component))
 
     for key, dockerfile in dockerfiles.items():
-        if not pattern.search(key):
-            continue
-        dockerfile['match'] = True
-        find_matched_dockerfiles_ancestors(dockerfile)
+        if pattern.search(key):
+            dockerfile['match'] = True
+            if CONF.builder.build_base_images_if_not_exist:
+                match_not_ready_base_dockerfiles(dockerfile, ready_images)
 
 
 def build_components(components=None):
@@ -189,21 +208,24 @@ def build_components(components=None):
 
     find_dependencies(dockerfiles)
 
+    ready_images = get_ready_image_names()
+
     if components is not None:
         for component in components:
-            match_dockerfiles_by_component(dockerfiles, component)
+            match_dockerfiles_by_component(dockerfiles, component,
+                                           ready_images)
 
-    # TODO(mrostecki): Try to use multiprocessing there.
-    # NOTE(mrostecki): Unfortunately, just using multiprocessing pool
-    # with multiprocessing.Queue, while keeping the same logic, doesn't
-    # work well with docker-py - each process exits before the image build
-    # is done.
-    queue = create_initial_queue(dockerfiles)
-    threads = [threading.Thread(target=process_dockerfile, args=(queue,))
-               for __ in range(CONF.builder.workers)]
-    for thread in threads:
-        thread.daemon = True
-        thread.start()
-    queue.join()
+    with futures.ThreadPoolExecutor(max_workers=CONF.builder.workers) as (
+            executor):
+        future_list = []
+        for dockerfile in dockerfiles.values():
+            if dockerfile['match'] and (dockerfile['parent'] is None or
+                                        not dockerfile['parent']['match']):
+                submit_dockerfile_processing(dockerfile, executor, future_list,
+                                             ready_images)
+
+        while future_list:
+            future = future_list.pop(0)
+            future.result()
 
     shutil.rmtree(tmp_dir)
