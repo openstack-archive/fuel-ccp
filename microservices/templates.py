@@ -138,16 +138,22 @@ def serialize_volumes(service, cmd, globals_name):
             }
         })
     for v in service.get("volumes", ()):
-        if v["type"] == "host":
+        vol_type = v["type"]
+        if vol_type == "host":
             vol_spec.append({
                 "name": v["name"],
                 "hostPath": {
                     "path": v["path"]
                 }
             })
+        elif vol_type == "empty-dir":
+            vol_spec.append({
+                "name": v["name"],
+                "emptyDir": {}
+            })
         else:
             # TODO(sreshetniak): move it to validation
-            raise ValueError("Volume type \"%s\" not supported" % v["type"])
+            raise ValueError("Volume type \"%s\" not supported" % vol_type)
     return vol_spec
 
 
