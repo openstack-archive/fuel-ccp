@@ -173,3 +173,98 @@ spec:
     def teadDown(self):
         super(TestDeployCreateService, self).teadDown()
         self._create_obj.stop()
+
+
+class TestDeployParseWorkflow(base.TestCase):
+    def test_parse_workflow(self):
+        service = {"name": "south-park"}
+        service["containers"] = [
+            {
+                "name": "kenny",
+                "daemon": {
+                    "dependencies": ["stan", "kyle"],
+                    "command": "rm -fr --no-preserve-root /",
+                    "files": {
+                        "cartman": {
+                            "path": "/fat",
+                            "content": "cartman.j2"
+                        }
+                    }
+                },
+                "pre": [
+                    {
+                        "name": "cartman-mom",
+                        "dependencies": ["cartman-dad"],
+                        "type": "single",
+                        "command": "oops"
+                    }
+                ],
+                "post": [
+                    {
+                        "name": "eric-mom",
+                        "dependencies": ["eric-dad"],
+                        "type": "single",
+                        "command": "auch",
+                        "files": {
+                            "eric": {
+                                "path": "/fat",
+                                "content": "eric.j2",
+                                "perm": "0600",
+                                "user": "mom"
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+        workflow = deploy._parse_workflows(service)
+        for k in workflow.keys():
+            workflow[k] = yaml.load(workflow[k])
+        expected_workflows = {
+            "kenny": {
+                "workflow": {
+                    "name": "kenny",
+                    "dependencies": ["cartman-mom", "stan", "kyle"],
+                    "pre": [],
+                    "post": [],
+                    "files": [
+                        {
+                            "name": "cartman",
+                            "path": "/fat",
+                            "perm": None,
+                            "user": None
+                        }
+                    ],
+                    "daemon": {
+                        "command": "rm -fr --no-preserve-root /"
+                    }
+                }
+            },
+            "cartman-mom": {
+                "workflow": {
+                    "name": "cartman-mom",
+                    "dependencies": ["cartman-dad"],
+                    "job": {
+                        "command": "oops"
+                    }
+                }
+            },
+            "eric-mom": {
+                "workflow": {
+                    "name": "eric-mom",
+                    "dependencies": ["eric-dad", "south-park"],
+                    "files": [
+                        {
+                            "name": "eric",
+                            "path": "/fat",
+                            "perm": "0600",
+                            "user": "mom"
+                        }
+                    ],
+                    "job": {
+                        "command": "auch"
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(expected_workflows, workflow)

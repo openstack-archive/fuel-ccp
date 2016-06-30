@@ -42,17 +42,7 @@ def parse_role(service_dir, role):
 
     _create_files_configmap(service_dir, service["name"], role.get("files"))
 
-    workflows = {}
-    for cont in service["containers"]:
-        job_wfs = _create_job_wfs(cont, service["name"])
-        workflows.update(job_wfs)
-
-        wf = {}
-        _create_pre_commands(wf, cont)
-        _create_daemon(wf, cont)
-        _create_post_commands(wf, cont)
-        workflows.update({cont["name"]: yaml.dump({"workflow": wf})})
-
+    workflows = _parse_workflows(service)
     _create_workflow(workflows, service["name"])
 
     for cont in service["containers"]:
@@ -71,6 +61,20 @@ def parse_role(service_dir, role):
     kubernetes.create_object_from_definition(obj)
 
     _create_service(service)
+
+
+def _parse_workflows(service):
+    workflows = {}
+    for cont in service["containers"]:
+        job_wfs = _create_job_wfs(cont, service["name"])
+        workflows.update(job_wfs)
+
+        wf = {}
+        _create_pre_commands(wf, cont)
+        _create_daemon(wf, cont)
+        _create_post_commands(wf, cont)
+        workflows.update({cont["name"]: yaml.dump({"workflow": wf})})
+    return workflows
 
 
 def _create_job_wfs(container, service_name):
