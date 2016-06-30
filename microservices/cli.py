@@ -9,11 +9,14 @@ from microservices import fetch
 
 
 CONF = cfg.CONF
+CONF.import_group('registry', 'microservices.config.registry')
 CONF.import_group('repositories', 'microservices.config.repositories')
 CONF.import_opt('action', 'microservices.config.cli')
 
 
 def do_build():
+    if CONF.builder.push and not CONF.registry.address:
+        raise RuntimeError('No registry specified, cannot push')
     if CONF.repositories.clone:
         do_fetch()
     build.build_components(components=CONF.action.components)

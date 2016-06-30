@@ -18,6 +18,7 @@ CONF = cfg.CONF
 CONF.import_group('builder', 'microservices.config.builder')
 CONF.import_group('images', 'microservices.config.images')
 CONF.import_group('repositories', 'microservices.config.repositories')
+CONF.import_group('registry', 'microservices.config.registry')
 
 LOG = logging.getLogger(__name__)
 
@@ -48,8 +49,8 @@ def find_dockerfiles(repository_name, tmp_dir, match=True):
     repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
     namespace = CONF.images.namespace
-    if CONF.builder.push:
-        namespace = '%s/%s' % (CONF.builder.registry, namespace)
+    if CONF.builder.push and CONF.registry.address:
+        namespace = '%s/%s' % (CONF.registry.address, namespace)
 
     for root, __, files in os.walk(repository_dir):
         if 'Dockerfile.j2' in files:
@@ -127,13 +128,13 @@ def build_dockerfile(dc, dockerfile):
 
 
 def push_dockerfile(dc, dockerfile):
-    if CONF.auth.registry:
-        dc.login(username=CONF.auth.registry_username,
-                 password=CONF.auth.registry_password,
-                 registry=CONF.builder.registry)
+    if CONF.registry.username and CONF.registry.password:
+        dc.login(username=CONF.registry.username,
+                 password=CONF.registry.password,
+                 registry=CONF.registry.address)
     for line in dc.push(dockerfile['full_name'],
                         stream=True,
-                        insecure_registry=CONF.builder.insecure_registry):
+                        insecure_registry=CONF.registry.insecure):
         build_data = json.loads(line)
         if 'stream' in build_data:
             LOG.info('%s: %s', dockerfile['name'],
@@ -142,13 +143,13 @@ def push_dockerfile(dc, dockerfile):
             LOG.error('%s: %s', dockerfile['name'],
                       build_data['errorDetail']['message'])
     LOG.info("%s - Push into %s registry finished", dockerfile['name'],
-             CONF.builder.registry)
+             CONF.registry.address)
 
 
 def process_dockerfile(dockerfile, executor, future_list, ready_images):
     with contextlib.closing(docker.Client()) as dc:
         build_dockerfile(dc, dockerfile)
-        if CONF.builder.push:
+        if CONF.builder.push and CONF.registry.address:
             push_dockerfile(dc, dockerfile)
 
     for child in dockerfile['children']:

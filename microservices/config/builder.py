@@ -22,13 +22,7 @@ builder_opts = [
                 help='Push to the Docker registry'),
     cfg.BoolOpt('no-cache',
                 default=False,
-                help='Dont use docker cache'),
-    cfg.StrOpt('registry',
-               default='127.0.0.1:5000',
-               help='Docker registry address (host:port)'),
-    cfg.BoolOpt('insecure-registry',
-                default=False,
-                help='Permit to push without SSL')
+                help='Dont use docker cache')
 ]
 builder_opt_group = cfg.OptGroup(name='builder',
                                  title='Images builder')

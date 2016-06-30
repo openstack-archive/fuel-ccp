@@ -6,6 +6,8 @@ from microservices import utils
 
 
 CONF = cfg.CONF
+CONF.import_group('images', 'microservices.config.images')
+CONF.import_group('registry', 'microservices.config.registry')
 
 FILES_VOLUME = "files-volume"
 GLOBAL_VOLUME = "global-volume"
@@ -14,8 +16,11 @@ SCRIPT_VOLUME = "script-volume"
 
 
 def _get_image_name(image_name):
-    return "%s/%s/%s:%s" % (CONF.builder.registry, CONF.images.namespace,
-                            image_name, CONF.images.tag)
+    image_name = "%s/%s:%s" % (CONF.images.namespace, image_name,
+                               CONF.images.tag)
+    if CONF.registry.address:
+        image_name = "%s/%s" % (CONF.registry.address, image_name)
+    return image_name
 
 
 def _get_start_cmd(cmd_name):
