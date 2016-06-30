@@ -209,9 +209,15 @@ def serialize_daemonset(name, spec):
 
 
 def serialize_service(name, ports):
-    ports_spec = [{"protocol": "TCP", "port": p["port"],
-                   "targetPort": p["port"], "name": utils.k8s_name(p["name"])}
-                  for p in ports]
+    ports_spec = []
+    for port in ports:
+        spec_entry = {"protocol": "TCP",
+                      "port": port["port"],
+                      "targetPort": port["port"],
+                      "name": utils.k8s_name(port["name"])}
+        if port.get("node-port"):
+            spec_entry.update({"nodePort": port["node-port"]})
+        ports_spec.append(spec_entry)
     return {
         "apiVersion": "v1",
         "kind": "Service",
