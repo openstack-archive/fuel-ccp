@@ -35,7 +35,7 @@ def _expand_files(service, files):
             _expand(cmd)
 
 
-def parse_role(service_dir, role):
+def parse_role(service_dir, role, defaults):
     service = role["service"]
     LOG.info("Using service %s", service["name"])
     _expand_files(service, role.get("files"))
@@ -60,7 +60,7 @@ def parse_role(service_dir, role):
         obj = templates.serialize_deployment(service["name"], cont_spec)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service)
+    _create_service(service, defaults)
 
 
 def _parse_workflows(service):
@@ -101,12 +101,11 @@ def _create_workflow(workflow, name):
         kubernetes.create_object_from_definition, template)
 
 
-def _create_service(service):
+def _create_service(service, defaults):
     template_ports = service.get("ports")
     if not template_ports:
         return
     ports = []
-    defaults = _get_defaults()
     for port in service["ports"]:
         source_port, _, node_port = str(port).partition(":")
         source_port = int(defaults.get(source_port, source_port))
@@ -217,7 +216,7 @@ def _create_files_configmap(service_dir, service_name, configs):
         kubernetes.create_object_from_definition, template)
 
 
-def deploy_component(component):
+def deploy_component(component, defaults):
     service_dir = os.path.join(CONF.repositories.path, component, 'service')
 
     if not os.path.isdir(service_dir):
@@ -229,7 +228,7 @@ def deploy_component(component):
             with open(os.path.join(service_dir, service_file), "r") as f:
                 role_obj = yaml.load(f)
 
-            parse_role(service_dir, role_obj)
+            parse_role(service_dir, role_obj, defaults)
 
 
 def _get_defaults():
@@ -253,8 +252,7 @@ def _get_defaults():
     return cfg
 
 
-def _push_defaults():
-    cfg = _get_defaults()
+def _push_defaults(cfg):
     start_scr_path = os.path.join(CONF.repositories.path, "ms-ext-config",
                                   "ms_ext_config", "start_script.py")
     with open(start_scr_path, "r") as f:
@@ -319,7 +317,8 @@ def deploy_components(components=None):
     _create_namespace()
     _deploy_etcd()
 
-    _push_defaults()
+    defaults = _get_defaults()
+    _push_defaults(defaults)
 
     for component in components:
-        deploy_component(component)
+        deploy_component(component, defaults)

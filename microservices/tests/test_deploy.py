@@ -100,7 +100,7 @@ class TestDeployCreateService(base.TestCase):
         self.create_obj = self._create_obj.start()
 
     def test_create_service_without_ports(self):
-        deploy._create_service({"name": "spam"})
+        deploy._create_service({"name": "spam"}, {})
         self.assertFalse(self.create_obj.called)
 
     def test_create_service(self):
@@ -165,10 +165,8 @@ spec:
   selector:
     app: foo
   type: NodePort"""
-        with mock.patch("microservices.deploy._get_defaults",
-                        return_value=defaults):
-            deploy._create_service(service)
-            self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
+        deploy._create_service(service, defaults)
+        self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
 
     def teadDown(self):
         super(TestDeployCreateService, self).teadDown()
