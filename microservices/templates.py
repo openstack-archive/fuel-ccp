@@ -11,6 +11,7 @@ CONF.import_group('registry', 'microservices.config.registry')
 
 FILES_VOLUME = "files-volume"
 GLOBAL_VOLUME = "global-volume"
+META_VOLUME = "meta-volume"
 ROLE_VOLUME = "role-volume"
 SCRIPT_VOLUME = "script-volume"
 
@@ -48,6 +49,10 @@ def serialize_volume_mounts(container):
         {
             "name": ROLE_VOLUME,
             "mountPath": "/etc/mcp/role"
+        },
+        {
+            "name": META_VOLUME,
+            "mountPath": "/etc/mcp/meta"
         },
         {
             "name": SCRIPT_VOLUME,
@@ -159,9 +164,7 @@ def serialize_volumes(service, globals_name):
             "configMap": {
                 "name": globals_name,
                 "items": [{"key": "configs",
-                           "path": "globals.yaml"},
-                          {"key": "network",
-                           "path": "network_topology.yaml"}]
+                           "path": "globals.yaml"}]
             }
         },
         {
@@ -169,6 +172,14 @@ def serialize_volumes(service, globals_name):
             "configMap": {
                 "name": "%s-workflow" % service["name"],
                 "items": workflow_items
+            }
+        },
+        {
+            "name": META_VOLUME,
+            "configMap": {
+                "name": "%s-meta" % service["name"],
+                "items": [{"key": "meta",
+                           "path": "meta.yaml"}]
             }
         },
         {
@@ -187,7 +198,8 @@ def serialize_volumes(service, globals_name):
             }
         }
     ]
-    volume_names = [GLOBAL_VOLUME, ROLE_VOLUME, SCRIPT_VOLUME, FILES_VOLUME]
+    volume_names = [GLOBAL_VOLUME, META_VOLUME, ROLE_VOLUME, SCRIPT_VOLUME,
+                    FILES_VOLUME]
     for cont in service["containers"]:
         for v in cont.get("volumes", ()):
             if v["name"] in volume_names:

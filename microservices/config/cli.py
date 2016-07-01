@@ -14,9 +14,6 @@ def add_parsers(subparsers):
     deploy_action.add_argument('-c', '--components',
                                nargs='+',
                                help='MCP component to deploy')
-    deploy_action.add_argument("-t", "--network-topology",
-                               nargs="?",
-                               help="Network topology file")
     deploy_action.add_argument("--dry-run",
                                action='store_true',
                                help="Print k8s objects definitions without"

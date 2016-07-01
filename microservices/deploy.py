@@ -41,6 +41,7 @@ def parse_role(service_dir, role, defaults):
     _expand_files(service, role.get("files"))
 
     _create_files_configmap(service_dir, service["name"], role.get("files"))
+    _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
     _create_workflow(workflows, service["name"])
@@ -216,6 +217,16 @@ def _create_files_configmap(service_dir, service_name, configs):
         kubernetes.create_object_from_definition, template)
 
 
+def _create_meta_configmap(service):
+    configmap_name = "%s-meta" % service["name"]
+    data = {}
+    data['meta'] = yaml.dump({"service-name": service["name"],
+                              "host-net": service.get("host-net", False)})
+    template = templates.serialize_configmap(configmap_name, data)
+    kubernetes.handle_exists(
+        kubernetes.create_object_from_definition, template)
+
+
 def deploy_component(component, defaults):
     service_dir = os.path.join(CONF.repositories.path, component, 'service')
 
@@ -258,15 +269,9 @@ def _push_defaults(cfg):
     with open(start_scr_path, "r") as f:
         start_scr_data = f.read()
 
-    topology_data = ""
-    if (CONF.action.network_topology and
-            os.path.isfile(CONF.action.network_topology)):
-        with open(CONF.action.network_topology, "r") as f:
-            topology_data = f.read()
     cm_data = {
         "configs": yaml.dump(cfg),
-        "start-script": start_scr_data,
-        "network": topology_data
+        "start-script": start_scr_data
     }
 
     cm = templates.serialize_configmap(DEFAULT_CONFIGMAP, cm_data)
