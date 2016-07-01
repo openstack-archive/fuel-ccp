@@ -24,7 +24,11 @@ LOG = logging.getLogger(__name__)
 
 
 def create_rendered_dockerfile(path, name, tmp_path):
-    content = jinja_utils.jinja_render(path)
+    context = dict(CONF.images.items())
+    if CONF.registry.address:
+        context['namespace'] = '%s/%s' % (CONF.registry.address,
+                                          context['namespace'])
+    content = jinja_utils.jinja_render(path, context)
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
     os.makedirs(dest_dir)
@@ -84,11 +88,12 @@ def find_dockerfiles(repository_name, tmp_dir, match=True):
     return dockerfiles
 
 
-IMAGE_FULL_NAME_RE = "(([\\w_-]+)\\/)?([\\w_-]+)(:([\\w_.-]+))?"
+IMAGE_FULL_NAME_RE = r"((?P<namespace>[\w:\.-]+)/){0,2}" \
+                     "(?P<name>[\w_-]+)" \
+                     "(:(?P<tag>[\w_\.-]+))?"
 IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
-
 DOCKER_FILE_FROM_PATTERN = re.compile(
-    "^\\s?FROM\\s+{}\\s?$".format(IMAGE_FULL_NAME_RE), re.MULTILINE
+    r"^\s?FROM\s+{}\s?$".format(IMAGE_FULL_NAME_RE), re.MULTILINE
 )
 
 
@@ -103,7 +108,8 @@ def find_dependencies(dockerfiles):
                 "FROM clause was not found in dockerfile for image: " + name
             )
 
-        parent_ns, parent_name, parent_tag = matcher.group(2, 3, 5)
+        parent_ns = matcher.group("namespace")
+        parent_name = matcher.group("name")
 
         if CONF.images.namespace != parent_ns:
             continue
@@ -182,7 +188,7 @@ def get_ready_image_names():
             matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
             if not matcher:
                 continue
-            ns, name, tag = matcher.group(2, 3, 5)
+            ns, name = matcher.group("namespace"), matcher.group("name")
             if CONF.images.namespace == ns:
                 ready_images.append(name)
     return ready_images

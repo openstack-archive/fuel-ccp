@@ -18,7 +18,10 @@ class TestJinjaUtils(base.TestCase):
         filename = os.path.join(
             os.path.dirname(sys.modules[__name__].__file__),
             'example.j2')
-        content = jinja_utils.jinja_render(filename)
-        self.assertEqual("debian\njessie\n"
-                         "MOS Microservices <mos-microservices@mirantis.com>",
-                         content)
+        context = {
+            "base_distro": "debian",
+            "base_tag": "jessie",
+            "maintainer": "some maintainer"
+        }
+        content = jinja_utils.jinja_render(filename, context)
+        self.assertEqual("debian\njessie\nsome maintainer", content)
