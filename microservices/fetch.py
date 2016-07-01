@@ -1,4 +1,5 @@
 import os
+import sys
 
 from concurrent import futures
 import git
@@ -14,21 +15,14 @@ LOG = logging.getLogger(__name__)
 
 
 def fetch_repository(repository_name):
-    try:
-        dest_dir = os.path.join(CONF.repositories.path, repository_name)
-        if os.path.isdir(dest_dir):
-            LOG.info('%s was already cloned, skipping', repository_name)
-            return
-        git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-        git_url = git_url % CONF.auth.gerrit_username
-        git.Repo.clone_from(git_url, dest_dir)
-        LOG.info('Cloned %s repo', repository_name)
-    except (git.exc.GitCommandError,
-            git.exc.HookExecutionError,
-            git.exc.CheckoutError) as ex:
-        # NOTE(sskripnick) multiprocessing.Pool can't handle some git
-        # exceptions properly
-        raise Exception("%s" % ex)
+    dest_dir = os.path.join(CONF.repositories.path, repository_name)
+    if os.path.isdir(dest_dir):
+        LOG.info('%s was already cloned, skipping', repository_name)
+        return
+    git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
+    git_url = git_url % CONF.auth.gerrit_username
+    git.Repo.clone_from(git_url, dest_dir)
+    LOG.info('Cloned %s repo', repository_name)
 
 
 def fetch_repositories(repository_names=None):
@@ -37,20 +31,25 @@ def fetch_repositories(repository_names=None):
 
     LOG.info('Cloning repositories into %s', CONF.repositories.path)
 
+    errors = 0
     with futures.ThreadPoolExecutor(
             max_workers=CONF.repositories.clone_concurrency) as executor:
         future_list = []
-        for repository_name in repository_names:
-            future_list.append(executor.submit(
-                fetch_repository, repository_name
-            ))
+        try:
+            for repository_name in repository_names:
+                future_list.append(executor.submit(
+                    fetch_repository, repository_name
+                ))
 
-        errors = 0
-        for future in future_list:
-            try:
-                future.result()
-            except Exception as ex:
-                LOG.error("Failed to fetch: %s" % ex)
-                errors += 1
-        if errors:
-            raise Exception("Failed to fetch %d repos" % errors)
+            for future in future_list:
+                try:
+                    future.result(timeout=sys.maxint)
+                except Exception as ex:
+                    LOG.error("Failed to fetch: %s" % ex)
+                    errors += 1
+        except SystemExit:
+            for future in future_list:
+                future.cancel()
+            raise
+    if errors:
+        raise Exception("Failed to fetch %d repos" % errors)
