@@ -14,6 +14,7 @@ from microservices import templates
 CONF = cfg.CONF
 CONF.import_group('repositories', 'microservices.config.repositories')
 CONF.import_opt("action", "microservices.config.cli")
+CONF.import_opt("deploy_config", "microservices.config.cli")
 
 LOG = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ def _expand_files(service, files):
             _expand(cmd)
 
 
-def parse_role(service_dir, role, defaults):
+def parse_role(service_dir, role, config):
     service = role["service"]
     LOG.info("Using service %s", service["name"])
     _expand_files(service, role.get("files"))
@@ -61,7 +62,7 @@ def parse_role(service_dir, role, defaults):
         obj = templates.serialize_deployment(service["name"], cont_spec)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service, defaults)
+    _create_service(service, config)
 
 
 def _parse_workflows(service):
@@ -102,16 +103,16 @@ def _create_workflow(workflow, name):
         kubernetes.create_object_from_definition, template)
 
 
-def _create_service(service, defaults):
+def _create_service(service, config):
     template_ports = service.get("ports")
     if not template_ports:
         return
     ports = []
     for port in service["ports"]:
         source_port, _, node_port = str(port).partition(":")
-        source_port = int(defaults.get(source_port, source_port))
+        source_port = int(config.get(source_port, source_port))
         if node_port:
-            node_port = int(defaults.get(node_port, node_port))
+            node_port = int(config.get(node_port, node_port))
         name_port = str(source_port)
         if node_port:
             ports.append({"port": source_port, "name": name_port,
@@ -227,7 +228,7 @@ def _create_meta_configmap(service):
         kubernetes.create_object_from_definition, template)
 
 
-def deploy_component(component, defaults):
+def deploy_component(component, config):
     service_dir = os.path.join(CONF.repositories.path, component, 'service')
 
     if not os.path.isdir(service_dir):
@@ -239,18 +240,25 @@ def deploy_component(component, defaults):
             with open(os.path.join(service_dir, service_file), "r") as f:
                 role_obj = yaml.load(f)
 
-            parse_role(service_dir, role_obj, defaults)
+            parse_role(service_dir, role_obj, config)
 
 
-def _get_defaults():
+def _get_config():
     cfg = {}
     components = list(CONF.repositories.names)
     paths = []
+    # Order does matter. At first we add global defaults.
+    for conf_path in ("resources/defaults.yaml", "resources/globals.yaml"):
+        paths.append(_get_resource_path(conf_path))
+
+    # After we add component defaults.
     for component in components:
         paths.append(os.path.join(CONF.repositories.path, component,
                                   "service/files/defaults.yaml"))
-    for conf_path in ("resources/defaults.yaml", "resources/globals.yaml"):
-        paths.append(_get_resource_path(conf_path))
+
+    # And finaly we add cluster-wide globals conf, if provided.
+    if CONF.deploy_config:
+        paths.append(CONF.deploy_config)
 
     for path in paths:
         if os.path.isfile(path):
@@ -263,7 +271,7 @@ def _get_defaults():
     return cfg
 
 
-def _push_defaults(cfg):
+def _push_config(cfg):
     start_scr_path = os.path.join(CONF.repositories.path, "ms-ext-config",
                                   "ms_ext_config", "start_script.py")
     with open(start_scr_path, "r") as f:
@@ -322,8 +330,8 @@ def deploy_components(components=None):
     _create_namespace()
     _deploy_etcd()
 
-    defaults = _get_defaults()
-    _push_defaults(defaults)
+    config = _get_config()
+    _push_config(config)
 
     for component in components:
-        deploy_component(component, defaults)
+        deploy_component(component, config)
