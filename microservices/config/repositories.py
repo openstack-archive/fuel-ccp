@@ -3,6 +3,41 @@ import os
 
 from oslo_config import cfg
 
+DEFAULT_REPOS = ['ms-ext-config',
+                 'ms-debian-base',
+                 'ms-aodh',
+                 'ms-ceilometer',
+                 'ms-ceph',
+                 'ms-cinder',
+                 'ms-designate',
+                 'ms-elasticsearch',
+                 'ms-glance',
+                 'ms-grafana',
+                 'ms-heat',
+                 'ms-horizon',
+                 'ms-ironic',
+                 'ms-influxdb',
+                 'ms-keystone',
+                 'ms-kibana',
+                 'ms-lma',
+                 'ms-magnum',
+                 'ms-manila',
+                 'ms-mariadb',
+                 'ms-memcached',
+                 'ms-mistral',
+                 'ms-mongodb',
+                 'ms-murano',
+                 'ms-neutron',
+                 'ms-nova',
+                 'ms-openstack-base',
+                 'ms-openvswitch',
+                 'ms-rabbitmq',
+                 'ms-sahara',
+                 'ms-swift',
+                 'ms-tempest',
+                 'ms-toolbox',
+                 'ms-trove',
+                 'ms-zaqar']
 
 CONF = cfg.CONF
 repositories_opts = [
@@ -20,149 +55,26 @@ repositories_opts = [
     cfg.StrOpt('path',
                default=os.path.expanduser('~/microservices-repos/'),
                help='Path where the microservice repositories are cloned'),
+    cfg.HostnameOpt('hostname',
+                    default='review.fuel-infra.org',
+                    help='Git server hostname to pull repositories from'),
+    cfg.PortOpt('port', default=29418, help='Git server port'),
+    cfg.StrOpt('protocol',
+               choices=['ssh', 'git', 'http', 'https'],
+               default='ssh',
+               help='Git access protocol'),
+    cfg.StrOpt('project',
+               default='nextgen',
+               help='Gerrit project'),
     cfg.ListOpt('names',
-                default=['ms-ext-config',
-                         'ms-debian-base',
-                         'ms-aodh',
-                         'ms-ceilometer',
-                         'ms-ceph',
-                         'ms-cinder',
-                         'ms-designate',
-                         'ms-elasticsearch',
-                         'ms-glance',
-                         'ms-grafana',
-                         'ms-heat',
-                         'ms-horizon',
-                         'ms-ironic',
-                         'ms-influxdb',
-                         'ms-keystone',
-                         'ms-kibana',
-                         'ms-lma',
-                         'ms-magnum',
-                         'ms-manila',
-                         'ms-mariadb',
-                         'ms-memcached',
-                         'ms-mistral',
-                         'ms-mongodb',
-                         'ms-murano',
-                         'ms-neutron',
-                         'ms-nova',
-                         'ms-openstack-base',
-                         'ms-openvswitch',
-                         'ms-rabbitmq',
-                         'ms-sahara',
-                         'ms-swift',
-                         'ms-tempest',
-                         'ms-toolbox',
-                         'ms-trove',
-                         'ms-zaqar'],
+                default=DEFAULT_REPOS,
                 help='List of repository names'),
-    cfg.StrOpt('ms-ext-config',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-ext-config'),
-    cfg.StrOpt('ms-debian-base',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-debian-base'),
-    cfg.StrOpt('ms-aodh',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-aodh'),
-    cfg.StrOpt('ms-ceilometer',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-ceilometer'),
-    cfg.StrOpt('ms-ceph',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-ceph'),
-    cfg.StrOpt('ms-cinder',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-cinder'),
-    cfg.StrOpt('ms-designate',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-designate'),
-    cfg.StrOpt('ms-elasticsearch',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-elasticsearch'),
-    cfg.StrOpt('ms-glance',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-glance'),
-    cfg.StrOpt('ms-grafana',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-grafana'),
-    cfg.StrOpt('ms-heat',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-heat'),
-    cfg.StrOpt('ms-horizon',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-horizon'),
-    cfg.StrOpt('ms-ironic',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-ironic'),
-    cfg.StrOpt('ms-influxdb',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-influxdb'),
-    cfg.StrOpt('ms-keystone',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-keystone'),
-    cfg.StrOpt('ms-kibana',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-kibana'),
-    cfg.StrOpt('ms-lma',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-lma'),
-    cfg.StrOpt('ms-magnum',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-magnum'),
-    cfg.StrOpt('ms-manila',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-manila'),
-    cfg.StrOpt('ms-mariadb',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-mariadb'),
-    cfg.StrOpt('ms-memcached',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-memcached'),
-    cfg.StrOpt('ms-mistral',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-mistral'),
-    cfg.StrOpt('ms-mongodb',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-mongodb'),
-    cfg.StrOpt('ms-murano',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-murano'),
-    cfg.StrOpt('ms-neutron',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-neutron'),
-    cfg.StrOpt('ms-nova',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-nova'),
-    cfg.StrOpt('ms-openstack-base',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-openstack-base'),
-    cfg.StrOpt('ms-openvswitch',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-openvswitch'),
-    cfg.StrOpt('ms-rabbitmq',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-rabbitmq'),
-    cfg.StrOpt('ms-sahara',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-sahara'),
-    cfg.StrOpt('ms-swift',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-swift'),
-    cfg.StrOpt('ms-tempest',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-tempest'),
-    cfg.StrOpt('ms-toolbox',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-toolbox'),
-    cfg.StrOpt('ms-trove',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-trove'),
-    cfg.StrOpt('ms-zaqar',
-               default='ssh://%s@review.fuel-infra.org:29418/'
-                       'nextgen/ms-zaqar')
 ]
+
+for repo in DEFAULT_REPOS:
+    option = cfg.StrOpt(repo, default='%s://%s@%s:%i/%s/' + repo)
+    repositories_opts.append(option)
+
 repositories_opt_group = cfg.OptGroup(name='repositories',
                                       title='Git repositories for components')
 CONF.register_group(repositories_opt_group)
