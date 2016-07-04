@@ -22,6 +22,8 @@ CONF.import_group('registry', 'microservices.config.registry')
 
 LOG = logging.getLogger(__name__)
 
+_SHUTDOWN = False
+
 
 def create_rendered_dockerfile(path, name, tmp_path):
     content = jinja_utils.jinja_render(path)
@@ -118,6 +120,10 @@ def build_dockerfile(dc, dockerfile):
                          nocache=CONF.builder.no_cache,
                          tag=dockerfile['full_name'],
                          path=os.path.dirname(dockerfile['path'])):
+        if _SHUTDOWN:
+            raise RuntimeError("Building '{}' was interrupted".format(
+                dockerfile['name']
+            ))
         build_data = json.loads(line)
         if 'stream' in build_data:
             LOG.info('%s: %s' % (dockerfile['name'],
@@ -198,35 +204,58 @@ def match_dockerfiles_by_component(dockerfiles, component, ready_images):
                 match_not_ready_base_dockerfiles(dockerfile, ready_images)
 
 
+def wait_futures(future_list, skip_errors=False):
+    while future_list:
+        future = future_list[0]
+        if future.done():
+            future_list.pop(0)
+            continue
+        try:
+            future.result(timeout=sys.maxint)
+        except Exception as ex:
+            if skip_errors:
+                LOG.error(str(ex))
+            else:
+                raise
+
+
 def build_components(components=None):
     tmp_dir = tempfile.mkdtemp()
 
-    dockerfiles = {}
-    match = not bool(components)
-    for repository_name in CONF.repositories.names:
-        dockerfiles.update(
-            find_dockerfiles(repository_name, tmp_dir, match=match))
+    try:
+        dockerfiles = {}
+        match = not bool(components)
+        for repository_name in CONF.repositories.names:
+            dockerfiles.update(
+                find_dockerfiles(repository_name, tmp_dir, match=match))
 
-    find_dependencies(dockerfiles)
+        find_dependencies(dockerfiles)
 
-    ready_images = get_ready_image_names()
+        ready_images = get_ready_image_names()
 
-    if components is not None:
-        for component in components:
-            match_dockerfiles_by_component(dockerfiles, component,
-                                           ready_images)
+        if components is not None:
+            for component in components:
+                match_dockerfiles_by_component(dockerfiles, component,
+                                               ready_images)
 
-    with futures.ThreadPoolExecutor(max_workers=CONF.builder.workers) as (
-            executor):
-        future_list = []
-        for dockerfile in dockerfiles.values():
-            if dockerfile['match'] and (dockerfile['parent'] is None or
-                                        not dockerfile['parent']['match']):
-                submit_dockerfile_processing(dockerfile, executor, future_list,
-                                             ready_images)
+        with futures.ThreadPoolExecutor(max_workers=CONF.builder.workers) as (
+                executor):
+            future_list = []
+            try:
+                for dockerfile in dockerfiles.values():
+                    if dockerfile['match'] and (
+                            dockerfile['parent'] is None or
+                            not dockerfile['parent']['match']):
+                        submit_dockerfile_processing(dockerfile, executor,
+                                                     future_list, ready_images)
 
-        while future_list:
-            future = future_list.pop(0)
-            future.result()
-
-    shutil.rmtree(tmp_dir)
+                wait_futures(future_list)
+            except SystemExit:
+                global _SHUTDOWN
+                _SHUTDOWN = True
+                for future in future_list:
+                    future.cancel()
+                wait_futures(future_list, skip_errors=True)
+                raise
+    finally:
+        shutil.rmtree(tmp_dir)

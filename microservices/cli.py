@@ -1,3 +1,4 @@
+import signal
 import sys
 
 from oslo_config import cfg
@@ -32,7 +33,13 @@ def do_fetch():
     fetch.fetch_repositories(CONF.repositories.names)
 
 
+def signal_handler(signo, frame):
+    sys.exit(-signo)
+
+
 def main():
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
     logging.register_options(CONF)
     CONF(sys.argv[1:])
     logging.setup(CONF, 'microservices')
