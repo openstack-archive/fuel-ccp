@@ -10,23 +10,36 @@ from oslo_log import log as logging
 CONF = cfg.CONF
 CONF.import_group('auth', 'microservices.config.auth')
 CONF.import_group('repositories', 'microservices.config.repositories')
+CONF.import_opt("action", "microservices.config.cli")
+CONF.import_opt("fetch_pull", "microservices.config.cli")
 
 LOG = logging.getLogger(__name__)
 
 
 def fetch_repository(repository_name):
     dest_dir = os.path.join(CONF.repositories.path, repository_name)
-    if os.path.isdir(dest_dir):
-        LOG.info('%s was already cloned, skipping', repository_name)
-        return
     git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
     git_url = git_url % (CONF.repositories.protocol,
                          CONF.auth.gerrit_username,
                          CONF.repositories.hostname,
                          CONF.repositories.port,
                          CONF.repositories.project)
-    git.Repo.clone_from(git_url, dest_dir)
-    LOG.info('Cloned %s repo', repository_name)
+    if os.path.isdir(dest_dir) and CONF.fetch_pull:
+        LOG.info('%s was already cloned and --pull-origin flag found,'
+                 ' pulling origin', repository_name)
+        repo = git.Repo(dest_dir)
+        if repo.active_branch.name == "master":
+            repo.remotes.origin.pull()
+            LOG.info('Pulled %s repo', repository_name)
+        else:
+            LOG.info('Current branch in "%s" repo is "%s", skipping',
+                     repository_name, repo.active_branch.name)
+    elif os.path.isdir(dest_dir):
+        LOG.info('%s was already cloned, skipping', repository_name)
+        return
+    else:
+        git.Repo.clone_from(git_url, dest_dir)
+        LOG.info('Cloned %s repo', repository_name)
 
 
 def fetch_repositories(repository_names=None):

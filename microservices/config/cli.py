@@ -29,6 +29,7 @@ CONF.register_cli_opt(cfg.SubCommandOpt('action',
                                         handler=add_parsers))
 
 common_opts = [
-    cfg.StrOpt('deploy-config', help='Cluster-wide configuration overrides')
+    cfg.StrOpt('deploy-config', help='Cluster-wide configuration overrides'),
+    cfg.BoolOpt('fetch-pull', help='Pull origin in cloned repos')
 ]
 CONF.register_cli_opts(common_opts)
