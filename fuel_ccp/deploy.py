@@ -35,6 +35,10 @@ def _expand_files(service, files):
 
 def parse_role(service_dir, role, config):
     service = role["service"]
+    if service["name"] not in config.get("topology", {}):
+        LOG.info("Service %s not in topology config, skipping deploy",
+                 service["name"])
+        return
     LOG.info("Using service %s", service["name"])
     _expand_files(service, role.get("files"))
 
@@ -52,14 +56,17 @@ def parse_role(service_dir, role, config):
         _create_post_jobs(service, cont)
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
+    affinity = templates.serialize_affinity(service, config["topology"])
 
     if service.get("daemonset", False):
-        obj = templates.serialize_daemonset(service["name"], cont_spec)
+        obj = templates.serialize_daemonset(service["name"], cont_spec,
+                                            affinity)
     else:
-        obj = templates.serialize_deployment(service["name"], cont_spec)
+        obj = templates.serialize_deployment(service["name"], cont_spec,
+                                             affinity)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service, config)
+    _create_service(service, config["configs"])
 
 
 def _parse_workflows(service):
@@ -264,6 +271,44 @@ def deploy_component(component, config):
             parse_role(service_dir, role_obj, config)
 
 
+def _make_topology(nodes, roles):
+    failed = False
+    # TODO(sreshetniak): move it to validation
+    if not nodes:
+        LOG.warning("nodes section is not specified in configs")
+        failed = True
+    if not roles:
+        LOG.warning("roles section is not specified in configs")
+        failed = True
+    if failed:
+        raise RuntimeError("Failed to create topology for services")
+
+    # TODO(sreshetniak): add validation
+    k8s_nodes = kubernetes.list_k8s_nodes()
+
+    def find_match(glob):
+        matcher = re.compile(glob)
+        nodes = []
+        for node in k8s_nodes:
+            match = matcher.match(node)
+            if match:
+                nodes.append(match.group(0))
+        return nodes
+
+    roles_to_node = {}
+    for node in nodes.keys():
+        matched_nodes = find_match(node)
+        for role in nodes[node]["roles"]:
+            roles_to_node.setdefault(role, [])
+            roles_to_node[role].extend(matched_nodes)
+    service_to_node = {}
+    for role in roles.keys():
+        for svc in roles[role]:
+            service_to_node.setdefault(svc, [])
+            service_to_node[svc].extend(roles_to_node[role])
+    return service_to_node
+
+
 def _create_namespace(namespace):
     if CONF.action.dry_run:
         return
@@ -284,12 +329,15 @@ def _create_namespace(namespace):
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
-    namespace = CONF.kubernetes.namespace
 
+    config = utils.get_global_parameters("configs", "nodes", "roles")
+    config["topology"] = _make_topology(config.get("nodes"),
+                                        config.get("roles"))
+
+    namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
 
-    config = utils.get_global_parameters('configs')
-    _create_globals_configmap(config)
+    _create_globals_configmap(config["configs"])
     _create_start_script_configmap()
 
     for component in components:
