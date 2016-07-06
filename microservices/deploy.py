@@ -309,26 +309,11 @@ def _get_resource_path(path):
         microservices.version_info.package, path)
 
 
-def _deploy_etcd():
-    LOG.info("Creating etcd cluster")
-
-    dp_path = _get_resource_path("resources/etcd-deployment.yaml")
-    with open(dp_path) as f:
-        obj = yaml.load(f)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
-
-    svc_path = _get_resource_path("resources/etcd-service.yaml")
-    with open(svc_path) as f:
-        obj = yaml.load(f)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
-
-
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
 
     _create_namespace()
-    _deploy_etcd()
 
     config = _get_config()
     _push_config(config)
