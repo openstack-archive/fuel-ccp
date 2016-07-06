@@ -53,7 +53,6 @@ class TestFetch(base.TestCase):
             'ms-murano',
             'ms-neutron',
             'ms-nova',
-            'ms-openvswitch',
             'ms-rabbitmq',
             'ms-sahara',
             'ms-swift',
