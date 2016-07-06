@@ -20,7 +20,11 @@ def fetch_repository(repository_name):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
     git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-    git_url = git_url % CONF.auth.gerrit_username
+    git_url = git_url % (CONF.repositories.protocol,
+                         CONF.auth.gerrit_username,
+                         CONF.repositories.hostname,
+                         CONF.repositories.port,
+                         CONF.repositories.project)
     git.Repo.clone_from(git_url, dest_dir)
     LOG.info('Cloned %s repo', repository_name)
 
