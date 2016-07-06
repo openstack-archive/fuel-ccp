@@ -23,7 +23,7 @@ def get_resource_path(path):
     return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
 
-def get_global_parameters(config_group):
+def get_global_parameters(*config_groups):
     cfg = {}
     components = list(CONF.repositories.names)
     paths = []
@@ -44,7 +44,10 @@ def get_global_parameters(config_group):
         if os.path.isfile(path):
             LOG.debug("Adding parameters from \"%s\"", path)
             with open(path, "r") as f:
-                cfg.update(yaml.load(f).get(config_group, {}))
+                data = yaml.load(f)
+                for group in config_groups:
+                    cfg.setdefault(group, {})
+                    cfg[group].update(data.get(group, {}))
         else:
             LOG.warning("\"%s\" not found, skipping", path)
 
