@@ -1,4 +1,4 @@
-import copy
+import json
 
 from oslo_config import cfg
 
@@ -132,8 +132,6 @@ def serialize_daemon_pod_spec(service, globals_name):
 
     if service.get("host-net"):
         cont_spec["hostNetwork"] = True
-    if service.get("node-selector"):
-        cont_spec["nodeSelector"] = copy.deepcopy(service["node-selector"])
     return cont_spec
 
 
@@ -238,8 +236,8 @@ def serialize_job(name, spec):
     }
 
 
-def serialize_deployment(name, spec):
-    return {
+def serialize_deployment(name, spec, affinity=None):
+    spec = {
         "apiVersion": "extensions/v1beta1",
         "kind": "Deployment",
         "metadata": {
@@ -258,10 +256,13 @@ def serialize_deployment(name, spec):
             }
         }
     }
+    if affinity:
+        spec["spec"]["template"]["metadata"]["annotations"] = affinity
+    return spec
 
 
-def serialize_daemonset(name, spec):
-    return {
+def serialize_daemonset(name, spec, affinity=None):
+    spec = {
         "apiVersion": "extensions/v1beta1",
         "kind": "DaemonSet",
         "metadata": {
@@ -279,6 +280,30 @@ def serialize_daemonset(name, spec):
             }
         }
     }
+    if affinity:
+        spec["spec"]["template"]["metadata"]["annotations"] = affinity
+    return spec
+
+
+def serialize_affinity(service, topology):
+    if not topology:
+        return
+    if service["name"] not in topology:
+        return
+    policy = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [{
+                    "matchExpressions": [{
+                        "key": "kubernetes.io/hostname",
+                        "operator": "In",
+                        "values": topology[service["name"]]
+                    }]
+                }]
+            }
+        }
+    }
+    return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(policy)}
 
 
 def serialize_service(name, ports):

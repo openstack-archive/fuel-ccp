@@ -55,14 +55,17 @@ def parse_role(service_dir, role, config):
         _create_post_jobs(service, cont)
 
     cont_spec = templates.serialize_daemon_pod_spec(service, DEFAULT_CONFIGMAP)
+    affinity = templates.serialize_affinity(service, config.get("topology"))
 
     if service.get("daemonset", False):
-        obj = templates.serialize_daemonset(service["name"], cont_spec)
+        obj = templates.serialize_daemonset(service["name"], cont_spec,
+                                            affinity)
     else:
-        obj = templates.serialize_deployment(service["name"], cont_spec)
+        obj = templates.serialize_deployment(service["name"], cont_spec,
+                                             affinity)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service, config)
+    _create_service(service, config["configs"])
 
 
 def _parse_workflows(service):
@@ -260,15 +263,35 @@ def _get_config():
     if CONF.deploy_config:
         paths.append(CONF.deploy_config)
 
+    cfg_sections = ["configs", "nodes", "roles"]
+    for section in cfg_sections:
+        cfg.setdefault(section, {})
     for path in paths:
         if os.path.isfile(path):
             LOG.debug("Adding parameters from \"%s\"", path)
             with open(path, "r") as f:
-                cfg.update(yaml.load(f).get("configs", {}))
+                file_data = yaml.load(f)
+                for section in cfg_sections:
+                    cfg[section].update(file_data.get(section, {}))
         else:
             LOG.warning("\"%s\" not found, skipping", path)
 
     return cfg
+
+
+def _make_topology(nodes, roles):
+    # TODO(sreshetniak): add validation
+    roles_to_node = {}
+    for node in nodes.keys():
+        for role in nodes[node]["roles"]:
+            roles_to_node.setdefault(role, [])
+            roles_to_node[role].append(node)
+    service_to_node = {}
+    for role in roles.keys():
+        for svc in roles[role]:
+            service_to_node.setdefault(svc, [])
+            service_to_node[svc].extend(roles_to_node[role])
+    return service_to_node
 
 
 def _push_config(cfg):
@@ -333,7 +356,8 @@ def deploy_components(components=None):
     _deploy_etcd()
 
     config = _get_config()
-    _push_config(config)
+    _push_config(config["configs"])
+    config["topology"] = _make_topology(config["nodes"], config["roles"])
 
     for component in components:
         deploy_component(component, config)
