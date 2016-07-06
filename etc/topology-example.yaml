@@ -1,0 +1,18 @@
+nodes:
+  node1:
+    roles:
+      - master
+  node[2-3]:
+    roles:
+      - worker
+roles:
+  master:
+    - mariadb
+    - keystone
+    - glance-api
+    - glance-registry
+    - horizon
+    - memcached
+    - rabbitmq
+  worker:
+    - nova-compute
