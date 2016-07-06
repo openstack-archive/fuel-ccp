@@ -27,44 +27,21 @@ class TestFetch(base.TestCase):
 
     def test_fetch_default_repositories(self, m_clone):
         # All repos except ms-openstack-base
-        components = [
-            'ms-debian-base',
-            'ms-aodh',
-            'ms-ceilometer',
-            'ms-ceph',
-            'ms-cinder',
-            'ms-designate',
-            'ms-elasticsearch',
-            'ms-glance',
-            'ms-grafana',
-            'ms-heat',
-            'ms-horizon',
-            'ms-ironic',
-            'ms-influxdb',
-            'ms-keystone',
-            'ms-kibana',
-            'ms-lma',
-            'ms-magnum',
-            'ms-manila',
-            'ms-mariadb',
-            'ms-memcached',
-            'ms-mistral',
-            'ms-mongodb',
-            'ms-murano',
-            'ms-neutron',
-            'ms-nova',
-            'ms-openvswitch',
-            'ms-rabbitmq',
-            'ms-sahara',
-            'ms-swift',
-            'ms-tempest',
-            'ms-toolbox',
-            'ms-trove',
-            'ms-zaqar'
-        ]
+        components = ['fuel-ccp-debian-base',
+                      'fuel-ccp-entrypoint',
+                      'fuel-ccp-etcd',
+                      'fuel-ccp-glance',
+                      'fuel-ccp-horizon',
+                      'fuel-ccp-keystone',
+                      'fuel-ccp-mariadb',
+                      'fuel-ccp-memcached',
+                      'fuel-ccp-neutron',
+                      'fuel-ccp-nova',
+                      'fuel-ccp-rabbitmq',
+                      'fuel-ccp-stacklight']
         username = getpass.getuser()
         expected_calls = [
-            mock.call('ssh://%s@review.fuel-infra.org:29418/nextgen/%s' % (
+            mock.call('ssh://%s@review.openstack.org:29418/openstack/%s' % (
                 username, component), os.path.join(self.tmp_path, component))
             for component in components
         ]
