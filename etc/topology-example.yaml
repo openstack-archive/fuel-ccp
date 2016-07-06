@@ -1,0 +1,32 @@
+nodes:
+  node1:
+    roles:
+      - master
+  node[2-3]:
+    roles:
+      - worker
+roles:
+  controller:
+    - elasticsearch
+    - glance-api
+    - glance-registry
+    - horizon
+    - keystone
+    - kibana
+    - mariadb
+    - memcached
+    - neutron-dhcp-agent
+    - neutron-l3-agent
+    - neutron-metadata-agent
+    - neutron-openvswitch-agent
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+    - rabbitmq
+  compute:
+    - neutron-openvswitch-agent
+    - nova-compute
+    - nova-libvirt
