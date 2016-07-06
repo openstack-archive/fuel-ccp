@@ -73,6 +73,15 @@ def get_v1_api(client):
     return apiv_api.ApivApi(client)
 
 
+def list_k8s_nodes():
+    api = get_v1_api(get_client())
+    resp = api.list_namespaced_node()
+    nodes = []
+    for node in resp.items:
+        nodes.append(node.metadata.name)
+    return nodes
+
+
 def handle_exists(fct, *args, **kwargs):
     try:
         fct(*args, **kwargs)
