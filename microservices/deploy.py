@@ -272,8 +272,10 @@ def _get_config():
 
 
 def _push_config(cfg):
-    start_scr_path = os.path.join(CONF.repositories.path, "ms-ext-config",
-                                  "ms_ext_config", "start_script.py")
+    start_scr_path = os.path.join(CONF.repositories.path,
+                                  "fuel-ccp-entrypoint",
+                                  "ms_ext_config",
+                                  "start_script.py")
     with open(start_scr_path, "r") as f:
         start_scr_data = f.read()
 
