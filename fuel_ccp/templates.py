@@ -1,4 +1,4 @@
-import copy
+import json
 
 from oslo_config import cfg
 
@@ -132,8 +132,6 @@ def serialize_daemon_pod_spec(service):
 
     if service.get("host-net"):
         cont_spec["hostNetwork"] = True
-    if service.get("node-selector"):
-        cont_spec["nodeSelector"] = copy.deepcopy(service["node-selector"])
     return cont_spec
 
 
@@ -239,7 +237,7 @@ def serialize_job(name, spec):
     }
 
 
-def serialize_deployment(name, spec):
+def serialize_deployment(name, spec, affinity):
     return {
         "apiVersion": "extensions/v1beta1",
         "kind": "Deployment",
@@ -250,6 +248,7 @@ def serialize_deployment(name, spec):
             "replicas": 1,
             "template": {
                 "metadata": {
+                    "annotations": affinity,
                     "labels": {
                         "mcp": "true",
                         "app": name
@@ -261,7 +260,7 @@ def serialize_deployment(name, spec):
     }
 
 
-def serialize_daemonset(name, spec):
+def serialize_daemonset(name, spec, affinity):
     return {
         "apiVersion": "extensions/v1beta1",
         "kind": "DaemonSet",
@@ -271,6 +270,7 @@ def serialize_daemonset(name, spec):
         "spec": {
             "template": {
                 "metadata": {
+                    "annotations": affinity,
                     "labels": {
                         "mcp": "true",
                         "app": name
@@ -280,6 +280,23 @@ def serialize_daemonset(name, spec):
             }
         }
     }
+
+
+def serialize_affinity(service, topology):
+    policy = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [{
+                    "matchExpressions": [{
+                        "key": "kubernetes.io/hostname",
+                        "operator": "In",
+                        "values": topology[service["name"]]
+                    }]
+                }]
+            }
+        }
+    }
+    return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(policy)}
 
 
 def serialize_service(name, ports):
