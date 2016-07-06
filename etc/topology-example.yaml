@@ -1,0 +1,44 @@
+nodes:
+  node1:
+    roles:
+      - controller
+      - lma
+      - lma-controller
+      - openvswitch
+  node[2-3]:
+    roles:
+      - compute
+      - lma
+      - openvswitch
+roles:
+  controller:
+    - etcd
+    - glance-api
+    - glance-registry
+    - horizon
+    - keystone
+    - mariadb
+    - memcached
+    - neutron-dhcp-agent
+    - neutron-l3-agent
+    - neutron-metadata-agent
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+    - rabbitmq
+  compute:
+    - nova-compute
+    - nova-libvirt
+  openvswitch:
+    - neutron-openvswitch-agent
+    - openvswitch-db
+    - openvswitch-vswitchd
+  lma-controller:
+    - elasticsearch
+    - influxdb
+    - kibana
+  lma:
+    - heka

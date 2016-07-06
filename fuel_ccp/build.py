@@ -243,7 +243,7 @@ def _get_config():
     if CONF.registry.address:
         cfg['namespace'] = '%s/%s' % (CONF.registry.address, cfg['namespace'])
 
-    cfg.update(utils.get_global_parameters('versions'))
+    cfg.update(utils.get_global_parameters('versions')["versions"])
 
     return cfg
 
