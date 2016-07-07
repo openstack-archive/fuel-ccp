@@ -1,0 +1,10 @@
+Code-Review+2: Eric Lemoine <elemoine@mirantis.com>
+Code-Review+1: Andrey Pavlov <apavlov@mirantis.com>
+Code-Review+2: Proskurin Kirill <kproskurin@mirantis.com>
+Workflow+1: Proskurin Kirill <kproskurin@mirantis.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Thu, 07 Jul 2016 16:37:29 +0000
+Reviewed-on: https://review.openstack.org/339084
+Project: openstack/fuel-ccp
+Branch: refs/heads/master
