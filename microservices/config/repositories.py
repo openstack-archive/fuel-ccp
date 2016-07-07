@@ -36,10 +36,10 @@ repositories_opts = [
     cfg.HostnameOpt('hostname',
                     default='review.openstack.org',
                     help='Git server hostname to pull repositories from'),
-    cfg.PortOpt('port', default=29418, help='Git server port'),
+    cfg.PortOpt('port', help='Git server port'),
     cfg.StrOpt('protocol',
                choices=['ssh', 'git', 'http', 'https'],
-               default='ssh',
+               default='https',
                help='Git access protocol'),
     cfg.StrOpt('project',
                default='openstack',
@@ -50,7 +50,7 @@ repositories_opts = [
 ]
 
 for repo in DEFAULT_REPOS:
-    option = cfg.StrOpt(repo, default='%s://%s@%s:%i/%s/' + repo)
+    option = cfg.StrOpt(repo, default=repo)
     repositories_opts.append(option)
 
 repositories_opt_group = cfg.OptGroup(name='repositories',
