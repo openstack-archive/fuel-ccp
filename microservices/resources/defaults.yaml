@@ -1,4 +1,4 @@
 configs:
-    etcd_urls: http://etcd-client:2379
+    etcd_urls: http://etcd:2379
     private_interface: eth0
     public_interface: eth1
