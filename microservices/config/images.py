@@ -19,7 +19,10 @@ images_opts = [
                default='MOS Microservices <mos-microservices@mirantis.com>'),
     cfg.StrOpt('branch',
                default='master',
-               help='Branch to use in OpenStack sources')
+               help='Branch to use in OpenStack sources'),
+    cfg.StrOpt('etcd-version',
+               default='v3.0.1',
+               help='Version of etcd')
 ]
 images_opt_group = cfg.OptGroup(name='images',
                                 title='Docker images')
