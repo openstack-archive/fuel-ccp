@@ -1,4 +1,3 @@
-import getpass
 import os
 
 import fixtures
@@ -39,10 +38,9 @@ class TestFetch(base.TestCase):
                       'fuel-ccp-nova',
                       'fuel-ccp-rabbitmq',
                       'fuel-ccp-stacklight']
-        username = getpass.getuser()
         expected_calls = [
-            mock.call('ssh://%s@review.openstack.org:29418/openstack/%s' % (
-                username, component), os.path.join(self.tmp_path, component))
+            mock.call('https://review.openstack.org/openstack/%s' % (
+                component), os.path.join(self.tmp_path, component))
             for component in components
         ]
         for component, expected_call in zip(components, expected_calls):
