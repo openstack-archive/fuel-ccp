@@ -1,4 +1,3 @@
-import getpass
 from oslo_config import cfg
 
 
@@ -7,7 +6,7 @@ CONF = cfg.CONF
 
 auth_opts = [
     cfg.StrOpt('gerrit-username',
-               default=getpass.getuser()),
+               help='Gerrit username'),
 ]
 auth_opt_group = cfg.OptGroup(name='auth',
                               title='Authentication data')
