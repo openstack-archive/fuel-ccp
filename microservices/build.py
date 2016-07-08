@@ -130,7 +130,7 @@ def build_dockerfile(dc, dockerfile):
             raise RuntimeError("Building '{}' was interrupted".format(
                 dockerfile['name']
             ))
-        build_data = json.loads(line)
+        build_data = json.loads(line.decode("UTF-8"))
         if 'stream' in build_data:
             LOG.info('%s: %s' % (dockerfile['name'],
                                  build_data['stream'].rstrip()))
