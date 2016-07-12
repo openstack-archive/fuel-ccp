@@ -5,12 +5,12 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import yaml
 
-import microservices
+import fuel_ccp
 
 
 CONF = cfg.CONF
-CONF.import_group('repositories', 'microservices.config.repositories')
-CONF.import_opt("deploy_config", "microservices.config.cli")
+CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 
@@ -20,8 +20,7 @@ def k8s_name(*args):
 
 
 def get_resource_path(path):
-    return pkg_resources.resource_filename(
-        microservices.version_info.package, path)
+    return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
 
 def get_global_parameters(config_group):

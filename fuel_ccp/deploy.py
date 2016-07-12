@@ -5,15 +5,15 @@ import yaml
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from microservices.common import utils
-from microservices import kubernetes
-from microservices import templates
+from fuel_ccp.common import utils
+from fuel_ccp import kubernetes
+from fuel_ccp import templates
 
 
 CONF = cfg.CONF
-CONF.import_group('repositories', 'microservices.config.repositories')
-CONF.import_opt("action", "microservices.config.cli")
-CONF.import_opt("deploy_config", "microservices.config.cli")
+CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+CONF.import_opt("action", "fuel_ccp.config.cli")
+CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 

@@ -2,8 +2,8 @@ import mock
 from oslo_config import cfg
 import yaml
 
-from microservices import deploy
-from microservices.tests import base
+from fuel_ccp import deploy
+from fuel_ccp.tests import base
 
 CONF = cfg.CONF
 
@@ -96,7 +96,7 @@ class TestDeployCreateService(base.TestCase):
     def setUp(self):
         super(TestDeployCreateService, self).setUp()
         self._create_obj = mock.patch(
-            "microservices.kubernetes.create_object_from_definition")
+            "fuel_ccp.kubernetes.create_object_from_definition")
         self.create_obj = self._create_obj.start()
 
     def test_create_service_without_ports(self):

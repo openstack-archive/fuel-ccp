@@ -1,8 +1,8 @@
 import os
 import sys
 
-from microservices.common import jinja_utils
-from microservices.tests import base
+from fuel_ccp.common import jinja_utils
+from fuel_ccp.tests import base
 
 
 class TestJinjaUtils(base.TestCase):
