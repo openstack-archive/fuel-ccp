@@ -7,7 +7,7 @@ from oslo_log import log as logging
 
 
 CONF = cfg.CONF
-CONF.import_group('repositories', 'microservices.config.repositories')
+CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 
 LOG = logging.getLogger(__name__)
 

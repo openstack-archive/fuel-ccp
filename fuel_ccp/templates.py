@@ -2,12 +2,12 @@ import copy
 
 from oslo_config import cfg
 
-from microservices import utils
+from fuel_ccp import utils
 
 
 CONF = cfg.CONF
-CONF.import_group('images', 'microservices.config.images')
-CONF.import_group('registry', 'microservices.config.registry')
+CONF.import_group('images', 'fuel_ccp.config.images')
+CONF.import_group('registry', 'fuel_ccp.config.registry')
 
 GLOBAL_CONFIG = "globals"
 SCRIPT_CONFIG = "start-script"

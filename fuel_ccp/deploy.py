@@ -6,15 +6,15 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import pkg_resources
 
-import microservices
-from microservices import kubernetes
-from microservices import templates
+import fuel_ccp
+from fuel_ccp import kubernetes
+from fuel_ccp import templates
 
 
 CONF = cfg.CONF
-CONF.import_group('repositories', 'microservices.config.repositories')
-CONF.import_opt("action", "microservices.config.cli")
-CONF.import_opt("deploy_config", "microservices.config.cli")
+CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+CONF.import_opt("action", "fuel_ccp.config.cli")
+CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 
@@ -312,8 +312,7 @@ def _create_namespace():
 
 
 def _get_resource_path(path):
-    return pkg_resources.resource_filename(
-        microservices.version_info.package, path)
+    return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
 
 def _deploy_etcd():
