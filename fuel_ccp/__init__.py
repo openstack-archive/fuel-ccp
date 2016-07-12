@@ -12,17 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-"""
-test_microservices
-----------------------------------
-
-Tests for `microservices` module.
-"""
-
-from microservices.tests import base
+import pbr.version
 
 
-class TestMicroservices(base.TestCase):
-
-    def test_something(self):
-        pass
+version_info = pbr.version.VersionInfo("fuel_ccp")
+__version__ = version_info.version_string()

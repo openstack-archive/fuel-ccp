@@ -4,15 +4,15 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from microservices import build
-from microservices import deploy
-from microservices import fetch
+from fuel_ccp import build
+from fuel_ccp import deploy
+from fuel_ccp import fetch
 
 
 CONF = cfg.CONF
-CONF.import_group('registry', 'microservices.config.registry')
-CONF.import_group('repositories', 'microservices.config.repositories')
-CONF.import_opt('action', 'microservices.config.cli')
+CONF.import_group('registry', 'fuel_ccp.config.registry')
+CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+CONF.import_opt('action', 'fuel_ccp.config.cli')
 
 
 def do_build():
@@ -42,7 +42,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     logging.register_options(CONF)
     CONF(sys.argv[1:])
-    logging.setup(CONF, 'microservices')
+    logging.setup(CONF, 'fuel-ccp')
 
     func = globals()['do_%s' % CONF.action.name]
     func()

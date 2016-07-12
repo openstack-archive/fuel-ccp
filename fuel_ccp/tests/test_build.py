@@ -4,8 +4,8 @@ import io
 import mock
 from oslo_config import fixture as conf_fixture
 
-from microservices import build
-from microservices.tests import base
+from fuel_ccp import build
+from fuel_ccp.tests import base
 
 
 BASE_DOCKERFILE = u"""FROM debian:jessie
@@ -66,7 +66,7 @@ class TestBuild(base.TestCase):
             io.StringIO(COMPONENT_DOCKERFILE.format(''))
         ]
         dockerfiles = self.__create_dockerfile_objects()
-        with mock.patch('microservices.build.open', m_open, create=True):
+        with mock.patch('fuel_ccp.build.open', m_open, create=True):
             build.find_dependencies(dockerfiles)
 
         self.assertListEqual([dockerfiles['ms-mysql']],
@@ -81,7 +81,7 @@ class TestBuild(base.TestCase):
             io.StringIO(COMPONENT_DOCKERFILE.format('example.com:8909/'))
         ]
         dockerfiles = self.__create_dockerfile_objects()
-        with mock.patch('microservices.build.open', m_open, create=True):
+        with mock.patch('fuel_ccp.build.open', m_open, create=True):
             build.find_dependencies(dockerfiles)
 
         self.assertListEqual([dockerfiles['ms-mysql']],
@@ -90,8 +90,8 @@ class TestBuild(base.TestCase):
                              dockerfiles['ms-mysql']['parent'])
 
     @mock.patch("docker.Client")
-    @mock.patch("microservices.build.build_dockerfile")
-    @mock.patch("microservices.build.submit_dockerfile_processing")
+    @mock.patch("fuel_ccp.build.build_dockerfile")
+    @mock.patch("fuel_ccp.build.submit_dockerfile_processing")
     def test_process_dockerfile_middle(self, submit_dockerfile_processing_mock,
                                        build_dockerfile_mock, dc_mock):
         dockerfiles = {
@@ -133,8 +133,8 @@ class TestBuild(base.TestCase):
             dockerfiles["leaf"], mock.ANY, mock.ANY, mock.ANY)
 
     @mock.patch("docker.Client")
-    @mock.patch("microservices.build.build_dockerfile")
-    @mock.patch("microservices.build.submit_dockerfile_processing")
+    @mock.patch("fuel_ccp.build.build_dockerfile")
+    @mock.patch("fuel_ccp.build.submit_dockerfile_processing")
     def test_process_dockerfile_middle_keep_consistency_off(
             self, submit_dockerfile_processing_mock,
             build_dockerfile_mock, dc_mock):
