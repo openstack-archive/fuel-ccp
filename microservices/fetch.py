@@ -1,5 +1,4 @@
 import os
-import sys
 
 from concurrent import futures
 import git
@@ -11,6 +10,8 @@ CONF = cfg.CONF
 CONF.import_group('repositories', 'microservices.config.repositories')
 
 LOG = logging.getLogger(__name__)
+
+FETCH_TIMEOUT = 2 ** 16  # in seconds
 
 
 def fetch_repository(repository_name):
@@ -41,7 +42,10 @@ def fetch_repositories(repository_names=None):
 
             for future in future_list:
                 try:
-                    future.result(timeout=sys.maxint)
+                    # we need to use timeout because in this case python
+                    # thread wakes up time to time to check timeout and don't
+                    # block signal processing
+                    future.result(timeout=FETCH_TIMEOUT)
                 except Exception as ex:
                     LOG.error("Failed to fetch: %s" % ex)
                     errors += 1

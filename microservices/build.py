@@ -14,6 +14,8 @@ from oslo_log import log as logging
 from microservices.common import jinja_utils
 
 
+BUILD_TIMEOUT = 2 ** 16  # in seconds
+
 CONF = cfg.CONF
 CONF.import_group('builder', 'microservices.config.builder')
 CONF.import_group('images', 'microservices.config.images')
@@ -217,7 +219,10 @@ def wait_futures(future_list, skip_errors=False):
             future_list.pop(0)
             continue
         try:
-            future.result(timeout=sys.maxint)
+            # we need to use timeout because in this case python
+            # thread wakes up time to time to check timeout and don't
+            # block signal processing
+            future.result(timeout=BUILD_TIMEOUT)
         except Exception as ex:
             if skip_errors:
                 LOG.error(str(ex))
