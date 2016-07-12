@@ -1,7 +1,7 @@
-========
+=====
 Usage
-========
+=====
 
-To use microservices in a project::
+To use fuel-ccp in a project::
 
-    import microservices
+    import fuel_ccp

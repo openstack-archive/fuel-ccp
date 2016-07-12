@@ -4,8 +4,8 @@ import fixtures
 import mock
 from oslo_config import cfg
 
-from microservices import fetch
-from microservices.tests import base
+from fuel_ccp import fetch
+from fuel_ccp.tests import base
 
 
 CONF = cfg.CONF

@@ -10,8 +10,8 @@ from oslo_log import log as logging
 
 
 CONF = cfg.CONF
-CONF.import_opt("action", "microservices.config.cli")
-CONF.import_group('kubernetes', 'microservices.config.kubernetes')
+CONF.import_opt("action", "fuel_ccp.config.cli")
+CONF.import_group('kubernetes', 'fuel_ccp.config.kubernetes')
 
 LOG = logging.getLogger(__name__)
 

@@ -11,16 +11,16 @@ import docker
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from microservices.common import jinja_utils
+from fuel_ccp.common import jinja_utils
 
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
 
 CONF = cfg.CONF
-CONF.import_group('builder', 'microservices.config.builder')
-CONF.import_group('images', 'microservices.config.images')
-CONF.import_group('repositories', 'microservices.config.repositories')
-CONF.import_group('registry', 'microservices.config.registry')
+CONF.import_group('builder', 'fuel_ccp.config.builder')
+CONF.import_group('images', 'fuel_ccp.config.images')
+CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+CONF.import_group('registry', 'fuel_ccp.config.registry')
 
 LOG = logging.getLogger(__name__)
 

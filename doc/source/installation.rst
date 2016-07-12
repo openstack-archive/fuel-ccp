@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ pip install microservices
+    $ pip install fuel-ccp
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv microservices
-    $ pip install microservices
+    $ mkvirtualenv fuel-ccp
+    $ pip install fuel-ccp
