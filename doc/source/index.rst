@@ -15,6 +15,7 @@ Contents:
    installation
    usage
    contributing
+   dsl
 
 Indices and tables
 ==================
