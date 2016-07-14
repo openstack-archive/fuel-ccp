@@ -18,8 +18,6 @@ CONF.import_opt("deploy_config", "microservices.config.cli")
 
 LOG = logging.getLogger(__name__)
 
-DEFAULT_CONFIGMAP = "openstack-default-files"
-
 YAML_FILE_RE = re.compile(r'\.yaml$')
 
 
@@ -54,7 +52,7 @@ def parse_role(service_dir, role, config):
         _create_pre_jobs(service, cont)
         _create_post_jobs(service, cont)
 
-    cont_spec = templates.serialize_daemon_pod_spec(service, DEFAULT_CONFIGMAP)
+    cont_spec = templates.serialize_daemon_pod_spec(service)
 
     if service.get("daemonset", False):
         obj = templates.serialize_daemonset(service["name"], cont_spec)
@@ -97,8 +95,8 @@ def _fill_cmd(workflow, cmd):
 
 
 def _create_workflow(workflow, name):
-    template = templates.serialize_configmap(
-        "%s-workflow" % name, workflow)
+    configmap_name = "%s-%s" % (name, templates.ROLE_CONFIG)
+    template = templates.serialize_configmap(configmap_name, workflow)
     kubernetes.handle_exists(
         kubernetes.create_object_from_definition, template)
 
@@ -168,8 +166,7 @@ def _create_post_jobs(service, container):
 
 def _create_job(service, container, job):
     cont_spec = templates.serialize_job_container_spec(container, job)
-    pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec,
-                                                DEFAULT_CONFIGMAP)
+    pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
     job_spec = templates.serialize_job(job["name"], pod_spec)
     kubernetes.create_object_from_definition(job_spec)
 
@@ -204,8 +201,31 @@ def _push_files_to_workflow(workflow, files):
     } for filename, f in files.items()]
 
 
+def _create_globals_configmap(config):
+    data = {
+        templates.GLOBAL_CONFIG: yaml.dump(config)
+    }
+    cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
+    kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
+
+
+def _create_start_script_configmap():
+    start_scr_path = os.path.join(CONF.repositories.path,
+                                  "fuel-ccp-entrypoint",
+                                  "ms_ext_config",
+                                  "start_script.py")
+    with open(start_scr_path) as f:
+        start_scr_data = f.read()
+
+    data = {
+        templates.SCRIPT_CONFIG: start_scr_data
+    }
+    cm = templates.serialize_configmap(templates.SCRIPT_CONFIG, data)
+    kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
+
+
 def _create_files_configmap(service_dir, service_name, configs):
-    configmap_name = "%s-configs" % service_name
+    configmap_name = "%s-%s" % (service_name, templates.FILES_CONFIG)
     data = {}
     if configs:
         for filename, f in configs.items():
@@ -219,10 +239,12 @@ def _create_files_configmap(service_dir, service_name, configs):
 
 
 def _create_meta_configmap(service):
-    configmap_name = "%s-meta" % service["name"]
-    data = {}
-    data['meta'] = yaml.dump({"service-name": service["name"],
-                              "host-net": service.get("host-net", False)})
+    configmap_name = "%s-%s" % (service["name"], templates.META_CONFIG)
+    data = {
+        templates.META_CONFIG: yaml.dump(
+            {"service-name": service["name"],
+             "host-net": service.get("host-net", False)})
+    }
     template = templates.serialize_configmap(configmap_name, data)
     kubernetes.handle_exists(
         kubernetes.create_object_from_definition, template)
@@ -271,23 +293,6 @@ def _get_config():
     return cfg
 
 
-def _push_config(cfg):
-    start_scr_path = os.path.join(CONF.repositories.path,
-                                  "fuel-ccp-entrypoint",
-                                  "ms_ext_config",
-                                  "start_script.py")
-    with open(start_scr_path, "r") as f:
-        start_scr_data = f.read()
-
-    cm_data = {
-        "configs": yaml.dump(cfg),
-        "start-script": start_scr_data
-    }
-
-    cm = templates.serialize_configmap(DEFAULT_CONFIGMAP, cm_data)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
-
-
 def _create_namespace():
     if CONF.action.dry_run:
         return
@@ -333,7 +338,8 @@ def deploy_components(components=None):
     _deploy_etcd()
 
     config = _get_config()
-    _push_config(config)
+    _create_globals_configmap(config)
+    _create_start_script_configmap()
 
     for component in components:
         deploy_component(component, config)

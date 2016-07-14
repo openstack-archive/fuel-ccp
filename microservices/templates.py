@@ -9,11 +9,11 @@ CONF = cfg.CONF
 CONF.import_group('images', 'microservices.config.images')
 CONF.import_group('registry', 'microservices.config.registry')
 
-FILES_VOLUME = "files-volume"
-GLOBAL_VOLUME = "global-volume"
-META_VOLUME = "meta-volume"
-ROLE_VOLUME = "role-volume"
-SCRIPT_VOLUME = "script-volume"
+GLOBAL_CONFIG = "globals"
+SCRIPT_CONFIG = "start-script"
+FILES_CONFIG = "files"
+META_CONFIG = "meta"
+ROLE_CONFIG = "role"
 
 
 def _get_image_name(image_name):
@@ -43,24 +43,24 @@ def serialize_configmap(name, data):
 def serialize_volume_mounts(container):
     spec = [
         {
-            "name": GLOBAL_VOLUME,
-            "mountPath": "/etc/mcp/globals"
+            "name": GLOBAL_CONFIG,
+            "mountPath": "/etc/mcp/%s" % GLOBAL_CONFIG
         },
         {
-            "name": ROLE_VOLUME,
-            "mountPath": "/etc/mcp/role"
+            "name": ROLE_CONFIG,
+            "mountPath": "/etc/mcp/%s" % ROLE_CONFIG
         },
         {
-            "name": META_VOLUME,
-            "mountPath": "/etc/mcp/meta"
+            "name": META_CONFIG,
+            "mountPath": "/etc/mcp/%s" % META_CONFIG
         },
         {
-            "name": SCRIPT_VOLUME,
+            "name": SCRIPT_CONFIG,
             "mountPath": "/opt/mcp_start_script/bin"
         },
         {
-            "name": FILES_VOLUME,
-            "mountPath": "/etc/mcp/files"
+            "name": FILES_CONFIG,
+            "mountPath": "/etc/mcp/%s" % FILES_CONFIG
         }
     ]
     for v in container.get("volumes", ()):
@@ -106,14 +106,14 @@ def serialize_job_container_spec(container, job):
     }
 
 
-def serialize_job_pod_spec(service, job, cont_spec, globals_name):
+def serialize_job_pod_spec(service, job, cont_spec):
     return {
         "metadata": {
             "name": job["name"]
         },
         "spec": {
             "containers": [cont_spec],
-            "volumes": serialize_volumes(service, globals_name),
+            "volumes": serialize_volumes(service),
             "restartPolicy": "OnFailure"
         }
     }
@@ -123,10 +123,10 @@ def serialize_daemon_containers(service):
     return [serialize_daemon_container_spec(c) for c in service["containers"]]
 
 
-def serialize_daemon_pod_spec(service, globals_name):
+def serialize_daemon_pod_spec(service):
     cont_spec = {
         "containers": serialize_daemon_containers(service),
-        "volumes": serialize_volumes(service, globals_name),
+        "volumes": serialize_volumes(service),
         "restartPolicy": "Always"
     }
 
@@ -137,7 +137,7 @@ def serialize_daemon_pod_spec(service, globals_name):
     return cont_spec
 
 
-def serialize_volumes(service, globals_name):
+def serialize_volumes(service):
     workflow_items = []
     for cont in service["containers"]:
         workflow_items.append(
@@ -160,49 +160,50 @@ def serialize_volumes(service, globals_name):
     file_items.append({"key": "placeholder", "path": ".placeholder"})
     vol_spec = [
         {
-            "name": GLOBAL_VOLUME,
+            "name": GLOBAL_CONFIG,
             "configMap": {
-                "name": globals_name,
-                "items": [{"key": "configs",
+                "name": GLOBAL_CONFIG,
+                "items": [{"key": GLOBAL_CONFIG,
                            "path": "globals.yaml"}]
             }
         },
         {
-            "name": ROLE_VOLUME,
+            "name": SCRIPT_CONFIG,
             "configMap": {
-                "name": "%s-workflow" % service["name"],
-                "items": workflow_items
-            }
-        },
-        {
-            "name": META_VOLUME,
-            "configMap": {
-                "name": "%s-meta" % service["name"],
-                "items": [{"key": "meta",
-                           "path": "meta.yaml"}]
-            }
-        },
-        {
-            "name": SCRIPT_VOLUME,
-            "configMap": {
-                "name": globals_name,
-                "items": [{"key": "start-script",
+                "name": SCRIPT_CONFIG,
+                "items": [{"key": SCRIPT_CONFIG,
                            "path": "start_script.py"}]
             }
         },
         {
-            "name": FILES_VOLUME,
+            "name": ROLE_CONFIG,
             "configMap": {
-                "name": "%s-configs" % service["name"],
+                "name": "%s-%s" % (service["name"], ROLE_CONFIG),
+                "items": workflow_items
+            }
+        },
+        {
+            "name": META_CONFIG,
+            "configMap": {
+                "name": "%s-%s" % (service["name"], META_CONFIG),
+                "items": [{"key": META_CONFIG,
+                           "path": "meta.yaml"}]
+            }
+        },
+        {
+            "name": FILES_CONFIG,
+            "configMap": {
+                "name": "%s-%s" % (service["name"], FILES_CONFIG),
                 "items": file_items
             }
         }
     ]
-    volume_names = [GLOBAL_VOLUME, META_VOLUME, ROLE_VOLUME, SCRIPT_VOLUME,
-                    FILES_VOLUME]
+    volume_names = [GLOBAL_CONFIG, META_CONFIG, ROLE_CONFIG, SCRIPT_CONFIG,
+                    FILES_CONFIG]
     for cont in service["containers"]:
         for v in cont.get("volumes", ()):
             if v["name"] in volume_names:
+                # TODO(apavlov): move to validation
                 continue
             if v["type"] == "host":
                 vol_spec.append({
