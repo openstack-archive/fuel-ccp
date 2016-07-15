@@ -282,26 +282,11 @@ def _create_namespace():
             body={"metadata": {"name": namespace}})
 
 
-def _deploy_etcd():
-    LOG.info("Creating etcd cluster")
-
-    dp_path = utils.get_resource_path("resources/etcd-deployment.yaml")
-    with open(dp_path) as f:
-        obj = yaml.load(f)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
-
-    svc_path = utils.get_resource_path("resources/etcd-service.yaml")
-    with open(svc_path) as f:
-        obj = yaml.load(f)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
-
-
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
 
     _create_namespace()
-    _deploy_etcd()
 
     config = utils.get_global_parameters('configs')
     _create_globals_configmap(config)
