@@ -2,7 +2,7 @@ import copy
 
 from oslo_config import cfg
 
-from microservices import utils
+from microservices.common import utils
 
 
 CONF = cfg.CONF
