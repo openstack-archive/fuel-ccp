@@ -4,9 +4,8 @@ import yaml
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import pkg_resources
 
-import microservices
+from microservices.common import utils
 from microservices import kubernetes
 from microservices import templates
 
@@ -271,7 +270,7 @@ def _get_config():
     paths = []
     # Order does matter. At first we add global defaults.
     for conf_path in ("resources/defaults.yaml", "resources/globals.yaml"):
-        paths.append(_get_resource_path(conf_path))
+        paths.append(utils.get_resource_path(conf_path))
 
     # After we add component defaults.
     for component in components:
@@ -311,20 +310,15 @@ def _create_namespace():
             body={"metadata": {"name": namespace}})
 
 
-def _get_resource_path(path):
-    return pkg_resources.resource_filename(
-        microservices.version_info.package, path)
-
-
 def _deploy_etcd():
     LOG.info("Creating etcd cluster")
 
-    dp_path = _get_resource_path("resources/etcd-deployment.yaml")
+    dp_path = utils.get_resource_path("resources/etcd-deployment.yaml")
     with open(dp_path) as f:
         obj = yaml.load(f)
     kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
 
-    svc_path = _get_resource_path("resources/etcd-service.yaml")
+    svc_path = utils.get_resource_path("resources/etcd-service.yaml")
     with open(svc_path) as f:
         obj = yaml.load(f)
     kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
