@@ -9,6 +9,8 @@ def add_parsers(subparsers):
     build_action.add_argument('-c', '--components',
                               nargs='+',
                               help='MCP component to build')
+    build_action.add_argument('--versions-config',
+                              help='Packages versions configuration overrides')
 
     deploy_action = subparsers.add_parser('deploy')
     deploy_action.add_argument('-c', '--components',

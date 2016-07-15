@@ -10,8 +10,10 @@ import tempfile
 import docker
 from oslo_config import cfg
 from oslo_log import log as logging
+import yaml
 
 from microservices.common import jinja_utils
+from microservices.common import utils
 
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
@@ -27,12 +29,8 @@ LOG = logging.getLogger(__name__)
 _SHUTDOWN = False
 
 
-def create_rendered_dockerfile(path, name, tmp_path):
-    context = dict(CONF.images.items())
-    if CONF.registry.address:
-        context['namespace'] = '%s/%s' % (CONF.registry.address,
-                                          context['namespace'])
-    content = jinja_utils.jinja_render(path, context)
+def create_rendered_dockerfile(path, name, tmp_path, config):
+    content = jinja_utils.jinja_render(path, config)
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
     os.makedirs(dest_dir)
@@ -52,7 +50,7 @@ def create_rendered_dockerfile(path, name, tmp_path):
     return dockerfilename
 
 
-def find_dockerfiles(repository_name, tmp_dir, match=True):
+def find_dockerfiles(repository_name, tmp_dir, config, match=True):
     dockerfiles = {}
     repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
@@ -71,7 +69,7 @@ def find_dockerfiles(repository_name, tmp_dir, match=True):
             continue
         name = os.path.basename(os.path.dirname(path))
         if is_jinja2:
-            path = create_rendered_dockerfile(path, name, tmp_dir)
+            path = create_rendered_dockerfile(path, name, tmp_dir, config)
         dockerfiles[name] = {
             'name': name,
             'full_name': '%s/%s' % (namespace, name),
@@ -230,15 +228,43 @@ def wait_futures(future_list, skip_errors=False):
                 raise
 
 
-def build_components(components=None):
+def _get_config(versions_config=None):
+    cfg = dict(CONF.images.items())
+    if CONF.registry.address:
+        cfg['namespace'] = '%s/%s' % (CONF.registry.address, cfg['namespace'])
+
+    components = list(CONF.repositories.names)
+    paths = [utils.get_resource_path("resources/default-versions.yaml")]
+
+    for component in components:
+        paths.append(os.path.join(CONF.repositories.path, component,
+                                  "docker/default-versions.yaml"))
+
+    if versions_config:
+        paths.append(versions_config)
+
+    for path in paths:
+        if os.path.isfile(path):
+            LOG.debug("Adding versions from \"%s\"", path)
+            with open(path) as f:
+                cfg.update(yaml.load(f))
+        else:
+            LOG.warning("\"%s\" not found, skipping", path)
+
+    return cfg
+
+
+def build_components(components=None, versions_config=None):
     tmp_dir = tempfile.mkdtemp()
 
+    config = _get_config(versions_config)
     try:
         dockerfiles = {}
         match = not bool(components)
         for repository_name in CONF.repositories.names:
             dockerfiles.update(
-                find_dockerfiles(repository_name, tmp_dir, match=match))
+                find_dockerfiles(
+                    repository_name, tmp_dir, config, match=match))
 
         find_dependencies(dockerfiles)
 

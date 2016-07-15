@@ -20,7 +20,8 @@ def do_build():
         raise RuntimeError('No registry specified, cannot push')
     if CONF.repositories.clone:
         do_fetch()
-    build.build_components(components=CONF.action.components)
+    build.build_components(components=CONF.action.components,
+                           versions_config=CONF.action.versions_config)
 
 
 def do_deploy():
