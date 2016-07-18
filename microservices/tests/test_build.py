@@ -5,6 +5,7 @@ import mock
 from oslo_config import fixture as conf_fixture
 
 from microservices import build
+from microservices import exceptions
 from microservices.tests import base
 
 
@@ -189,3 +190,39 @@ class TestBuild(base.TestCase):
         build.match_not_ready_base_dockerfiles(dockerfile, [])
         self.assertEqual(dockerfile['parent']['match'], True)
         self.assertEqual(dockerfile['parent']['parent']['match'], True)
+
+    @mock.patch("docker.Client")
+    def test_build_failed(self, dc_mock):
+        dc_mock.build.return_value = [
+            '{"errorDetail": {"message": "Some error"}}']
+        dockerfile = {
+            'name': 'test',
+            'full_name': 'namespace/test',
+            'parent': None,
+            'children': [],
+            'match': True,
+            'path': '/tmp'
+        }
+        with self.assertRaisesRegexp(
+                exceptions.ImageBuildException,
+                'The "test" image build failed: "Some error"'):
+            build.build_dockerfile(dc_mock, dockerfile)
+
+    @mock.patch("docker.Client")
+    def test_push_failed(self, dc_mock):
+        self.cfg.config(group="registry", address='1.2.3.4:5000')
+        dc_mock.push.return_value = [
+            '{"errorDetail": {"message": "Some error"}}']
+        dockerfile = {
+            'name': 'test',
+            'full_name': 'namespace/test',
+            'parent': None,
+            'children': [],
+            'match': True,
+            'path': '/tmp'
+        }
+        with self.assertRaisesRegexp(
+                exceptions.ImagePushException,
+                'The "test" image push to the registry '
+                '"1.2.3.4:5000" failed: "Some error"'):
+            build.push_dockerfile(dc_mock, dockerfile)

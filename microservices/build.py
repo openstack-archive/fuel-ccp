@@ -12,6 +12,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from microservices.common import jinja_utils
+from microservices import exceptions
 
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
@@ -137,8 +138,8 @@ def build_dockerfile(dc, dockerfile):
             LOG.info('%s: %s' % (dockerfile['name'],
                                  build_data['stream'].rstrip()))
         if 'errorDetail' in build_data:
-            LOG.error('%s: %s' % (dockerfile['name'],
-                                  build_data['errorDetail']['message']))
+            raise exceptions.ImageBuildException(
+                dockerfile['name'], build_data['errorDetail']['message'])
 
 
 def push_dockerfile(dc, dockerfile):
@@ -154,8 +155,10 @@ def push_dockerfile(dc, dockerfile):
             LOG.info('%s: %s', dockerfile['name'],
                      build_data['stream'].rstrip())
         if 'errorDetail' in build_data:
-            LOG.error('%s: %s', dockerfile['name'],
-                      build_data['errorDetail']['message'])
+            raise exceptions.ImagePushException(
+                dockerfile['name'], CONF.registry.address,
+                build_data['errorDetail']['message'])
+
     LOG.info("%s - Push into %s registry finished", dockerfile['name'],
              CONF.registry.address)
 
