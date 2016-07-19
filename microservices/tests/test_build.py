@@ -43,7 +43,9 @@ class TestBuild(base.TestCase):
                         'Dockerfile',
                 'is_jinja2': False,
                 'parent': None,
-                'children': []
+                'children': [],
+                'build_result': 'Success',
+                'push_result': 'Success'
             },),
             ('ms-mysql', {
                 'name': 'ms-mysql',
@@ -51,7 +53,9 @@ class TestBuild(base.TestCase):
                         'Dockerfile',
                 'is_jinja2': False,
                 'parent': None,
-                'children': []
+                'children': [],
+                'build_result': 'Success',
+                'push_result': 'Success'
             },)
         ])
 
@@ -189,3 +193,23 @@ class TestBuild(base.TestCase):
         build.match_not_ready_base_dockerfiles(dockerfile, [])
         self.assertEqual(dockerfile['parent']['match'], True)
         self.assertEqual(dockerfile['parent']['parent']['match'], True)
+
+    def test_get_summary_succeeded(self):
+        dockerfiles = self.__create_dockerfile_objects()
+        self.assertTrue(build._get_summary(dockerfiles))
+
+    def test_get_summary_not_pushed(self):
+        dockerfiles = self.__create_dockerfile_objects()
+        dockerfiles['ms-debian-base']['push_result'] = 'Exists'
+        dockerfiles['ms-mysql']['push_result'] = 'Exists'
+        self.assertTrue(build._get_summary(dockerfiles))
+
+    def test_get_summary_build_failed(self):
+        dockerfiles = self.__create_dockerfile_objects()
+        dockerfiles['ms-debian-base']['build_result'] = 'Failure'
+        self.assertFalse(build._get_summary(dockerfiles))
+
+    def test_get_summary_push_failed(self):
+        dockerfiles = self.__create_dockerfile_objects()
+        dockerfiles['ms-debian-base']['push_result'] = 'Failure'
+        self.assertFalse(build._get_summary(dockerfiles))
