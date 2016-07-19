@@ -12,6 +12,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from microservices.common import jinja_utils
+from microservices.common import utils
 
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
@@ -27,12 +28,8 @@ LOG = logging.getLogger(__name__)
 _SHUTDOWN = False
 
 
-def create_rendered_dockerfile(path, name, tmp_path):
-    context = dict(CONF.images.items())
-    if CONF.registry.address:
-        context['namespace'] = '%s/%s' % (CONF.registry.address,
-                                          context['namespace'])
-    content = jinja_utils.jinja_render(path, context)
+def create_rendered_dockerfile(path, name, tmp_path, config):
+    content = jinja_utils.jinja_render(path, config)
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
     os.makedirs(dest_dir)
@@ -52,7 +49,7 @@ def create_rendered_dockerfile(path, name, tmp_path):
     return dockerfilename
 
 
-def find_dockerfiles(repository_name, tmp_dir, match=True):
+def find_dockerfiles(repository_name, tmp_dir, config, match=True):
     dockerfiles = {}
     repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
@@ -71,7 +68,7 @@ def find_dockerfiles(repository_name, tmp_dir, match=True):
             continue
         name = os.path.basename(os.path.dirname(path))
         if is_jinja2:
-            path = create_rendered_dockerfile(path, name, tmp_dir)
+            path = create_rendered_dockerfile(path, name, tmp_dir, config)
         dockerfiles[name] = {
             'name': name,
             'full_name': '%s/%s' % (namespace, name),
@@ -230,15 +227,27 @@ def wait_futures(future_list, skip_errors=False):
                 raise
 
 
+def _get_config():
+    cfg = dict(CONF.images.items())
+    if CONF.registry.address:
+        cfg['namespace'] = '%s/%s' % (CONF.registry.address, cfg['namespace'])
+
+    cfg.update(utils.get_global_parameters('versions'))
+
+    return cfg
+
+
 def build_components(components=None):
     tmp_dir = tempfile.mkdtemp()
 
+    config = _get_config()
     try:
         dockerfiles = {}
         match = not bool(components)
         for repository_name in CONF.repositories.names:
             dockerfiles.update(
-                find_dockerfiles(repository_name, tmp_dir, match=match))
+                find_dockerfiles(
+                    repository_name, tmp_dir, config, match=match))
 
         find_dependencies(dockerfiles)
 

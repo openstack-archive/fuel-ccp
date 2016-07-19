@@ -4,9 +4,8 @@ import yaml
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import pkg_resources
 
-import microservices
+from microservices.common import utils
 from microservices import kubernetes
 from microservices import templates
 
@@ -265,34 +264,6 @@ def deploy_component(component, config):
             parse_role(service_dir, role_obj, config)
 
 
-def _get_config():
-    cfg = {}
-    components = list(CONF.repositories.names)
-    paths = []
-    # Order does matter. At first we add global defaults.
-    for conf_path in ("resources/defaults.yaml", "resources/globals.yaml"):
-        paths.append(_get_resource_path(conf_path))
-
-    # After we add component defaults.
-    for component in components:
-        paths.append(os.path.join(CONF.repositories.path, component,
-                                  "service/files/defaults.yaml"))
-
-    # And finaly we add cluster-wide globals conf, if provided.
-    if CONF.deploy_config:
-        paths.append(CONF.deploy_config)
-
-    for path in paths:
-        if os.path.isfile(path):
-            LOG.debug("Adding parameters from \"%s\"", path)
-            with open(path, "r") as f:
-                cfg.update(yaml.load(f).get("configs", {}))
-        else:
-            LOG.warning("\"%s\" not found, skipping", path)
-
-    return cfg
-
-
 def _create_namespace():
     if CONF.action.dry_run:
         return
@@ -311,20 +282,15 @@ def _create_namespace():
             body={"metadata": {"name": namespace}})
 
 
-def _get_resource_path(path):
-    return pkg_resources.resource_filename(
-        microservices.version_info.package, path)
-
-
 def _deploy_etcd():
     LOG.info("Creating etcd cluster")
 
-    dp_path = _get_resource_path("resources/etcd-deployment.yaml")
+    dp_path = utils.get_resource_path("resources/etcd-deployment.yaml")
     with open(dp_path) as f:
         obj = yaml.load(f)
     kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
 
-    svc_path = _get_resource_path("resources/etcd-service.yaml")
+    svc_path = utils.get_resource_path("resources/etcd-service.yaml")
     with open(svc_path) as f:
         obj = yaml.load(f)
     kubernetes.handle_exists(kubernetes.create_object_from_definition, obj)
@@ -337,7 +303,7 @@ def deploy_components(components=None):
     _create_namespace()
     _deploy_etcd()
 
-    config = _get_config()
+    config = utils.get_global_parameters('configs')
     _create_globals_configmap(config)
     _create_start_script_configmap()
 
