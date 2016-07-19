@@ -75,7 +75,9 @@ def find_dockerfiles(repository_name, tmp_dir, config, match=True):
             'path': path,
             'parent': None,
             'children': [],
-            'match': match
+            'match': match,
+            'build_res': None,
+            'push_res': None
         }
 
     if len(dockerfiles) == 0:
@@ -133,9 +135,11 @@ def build_dockerfile(dc, dockerfile):
         if 'stream' in build_data:
             LOG.info('%s: %s' % (dockerfile['name'],
                                  build_data['stream'].rstrip()))
+            dockerfile['build_res'] = 'Success'
         if 'errorDetail' in build_data:
             LOG.error('%s: %s' % (dockerfile['name'],
                                   build_data['errorDetail']['message']))
+            dockerfile['build_res'] = 'Failure'
 
 
 def push_dockerfile(dc, dockerfile):
@@ -147,12 +151,19 @@ def push_dockerfile(dc, dockerfile):
                         stream=True,
                         insecure_registry=CONF.registry.insecure):
         build_data = json.loads(line.decode("UTF-8"))
-        if 'stream' in build_data:
-            LOG.info('%s: %s', dockerfile['name'],
-                     build_data['stream'].rstrip())
-        if 'errorDetail' in build_data:
+        if build_data.get('progress'):
+            LOG.info('%s: %s' % (
+                dockerfile['name'], build_data['progress'].rstrip()))
+
+        if build_data.get('status') == 'Layer already exists':
+            dockerfile['push_res'] = 'Exists'
+        elif 'errorDetail' in build_data:
             LOG.error('%s: %s', dockerfile['name'],
                       build_data['errorDetail']['message'])
+            dockerfile['push_res'] = 'Failure'
+        elif build_data.get('status') == 'Pushed':
+            LOG.info('%s: pushed to the registry', dockerfile['name'])
+            dockerfile['push_res'] = 'Success'
     LOG.info("%s - Push into %s registry finished", dockerfile['name'],
              CONF.registry.address)
 
@@ -237,12 +248,52 @@ def _get_config():
     return cfg
 
 
+def _get_summary(dockerfiles):
+    LOG.info('#' * 50)
+    LOG.info('Summary:')
+
+    build_succeeded = [d['name'] for d in dockerfiles.values()
+                       if d['build_res'] == 'Success']
+    if build_succeeded:
+        LOG.info('%d image(s) build succeeded: %s' % (
+            len(build_succeeded), ', '.join(build_succeeded)))
+
+    build_failed = [d['name'] for d in dockerfiles.values()
+                    if d['build_res'] == 'Failure']
+    if build_failed:
+        LOG.error('%d image(s) build failed: %s' % (
+            len(build_failed), ', '.join(build_failed)))
+
+    push_succeeded = [d['name'] for d in dockerfiles.values()
+                      if d['push_res'] == 'Success']
+    if push_succeeded:
+        LOG.info('%d image(s) push succeeded: %s' % (
+            len(push_succeeded), ', '.join(push_succeeded)))
+
+    already_pushed = [d['name'] for d in dockerfiles.values()
+                      if d['push_res'] == 'Exists']
+    if already_pushed:
+        LOG.info('%d image(s) already in registry: %s' % (
+            len(already_pushed), ', '.join(already_pushed)))
+
+    push_failed = [d['name'] for d in dockerfiles.values()
+                   if d['push_res'] == 'Failure']
+    if push_failed:
+        LOG.error('%d image(s) push failed: %s' % (
+            len(push_failed), ', '.join(push_failed)))
+    LOG.info('#' * 50)
+
+    if build_failed or push_failed:
+        return False
+    return True
+
+
 def build_components(components=None):
     tmp_dir = tempfile.mkdtemp()
 
     config = _get_config()
+    dockerfiles = {}
     try:
-        dockerfiles = {}
         match = not bool(components)
         for repository_name in CONF.repositories.names:
             dockerfiles.update(
@@ -278,4 +329,7 @@ def build_components(components=None):
                 wait_futures(future_list, skip_errors=True)
                 raise
     finally:
+        build_succeeded = _get_summary(dockerfiles)
         shutil.rmtree(tmp_dir)
+        if not build_succeeded:
+            sys.exit(1)
