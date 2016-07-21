@@ -7,7 +7,7 @@ import shutil
 import sys
 import tempfile
 
-import docker
+import docker_client
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -169,7 +169,7 @@ def push_dockerfile(dc, dockerfile):
 
 
 def process_dockerfile(dockerfile, executor, future_list, ready_images):
-    with contextlib.closing(docker.Client()) as dc:
+    with contextlib.closing(docker_client.get()) as dc:
         build_dockerfile(dc, dockerfile)
         if CONF.builder.push and CONF.registry.address:
             push_dockerfile(dc, dockerfile)
@@ -198,7 +198,7 @@ def match_not_ready_base_dockerfiles(dockerfile, ready_images):
 
 
 def get_ready_image_names():
-    with contextlib.closing(docker.Client()) as dc:
+    with contextlib.closing(docker_client.get()) as dc:
         ready_images = []
         for image in dc.images():
             matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
