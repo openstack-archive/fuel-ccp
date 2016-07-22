@@ -59,6 +59,10 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
         api = apiv_api.ApivApi(client)
         resp = api.create_namespaced_config_map(
             body=object_dict, namespace=namespace)
+    elif object_dict['kind'] == 'Ingress':
+        api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
+        resp = api.create_namespaced_ingress(
+            body=object_dict, namespace=namespace)
     else:
         LOG.warning('"%s" object is not supported, skipping.'
                     % object_dict['kind'])
