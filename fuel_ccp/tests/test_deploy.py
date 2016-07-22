@@ -100,20 +100,20 @@ class TestDeployCreateService(base.TestCase):
         self.create_obj = self._create_obj.start()
 
     def test_create_service_without_ports(self):
-        deploy._create_service({"name": "spam"}, {})
+        deploy._process_ports({"name": "spam"}, {})
         self.assertFalse(self.create_obj.called)
 
     def test_create_service(self):
         service = {
             "name": "foo",
             "ports": [
-                1234,
-                "1122:3344",
-                "5566",
-                "port1",
-                "port2:nodeport",
-                "7788:nodeport",
-                "port3:9900"
+                {"port": 1234},
+                {"port": "1122", "node_port": "3344"},
+                {"port": "5566"},
+                {"port": "port1"},
+                {"port": "port2", "node_port": "nodeport"},
+                {"port": "7788", "node_port": "nodeport"},
+                {"port": "port3", "node_port": "9900"}
             ]
         }
         defaults = {
@@ -165,7 +165,7 @@ spec:
   selector:
     app: foo
   type: NodePort"""
-        deploy._create_service(service, defaults)
+        deploy._process_ports(service, defaults)
         self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
 
     def teadDown(self):

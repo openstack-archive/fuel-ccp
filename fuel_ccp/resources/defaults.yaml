@@ -2,3 +2,7 @@ configs:
     etcd_urls: http://etcd:2379
     private_interface: eth0
     public_interface: eth1
+    use_ingress: true
+
+    ingress_domain: ccp # will be prefixed by namespace name (namespace.ccp)
+    ingress_port: 30000 #FIXME workaround to access ingress controller
