@@ -28,6 +28,27 @@ def _get_start_cmd(cmd_name):
     return ["python", "/opt/mcp_start_script/bin/start_script.py", cmd_name]
 
 
+def serialize_ingress(name, host, paths):
+    return {
+        "apiVersion": "extensions/v1beta1",
+        "kind": "Ingress",
+        "metadata": {
+            "name": name,
+            "mcp": "true"
+        },
+        "spec": {
+            "rules": [
+                {
+                    "host": host,
+                    "http": {
+                        "paths": paths
+                    }
+                }
+            ]
+        }
+    }
+
+
 def serialize_configmap(name, data):
     return {
         "apiVersion": "v1",
