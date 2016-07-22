@@ -66,7 +66,7 @@ def parse_role(service_dir, role, config):
                                              affinity)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service, config["configs"])
+    _process_ports(service, config)
 
 
 def _parse_workflows(service):
@@ -107,13 +107,16 @@ def _create_workflow(workflow, name):
         kubernetes.create_object_from_definition, template)
 
 
-def _create_service(service, config):
+def _process_ports(service, config):
     template_ports = service.get("ports")
     if not template_ports:
         return
     ports = []
+    ingress_paths = []
     for port in service["ports"]:
-        source_port, _, node_port = str(port).partition(":")
+        source_port = port.get('port')
+        node_port = port.get('node_port')
+
         source_port = int(config.get(source_port, source_port))
         if node_port:
             node_port = int(config.get(node_port, node_port))
@@ -123,8 +126,25 @@ def _create_service(service, config):
                           "node-port": node_port})
         else:
             ports.append({"port": source_port, "name": name_port})
-    template = templates.serialize_service(service["name"], ports)
-    kubernetes.create_object_from_definition(template)
+
+        if config.get('use_ingress'):
+            ingress_path = port.get('ingress')
+            if ingress_path:
+                ingress_paths.append({
+                    "path": config.get(ingress_path, ingress_path),
+                    "backend": {
+                        "serviceName": service["name"],
+                        "servicePort": source_port
+                    }
+                })
+    # TODO(apavlov): separate NodePort and ClusterIP services
+    service_template = templates.serialize_service(service["name"], ports)
+    kubernetes.create_object_from_definition(service_template)
+
+    if config.get('use_ingress') and ingress_paths:
+        ingress_template = templates.serialize_ingress(
+            service['name'], config.get('ingress_domain', ''), ingress_paths)
+        kubernetes.create_object_from_definition(ingress_template)
 
 
 def _create_pre_commands(workflow, container):
@@ -341,16 +361,24 @@ def _create_openrc(config, namespace):
              os.getcwd(), namespace)
 
 
+def _get_config():
+    cfg = utils.get_global_parameters("configs", "nodes", "roles")
+    cfg["topology"] = _make_topology(cfg.get("nodes"), cfg.get("roles"))
+    if cfg['configs'].get('ingress_domain'):
+        cfg['configs']['ingress_domain'] = ".".join(
+            (CONF.kubernetes.namespace, cfg['configs']['ingress_domain']))
+
+    return cfg
+
+
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
 
-    config = utils.get_global_parameters("configs", "nodes", "roles")
-    config["topology"] = _make_topology(config.get("nodes"),
-                                        config.get("roles"))
-
     namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
+
+    config = _get_config()
 
     _create_globals_configmap(config["configs"])
     _create_start_script_configmap()
