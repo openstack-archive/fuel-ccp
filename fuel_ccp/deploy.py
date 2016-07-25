@@ -282,6 +282,22 @@ def _create_namespace():
             body={"metadata": {"name": namespace}})
 
 
+def _create_openrc(config):
+    namespace = CONF.kubernetes.namespace
+    openrc = ["export OS_PROJECT_DOMAIN_NAME=default",
+              "export OS_USER_DOMAIN_NAME=default",
+              "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
+              "export OS_USERNAME=%s" % config['openstack_user_name'],
+              "export OS_PASSWORD=%s" % config['openstack_user_password'],
+              "export OS_IDENTITY_API_VERSION=3",
+              "export OS_AUTH_URL=http://keystone.%s.svc.cluster.local:%s/v3" %
+              (namespace, config['keystone_public_port'])]
+    with open('openrc-%s' % namespace, 'w') as openrc_file:
+        openrc_file.write("\n".join(openrc))
+    LOG.info("Openrc file for this deployment created at %s/openrc-%s",
+             os.getcwd(), namespace)
+
+
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
@@ -294,3 +310,5 @@ def deploy_components(components=None):
 
     for component in components:
         deploy_component(component, config)
+
+    _create_openrc(config)
