@@ -1,0 +1,12 @@
+# If you want to connect to the public endpoints of OpenStack you can create
+# an openrc by replacing these variables. You can also replace the admin
+# username and password with those of another user. Make sure you replaced
+# "NAMESPACE" with the expected k8s namespace of you keystone deployment.
+
+export OS_PROJECT_DOMAIN_NAME=default
+export OS_USER_DOMAIN_NAME=default
+export OS_PROJECT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=password
+export OS_AUTH_URL=http://keystone.NAMESPACE.svc.cluster.local:5000/v3
+export OS_IDENTITY_API_VERSION=3
