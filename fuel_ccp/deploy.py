@@ -264,10 +264,9 @@ def deploy_component(component, config):
             parse_role(service_dir, role_obj, config)
 
 
-def _create_namespace():
+def _create_namespace(namespace):
     if CONF.action.dry_run:
         return
-    namespace = CONF.kubernetes.namespace
     client = kubernetes.get_client()
     api = kubernetes.get_v1_api(client)
     # TODO(sreshetniak): add selector??
@@ -285,8 +284,9 @@ def _create_namespace():
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
+    namespace = CONF.kubernetes.namespace
 
-    _create_namespace()
+    _create_namespace(namespace)
 
     config = utils.get_global_parameters('configs')
     _create_globals_configmap(config)
