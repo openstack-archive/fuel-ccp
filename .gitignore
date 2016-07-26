@@ -56,3 +56,6 @@ ChangeLog
 
 # Configs
 *.conf
+
+# openrc files
+openrc-*
