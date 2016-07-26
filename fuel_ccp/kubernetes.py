@@ -1,3 +1,4 @@
+import os
 import yaml
 
 from k8sclient.client import api_client
@@ -30,9 +31,19 @@ def get_client(kube_apiserver=None, key_file=None, cert_file=None,
 def create_object_from_definition(object_dict, namespace=None, client=None):
     LOG.info("Deploying %s: \"%s\"",
              object_dict["kind"], object_dict["metadata"]["name"])
-    if CONF.action.dry_run:
+    if CONF.action.export_dir:
+        file_name = '%s-%s.yaml' % (
+            object_dict['metadata']['name'], object_dict['kind'].lower())
+        file_path = os.path.join(CONF.action.export_dir, file_name)
+        with open(file_path, 'w') as object_file:
+            object_file.write(yaml.dump(
+                object_dict, default_flow_style=False))
+        if CONF.action.dry_run:
+            return
+    elif CONF.action.dry_run:
         LOG.info(yaml.dump(object_dict, default_flow_style=False))
         return
+
     namespace = namespace or CONF.kubernetes.namespace
     client = client or get_client()
     if object_dict['kind'] == 'Deployment':
