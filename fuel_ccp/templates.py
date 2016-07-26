@@ -34,7 +34,9 @@ def serialize_configmap(name, data):
         "kind": "ConfigMap",
         "metadata": {
             "name": name,
-            "mcp": "true"
+            "labels": {
+                "mcp": "true"
+            }
         },
         "data": data
     }
@@ -231,7 +233,9 @@ def serialize_job(name, spec):
         "kind": "Job",
         "metadata": {
             "name": name,
-            "mcp": "true"
+            "labels": {
+                "mcp": "true"
+            }
         },
         "spec": {
             "template": spec
@@ -297,7 +301,9 @@ def serialize_service(name, ports):
         "kind": "Service",
         "metadata": {
             "name": name,
-            "mcp": "true"
+            "labels": {
+                "mcp": "true"
+            }
         },
         "spec": {
             "type": "NodePort",

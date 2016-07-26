@@ -126,7 +126,8 @@ class TestDeployCreateService(base.TestCase):
 apiVersion: v1
 kind: Service
 metadata:
-  mcp: "true"
+  labels:
+    mcp: "true"
   name: foo
 spec:
   ports:
