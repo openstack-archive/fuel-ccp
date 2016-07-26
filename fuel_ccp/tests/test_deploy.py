@@ -1,3 +1,6 @@
+import filecmp
+import os
+
 import mock
 from oslo_config import cfg
 import yaml
@@ -9,6 +12,10 @@ CONF = cfg.CONF
 
 
 class TestDeploy(base.TestCase):
+    def setUp(self):
+        super(TestDeploy, self).setUp()
+        self.namespace = "py27_test_delme"
+
     def test_fill_cmd(self):
         workflow = {}
         cmd = {
@@ -90,6 +97,33 @@ class TestDeploy(base.TestCase):
             }]
         }
         self.assertDictEqual(expected, service)
+
+    def test_create_openrc(self):
+        namespace = self.namespace
+        openrc_etalon_file = 'openrc-%s-etalon' % namespace
+        openrc_test_file = 'openrc-%s' % namespace
+        config = {"openstack_project_name": "admin",
+                  "openstack_user_name": "admin",
+                  "openstack_user_password": "password",
+                  "keystone_public_port": 5000}
+        rc = ["export OS_PROJECT_DOMAIN_NAME=default",
+              "export OS_USER_DOMAIN_NAME=default",
+              "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
+              "export OS_USERNAME=%s" % config['openstack_user_name'],
+              "export OS_PASSWORD=%s" % config['openstack_user_password'],
+              "export OS_IDENTITY_API_VERSION=3",
+              "export OS_AUTH_URL=http://keystone.%s.svc.cluster.local:%s/v3" %
+              (namespace, config['keystone_public_port'])]
+
+        with open(openrc_etalon_file, 'w') as openrc_file:
+            openrc_file.write("\n".join(rc))
+        self.addCleanup(os.remove, openrc_etalon_file)
+        deploy._create_openrc(config, namespace)
+        self.addCleanup(os.remove, openrc_test_file)
+        result = filecmp.cmp(openrc_etalon_file,
+                             openrc_test_file,
+                             shallow=False)
+        self.assertTrue(result)
 
 
 class TestDeployCreateService(base.TestCase):
