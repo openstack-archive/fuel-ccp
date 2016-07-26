@@ -2,3 +2,5 @@ configs:
     etcd_urls: http://etcd:2379
     private_interface: eth0
     public_interface: eth1
+    etcd_connection_attempts: 20
+    etcd_connection_delay: 5
