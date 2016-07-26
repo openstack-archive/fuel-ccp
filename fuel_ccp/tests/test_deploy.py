@@ -1,4 +1,6 @@
+import filecmp
 import mock
+import os
 from oslo_config import cfg
 import yaml
 
@@ -90,6 +92,31 @@ class TestDeploy(base.TestCase):
             }]
         }
         self.assertDictEqual(expected, service)
+
+    def test_create_openrc(self):
+        namespace = "py27_test_delme"
+        config = {"openstack_project_name": "admin",
+                  "openstack_user_name": "admin",
+                  "openstack_user_password": "password",
+                  "keystone_public_port": 5000}
+        rc = ["export OS_PROJECT_DOMAIN_NAME=default",
+              "export OS_USER_DOMAIN_NAME=default",
+              "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
+              "export OS_USERNAME=%s" % config['openstack_user_name'],
+              "export OS_PASSWORD=%s" % config['openstack_user_password'],
+              "export OS_IDENTITY_API_VERSION=3",
+              "export OS_AUTH_URL=http://keystone.%s.svc.cluster.local:%s/v3" %
+              (namespace, config['keystone_public_port'])]
+
+        with open('openrc-%s-etalon' % namespace, 'w') as openrc_file:
+            openrc_file.write("\n".join(rc))
+        deploy._create_openrc(config, namespace)
+        result = filecmp.cmp('openrc-%s-etalon' % namespace,
+                             'openrc-%s' % namespace,
+                             shallow=False)
+        os.remove('openrc-%s-etalon' % namespace)
+        os.remove('openrc-%s' % namespace)
+        self.assertTrue(result)
 
 
 class TestDeployCreateService(base.TestCase):
