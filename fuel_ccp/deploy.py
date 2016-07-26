@@ -285,6 +285,8 @@ def _create_namespace():
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
+    if CONF.action.export_dir:
+        os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     _create_namespace()
 

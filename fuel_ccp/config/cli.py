@@ -18,6 +18,8 @@ def add_parsers(subparsers):
                                action='store_true',
                                help="Print k8s objects definitions without"
                                     "actual creation")
+    deploy_action.add_argument('--export-dir',
+                               help='Directory to export created k8s objects')
 
     fetch_action = subparsers.add_parser('fetch')
     fetch_action.add_argument('-c', '--components',
