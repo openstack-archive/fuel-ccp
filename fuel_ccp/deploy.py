@@ -344,6 +344,8 @@ def _create_openrc(config, namespace):
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
+    if CONF.action.export_dir:
+        os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     config = utils.get_global_parameters("configs", "nodes", "roles")
     config["topology"] = _make_topology(config.get("nodes"),
