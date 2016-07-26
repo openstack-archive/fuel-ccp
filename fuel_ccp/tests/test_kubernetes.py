@@ -37,6 +37,7 @@ class TestKubernetes(base.TestCase):
         'k8sclient.client.apis.apisextensionsvbeta_api.ApisextensionsvbetaApi')
     def test_create_deployment(self, api_beta):
         CONF.action.dry_run = False
+        CONF.action.export_dir = False
         api = mock.Mock()
         api.create_namespaced_deployment = mock.Mock()
         api_beta.return_value = api
@@ -50,6 +51,7 @@ class TestKubernetes(base.TestCase):
     @mock.patch('k8sclient.client.apis.apiv_api.ApivApi')
     def test_create_service(self, api_v1):
         CONF.action.dry_run = False
+        CONF.action.export_dir = False
         api = mock.Mock()
         api.create_namespaced_service = mock.Mock()
         api_v1.return_value = api
