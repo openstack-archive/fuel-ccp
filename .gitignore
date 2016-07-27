@@ -56,3 +56,6 @@ ChangeLog
 
 # Configs
 *.conf
+
+# debug info from oslo_debug_helper
+debug-*
