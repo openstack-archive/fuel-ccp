@@ -358,4 +358,4 @@ def deploy_components(components=None):
     for component in components:
         deploy_component(component, config)
 
-    _create_openrc(config, namespace)
+    _create_openrc(config['configs'], namespace)
