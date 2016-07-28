@@ -301,3 +301,45 @@ class TestDeployParseWorkflow(base.TestCase):
             }
         }
         self.assertDictEqual(expected_workflows, workflow)
+
+
+class TestDeployMakeTopology(base.TestCase):
+    def test_make_empty_topology(self):
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, None, None)
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, None, {"spam": "eggs"})
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, {"spam": "eggs"}, None)
+
+    def test_make_topology(self):
+        nodes = {
+            "node1": {
+                "roles": ["controller"]
+            },
+            "node[2-3]": {
+                "roles": ["compute"]
+            }
+        }
+        roles = {
+            "controller": [
+                "mysql",
+                "keystone"
+            ],
+            "compute": [
+                "nova-compute",
+                "libvirtd"
+            ]
+        }
+
+        node_list = ["node1", "node2", "node3"]
+        expected_topology = {
+            "mysql": ["node1"],
+            "keystone": ["node1"],
+            "nova-compute": ["node2", "node3"],
+            "libvirtd": ["node2", "node3"]
+        }
+        with mock.patch("fuel_ccp.kubernetes.list_k8s_nodes") as p:
+            p.return_value = node_list
+            topology = deploy._make_topology(nodes, roles)
+        self.assertDictEqual(expected_topology, topology)
