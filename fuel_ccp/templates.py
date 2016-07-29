@@ -25,7 +25,7 @@ def _get_image_name(image_name):
 
 
 def _get_start_cmd(cmd_name):
-    return ["dumb-init", "python",
+    return ["python",
             "/opt/mcp_start_script/bin/start_script.py", cmd_name]
 
 
