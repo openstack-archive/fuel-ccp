@@ -98,6 +98,22 @@ class TestDeploy(base.TestCase):
         }
         self.assertDictEqual(expected, service)
 
+    def test_update_container_volumes(self):
+        t_cont = {'daemon': {'command': 'mysqld', 'name': 'mariadb'},
+                  'name': 'mariadb', 'volumes': [
+                  {'path': '/path/to/vol', 'type': 'host', 'name': 'logs'},
+                  {'path': '{{ logs_dir }}', 'type': 'host', 'name': 'logs'}],
+                  'image': 'mariadb'}
+        e_cont = {'daemon': {'command': 'mysqld', 'name': 'mariadb'},
+                  'name': 'mariadb', 'volumes': [
+                  {'path': '/path/to/vol', 'type': 'host', 'name': 'logs'},
+                  {'path': '/tmp/delme', 'type': 'host', 'name': 'logs'}],
+                  'image': 'mariadb'}
+        jvars = {'logs_dir': '/tmp/delme'}
+
+        deploy._update_container_volumes(t_cont, jvars)
+        self.assertDictEqual(e_cont, t_cont)
+
     def test_create_openrc(self):
         namespace = self.namespace
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
