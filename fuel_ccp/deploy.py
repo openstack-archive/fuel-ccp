@@ -126,9 +126,9 @@ def _create_service(service, config):
     ports = []
     for port in service["ports"]:
         source_port, _, node_port = str(port).partition(":")
-        source_port = int(config.get(source_port, source_port))
+        source_port = int(jinja_utils.jinja_render_str(source_port, config))
         if node_port:
-            node_port = int(config.get(node_port, node_port))
+            node_port = int(jinja_utils.jinja_render_str(node_port, config))
         name_port = str(source_port)
         if node_port:
             ports.append({"port": source_port, "name": name_port,
