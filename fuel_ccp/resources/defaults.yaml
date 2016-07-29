@@ -4,3 +4,4 @@ configs:
     public_interface: eth1
     etcd_connection_attempts: 20
     etcd_connection_delay: 5
+    base_logs_dir: /var/log/ccp
