@@ -21,6 +21,16 @@ def add_parsers(subparsers):
 
     subparsers.add_parser('fetch')
 
+    cleanup_action = subparsers.add_parser('cleanup')
+    # Making auth url configurable at least until Ingress/LB support will
+    # be implemented
+    cleanup_action.add_argument('--auth-url',
+                                help='The URL of Keystone authentication '
+                                     'server')
+    cleanup_action.add_argument('--skip-os-cleanup',
+                                action='store_true',
+                                help='Skip cleanup of OpenStack environment')
+
 
 CONF.register_cli_opt(cfg.SubCommandOpt('action',
                                         handler=add_parsers))
