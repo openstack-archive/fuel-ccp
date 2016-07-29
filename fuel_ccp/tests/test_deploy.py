@@ -144,10 +144,10 @@ class TestDeployCreateService(base.TestCase):
                 1234,
                 "1122:3344",
                 "5566",
-                "port1",
-                "port2:nodeport",
-                "7788:nodeport",
-                "port3:9900"
+                "{{ port1 }}",
+                "{{ port2 }}: {{ nodeport }}",
+                "7788:{{ nodeport }}",
+                "{{ port3 }}:9900"
             ]
         }
         defaults = {
