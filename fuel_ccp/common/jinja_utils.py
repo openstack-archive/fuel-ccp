@@ -18,3 +18,9 @@ def jinja_render(path, context):
     env.filters['bool'] = str_to_bool
     content = env.get_template(os.path.basename(path)).render(context)
     return content
+
+
+def jinja_render_str(content, jvars, name='default_name'):
+    env = jinja2.Environment(loader=jinja2.DictLoader({name: content}))
+    env.filters['bool'] = str_to_bool
+    return env.get_template(name).render(jvars)
