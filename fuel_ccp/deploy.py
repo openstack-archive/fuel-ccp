@@ -5,6 +5,7 @@ import yaml
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
@@ -33,6 +34,17 @@ def _expand_files(service, files):
             _expand(cmd)
 
 
+def _update_container_volumes(cont, jvars):
+    """Loop though all volumes and render jinja2 templates, if avalible"""
+
+    if cont.get('volumes', {}):
+        for v in cont['volumes']:
+            v['path'] = jinja_utils.jinja_render_str(v['path'], jvars)
+            if v.get('mount-path', ""):
+                v['mount-path'] = jinja_utils.jinja_render_str(v['mount-path'],
+                                                               jvars)
+
+
 def parse_role(service_dir, role, config):
     service = role["service"]
     if service["name"] not in config.get("topology", {}):
@@ -52,6 +64,7 @@ def parse_role(service_dir, role, config):
         daemon_cmd = cont["daemon"]
         daemon_cmd["name"] = cont["name"]
 
+        _update_container_volumes(cont, config['configs'])
         _create_pre_jobs(service, cont)
         _create_post_jobs(service, cont)
 
