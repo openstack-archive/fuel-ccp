@@ -5,6 +5,7 @@ import yaml
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
@@ -54,6 +55,15 @@ def parse_role(service_dir, role, config):
 
         _create_pre_jobs(service, cont)
         _create_post_jobs(service, cont)
+
+    # Volumes templating
+    jvars = config['configs']
+    for cont in [c for c in service['containers'] if c.get('volumes', {})]:
+        for v in cont['volumes']:
+            v['path'] = jinja_utils.jinja_render_str(v['path'], jvars)
+            if v.get('mount-path', ""):
+                v['mount-path'] = jinja_utils.jinja_render_str(v['mount-path'],
+                                                               jvars)
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
