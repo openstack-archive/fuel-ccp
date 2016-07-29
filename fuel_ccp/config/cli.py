@@ -24,6 +24,13 @@ def add_parsers(subparsers):
                               nargs='+',
                               help='MCP component to fetch')
 
+    cleanup_action = subparsers.add_parser('cleanup')
+    # Making auth url configurable at least until Ingress/LB support will
+    # be implemented
+    cleanup_action.add_argument('--auth-url',
+                                help='The URL of Keystone authentication '
+                                     'server')
+
 
 CONF.register_cli_opt(cfg.SubCommandOpt('action',
                                         handler=add_parsers))
