@@ -358,4 +358,5 @@ def deploy_components(components=None):
     for component in components:
         deploy_component(component, config)
 
-    _create_openrc(config['configs'], namespace)
+    if 'fuel-ccp-keystone' in components:
+        _create_openrc(config['configs'], namespace)
