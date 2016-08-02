@@ -19,10 +19,7 @@ def add_parsers(subparsers):
                                help="Print k8s objects definitions without"
                                     "actual creation")
 
-    fetch_action = subparsers.add_parser('fetch')
-    fetch_action.add_argument('-c', '--components',
-                              nargs='+',
-                              help='MCP component to fetch')
+    subparsers.add_parser('fetch')
 
 
 CONF.register_cli_opt(cfg.SubCommandOpt('action',
