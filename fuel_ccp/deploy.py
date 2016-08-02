@@ -87,10 +87,10 @@ def _create_job_wfs(container, service_name):
     wfs = {}
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            wfs.update(_create_job_wf(container, job))
+            wfs.update(_create_job_wf(job))
     for job in container.get("post", ()):
         if _is_single_job(job):
-            wfs.update(_create_job_wf(container, job, True, service_name))
+            wfs.update(_create_job_wf(job, True, service_name))
     return wfs
 
 
@@ -130,7 +130,7 @@ def _create_service(service, config):
 def _create_pre_commands(workflow, container):
     workflow["pre"] = []
     for cmd in container.get("pre", ()):
-        _create_command(workflow["pre"], container, cmd)
+        _create_command(workflow["pre"], cmd)
 
 
 def _create_daemon(workflow, container):
@@ -151,7 +151,7 @@ def _create_post_commands(workflow, container):
     LOG.debug("Create post jobs")
     workflow["post"] = []
     for cmd in container.get("post", ()):
-        _create_command(workflow["post"], container, cmd)
+        _create_command(workflow["post"], cmd)
 
 
 def _is_single_job(job):
@@ -177,14 +177,14 @@ def _create_job(service, container, job):
     kubernetes.create_object_from_definition(job_spec)
 
 
-def _create_command(workflow, container, cmd):
+def _create_command(workflow, cmd):
     if cmd.get("type", "local") == "local":
         cmd_flow = {}
         _fill_cmd(cmd_flow, cmd)
         workflow.append(cmd_flow)
 
 
-def _create_job_wf(container, job, post=False, service_name=None):
+def _create_job_wf(job, post=False, service_name=None):
     wrk = {}
     wrk["name"] = job["name"]
     wrk["dependencies"] = job.get("dependencies", [])
