@@ -212,12 +212,18 @@ def get_ready_image_names():
 
 def match_dockerfiles_by_component(dockerfiles, component, ready_images):
     pattern = re.compile(re.escape(component))
-
-    for key, dockerfile in dockerfiles.items():
-        if pattern.search(key):
-            dockerfile['match'] = True
-            if CONF.builder.build_base_images_if_not_exist:
-                match_not_ready_base_dockerfiles(dockerfile, ready_images)
+    matched_dockerfiles = list(filter(pattern.match, dockerfiles.keys()))
+    if matched_dockerfiles:
+        LOG.info("Component \"%s\" matches: %s", component,
+                 ", ".join(matched_dockerfiles))
+    else:
+        raise RuntimeError("Component \"%s\" doesn't match any "
+                           "dockerfile" % component)
+    for dockerfile in matched_dockerfiles:
+        dockerfiles[dockerfile]['match'] = True
+        if CONF.builder.build_base_images_if_not_exist:
+            match_not_ready_base_dockerfiles(
+                dockerfiles[dockerfile], ready_images)
 
 
 def wait_futures(future_list, skip_errors=False):
