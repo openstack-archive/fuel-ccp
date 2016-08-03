@@ -38,6 +38,7 @@ roles:
     - openvswitch-vswitchd
   stacklight-backend:
     - elasticsearch
+    - grafana
     - influxdb
     - kibana
   stacklight-collector:
