@@ -15,9 +15,6 @@ Application definition template
             - internal-port:external-port
         daemonset: true
         host-net: true
-        node-selector:
-            openstack-controller: "true"
-            openstack-compute: "true"
         containers:
             - name: container-name
               image: container-image
@@ -90,8 +87,6 @@ Parameters description
 |               | (with NodePort type for now)                  |          | external-port    |         |
 |               | Only internal or both internal:external ports |          | array            |         |
 |               | can be specified                              |          |                  |         |
-+---------------+-----------------------------------------------+----------+------------------+---------+
-| node-selector |                                               | false    | array of labels  |         |
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | daemonset     | Create DaemonSet instead of Deployment        | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+
