@@ -49,6 +49,6 @@ def get_global_parameters(*config_groups):
                     cfg.setdefault(group, {})
                     cfg[group].update(data.get(group, {}))
         else:
-            LOG.warning("\"%s\" not found, skipping", path)
+            LOG.debug("\"%s\" not found, skipping", path)
 
     return cfg
