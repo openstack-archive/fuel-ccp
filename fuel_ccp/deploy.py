@@ -9,6 +9,7 @@ from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
+from fuel_ccp import validate
 
 
 CONF = cfg.CONF
@@ -281,6 +282,7 @@ def deploy_component(component, config):
             with open(os.path.join(service_dir, service_file), "r") as f:
                 role_obj = yaml.load(f)
 
+            validate.validate_service(role_obj)
             parse_role(service_dir, role_obj, config)
 
 
