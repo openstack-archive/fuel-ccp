@@ -9,7 +9,6 @@ from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
-from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
 
 
@@ -348,11 +347,10 @@ def _create_openrc(config, namespace):
              os.getcwd(), namespace)
 
 
-def deploy_components(components=None):
-    components_map = utils.get_deploy_components_info()
-    components = set(components) if components else set(components_map.keys())
+def deploy_components(components_map, components):
+    if not components:
+        components = set(components_map.keys())
 
-    base_validation.validate_components_names(components, components_map)
     deploy_validation.validate_requested_components(components, components_map)
 
     if CONF.action.export_dir:
