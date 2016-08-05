@@ -7,7 +7,7 @@ kubernetes_opts = [
                default='127.0.0.1:8080',
                help='Addres and port for kube-apiserver'),
     cfg.StrOpt('namespace',
-               default='default',
+               default='ccp',
                help='The name of the namespace'),
     cfg.StrOpt('ca-certs',
                help='The location of the CA certificate files'),

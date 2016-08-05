@@ -5,6 +5,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from fuel_ccp import build
+from fuel_ccp import cleanup
 from fuel_ccp import deploy
 from fuel_ccp import fetch
 
@@ -31,6 +32,11 @@ def do_deploy():
 
 def do_fetch():
     fetch.fetch_repositories(CONF.repositories.names)
+
+
+def do_cleanup():
+    cleanup.cleanup(auth_url=CONF.action.auth_url,
+                    skip_os_cleanup=CONF.action.skip_os_cleanup)
 
 
 def signal_handler(signo, frame):

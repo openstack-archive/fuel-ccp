@@ -46,7 +46,7 @@ class TestKubernetes(base.TestCase):
         kubernetes.create_object_from_definition(
             deployment_dict, client=mock.Mock())
         api.create_namespaced_deployment.assert_called_once_with(
-            body=deployment_dict, namespace='default')
+            body=deployment_dict, namespace='ccp')
 
     @mock.patch('k8sclient.client.apis.apiv_api.ApivApi')
     def test_create_service(self, api_v1):
@@ -61,4 +61,4 @@ class TestKubernetes(base.TestCase):
             service_dict, client=mock.Mock())
 
         api.create_namespaced_service.assert_called_once_with(
-            body=service_dict, namespace='default')
+            body=service_dict, namespace='ccp')
