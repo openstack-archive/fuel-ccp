@@ -50,7 +50,7 @@ def parse_role(service_dir, role, config):
         LOG.info("Service %s not in topology config, skipping deploy",
                  service["name"])
         return
-    LOG.info("Using service %s", service["name"])
+    LOG.info("Scheduling service %s", service["name"])
     _expand_files(service, role.get("files"))
 
     _create_files_configmap(service_dir, service["name"], role.get("files"))
@@ -79,6 +79,7 @@ def parse_role(service_dir, role, config):
     kubernetes.create_object_from_definition(obj)
 
     _create_service(service, config["configs"])
+    LOG.info("Service %s successfuly scheduled", service["name"])
 
 
 def _parse_workflows(service):

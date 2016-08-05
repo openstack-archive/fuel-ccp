@@ -29,7 +29,7 @@ def get_client(kube_apiserver=None, key_file=None, cert_file=None,
 
 
 def create_object_from_definition(object_dict, namespace=None, client=None):
-    LOG.info("Deploying %s: \"%s\"",
+    LOG.debug("Deploying %s: \"%s\"",
              object_dict["kind"], object_dict["metadata"]["name"])
     if CONF.action.export_dir:
         file_name = '%s-%s.yaml' % (
@@ -78,7 +78,7 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
                     % object_dict['kind'])
         return
 
-    LOG.info('%s "%s" has been created' % (
+    LOG.debug('%s "%s" has been created' % (
         object_dict['kind'], object_dict['metadata']['name']))
     return resp
 
