@@ -8,12 +8,22 @@ def add_parsers(subparsers):
     build_action = subparsers.add_parser('build')
     build_action.add_argument('-c', '--components',
                               nargs='+',
-                              help='CCP component to build')
+                              help='CCP components to build')
+
+    validate_action = subparsers.add_parser('validate')
+    validate_action.add_argument('-c', '--components',
+                                 nargs='+',
+                                 help='CCP components to validate')
+    validate_action.add_argument('-t', '--types',
+                                 nargs="+",
+                                 help="List of validation types to perform. "
+                                      "If not specified - perform all "
+                                      "supported validation types")
 
     deploy_action = subparsers.add_parser('deploy')
     deploy_action.add_argument('-c', '--components',
                                nargs='+',
-                               help='CCP component to deploy')
+                               help='CCP components to deploy')
     deploy_action.add_argument("--dry-run",
                                action='store_true',
                                help="Print k8s objects definitions without"
@@ -62,6 +72,12 @@ SCHEMA = {
             'export_dir': {'type': 'string'},
             'auth_url': {'type': 'string'},
             'skip_os_cleanup': {'type': 'boolean'},
+            'types': {
+                'type': 'array',
+                'items': {
+                    "enum": ["service-def"]
+                }
+            }
         }.items()},
     },
 }
