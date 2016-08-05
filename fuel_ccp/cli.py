@@ -9,6 +9,7 @@ from fuel_ccp import cleanup
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import validate
 
 
 CONF = cfg.CONF
@@ -29,6 +30,12 @@ def do_deploy():
     if CONF.repositories.clone:
         do_fetch()
     deploy.deploy_components(components=CONF.action.components)
+
+
+def do_validate():
+    if CONF.repositories.clone:
+        do_fetch()
+    validate.validate(CONF.action.objects)
 
 
 def do_fetch():
