@@ -6,9 +6,11 @@ from oslo_log import log as logging
 
 from fuel_ccp import build
 from fuel_ccp import cleanup
+from fuel_ccp.common import utils
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import validate
 
 
 CONF = cfg.CONF
@@ -28,7 +30,24 @@ def do_build():
 def do_deploy():
     if CONF.repositories.clone:
         do_fetch()
-    deploy.deploy_components(components=CONF.action.components)
+    components_map = utils.get_deploy_components_info()
+
+    components = CONF.action.components
+    if components:
+        components = set(components)
+
+    validate.validate_services(components_map, components)
+    deploy.deploy_components(components_map, components)
+
+
+def do_validate():
+    if CONF.repositories.clone:
+        do_fetch()
+
+    components = CONF.action.components
+    if components:
+        components = set(components)
+    validate.validate(components=components, types=CONF.action.types)
 
 
 def do_fetch():

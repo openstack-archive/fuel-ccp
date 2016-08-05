@@ -345,9 +345,9 @@ def _create_openrc(config, namespace):
              os.getcwd(), namespace)
 
 
-def deploy_components(components=None):
-    components_map = utils.get_deploy_components_info()
-    components = set(components) if components else set(components_map.keys())
+def deploy_components(components_map, components):
+    if not components:
+        components = components_map.keys()
 
     base_validation.validate_components_names(components, components_map)
     deploy_validation.validate_requested_components(components, components_map)
