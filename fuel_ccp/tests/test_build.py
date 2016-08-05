@@ -15,7 +15,7 @@ RUN apt-get install \
       curl \
     && apt-get clean"""
 
-COMPONENT_DOCKERFILE = u"""FROM {}mcp/ms-debian-base
+COMPONENT_DOCKERFILE = u"""FROM {}ccp/ms-debian-base
 MAINTAINER Foo Bar <foo@bar.org>
 
 RUN apt-get -y install \

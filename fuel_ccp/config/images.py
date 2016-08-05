@@ -4,7 +4,7 @@ from oslo_config import cfg
 CONF = cfg.CONF
 images_opts = [
     cfg.StrOpt('namespace',
-               default='mcp',
+               default='ccp',
                help='Namespace for Docker images'),
     cfg.StrOpt('tag',
                default='latest',
