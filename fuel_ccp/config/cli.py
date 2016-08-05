@@ -10,6 +10,13 @@ def add_parsers(subparsers):
                               nargs='+',
                               help='MCP component to build')
 
+    validate_action = subparsers.add_parser('validate')
+    validate_action.add_argument('objects',
+                                 nargs="*",
+                                 help="List of objects to validate."
+                                      "If not specfied - validate all "
+                                      "supported objects")
+
     deploy_action = subparsers.add_parser('deploy')
     deploy_action.add_argument('-c', '--components',
                                nargs='+',
