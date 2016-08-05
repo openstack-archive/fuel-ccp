@@ -7,6 +7,7 @@ from oslo_log import log as logging
 from fuel_ccp import build
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import validate
 
 
 CONF = cfg.CONF
@@ -27,6 +28,12 @@ def do_deploy():
     if CONF.repositories.clone:
         do_fetch()
     deploy.deploy_components(components=CONF.action.components)
+
+
+def do_validate():
+    if CONF.repositories.clone:
+        do_fetch()
+    validate.validate(type=CONF.action.type)
 
 
 def do_fetch():

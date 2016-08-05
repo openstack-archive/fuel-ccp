@@ -10,6 +10,12 @@ def add_parsers(subparsers):
                               nargs='+',
                               help='MCP component to build')
 
+    validate_action = subparsers.add_parser('validate')
+    validate_action.add_argument('type',
+                                 nargs=1,
+                                 choices=["service_def"],
+                                 help='Type of validation')
+
     deploy_action = subparsers.add_parser('deploy')
     deploy_action.add_argument('-c', '--components',
                                nargs='+',
