@@ -244,6 +244,14 @@ def wait_futures(future_list, skip_errors=False):
                 raise
 
 
+def _cleanup():
+    LOG.info("Deleting dangling images")
+    with contextlib.closing(docker.Client()) as dc:
+        for image in dc.images(filters={'dangling': True}, quiet=True):
+            LOG.debug("Deleting dangling image with ID: %s", image)
+            dc.remove_image(image)
+
+
 def _get_config():
     cfg = dict(CONF.images.items())
     if CONF.registry.address:
@@ -335,6 +343,7 @@ def build_components(components=None):
                 wait_futures(future_list, skip_errors=True)
                 raise
     finally:
+        _cleanup()
         build_succeeded = _get_summary(dockerfiles)
         shutil.rmtree(tmp_dir)
         if not build_succeeded:
