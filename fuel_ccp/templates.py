@@ -252,6 +252,12 @@ def serialize_deployment(name, spec, affinity):
         },
         "spec": {
             "replicas": 1,
+            "strategy": {
+                "rollingUpdate": {
+                    "maxSurge": 1,
+                    "maxUnavailable": 0
+                }
+            },
             "template": {
                 "metadata": {
                     "annotations": affinity,

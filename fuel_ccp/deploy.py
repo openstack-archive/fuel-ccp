@@ -44,7 +44,7 @@ def _update_container_volumes(cont, jvars):
                                                            jvars)
 
 
-def parse_role(service_dir, role, config):
+def parse_role(service_dir, role, config, update=False):
     service = role["service"]
     if service["name"] not in config.get("topology", {}):
         LOG.info("Service %s not in topology config, skipping deploy",
@@ -64,8 +64,8 @@ def parse_role(service_dir, role, config):
         daemon_cmd["name"] = cont["name"]
 
         _update_container_volumes(cont, config['configs'])
-        _create_pre_jobs(service, cont)
-        _create_post_jobs(service, cont)
+        _create_pre_jobs(service, cont, update=update)
+        _create_post_jobs(service, cont, update=update)
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
@@ -76,9 +76,9 @@ def parse_role(service_dir, role, config):
     else:
         obj = templates.serialize_deployment(service["name"], cont_spec,
                                              affinity)
-    kubernetes.create_object_from_definition(obj)
+    kubernetes.create_object_from_definition(obj, update=update)
 
-    _create_service(service, config["configs"])
+    _create_service(service, config["configs"], update)
 
 
 def _parse_workflows(service):
@@ -119,7 +119,7 @@ def _create_workflow(workflow, name):
         kubernetes.create_object_from_definition, template)
 
 
-def _create_service(service, config):
+def _create_service(service, config, update=False):
     template_ports = service.get("ports")
     if not template_ports:
         return
@@ -136,7 +136,7 @@ def _create_service(service, config):
         else:
             ports.append({"port": source_port, "name": name_port})
     template = templates.serialize_service(service["name"], ports)
-    kubernetes.create_object_from_definition(template)
+    kubernetes.create_object_from_definition(template, update=update)
 
 
 def _create_pre_commands(workflow, container):
@@ -170,23 +170,23 @@ def _is_single_job(job):
     return job.get("type", "local") == "single"
 
 
-def _create_pre_jobs(service, container):
+def _create_pre_jobs(service, container, update=False):
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            _create_job(service, container, job)
+            _create_job(service, container, job, update=update)
 
 
-def _create_post_jobs(service, container):
+def _create_post_jobs(service, container, update=False):
     for job in container.get("post", ()):
         if _is_single_job(job):
-            _create_job(service, container, job)
+            _create_job(service, container, job, update=update)
 
 
-def _create_job(service, container, job):
+def _create_job(service, container, job, update=False):
     cont_spec = templates.serialize_job_container_spec(container, job)
     pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
     job_spec = templates.serialize_job(job["name"], pod_spec)
-    kubernetes.create_object_from_definition(job_spec)
+    kubernetes.create_object_from_definition(job_spec, update=update)
 
 
 def _create_command(workflow, cmd):
@@ -268,7 +268,7 @@ def _create_meta_configmap(service):
         kubernetes.create_object_from_definition, template)
 
 
-def deploy_component(component, config):
+def deploy_component(component, config, update=False):
     service_dir = os.path.join(CONF.repositories.path, component, 'service')
 
     if not os.path.isdir(service_dir):
@@ -280,7 +280,7 @@ def deploy_component(component, config):
             with open(os.path.join(service_dir, service_file), "r") as f:
                 role_obj = yaml.load(f)
 
-            parse_role(service_dir, role_obj, config)
+            parse_role(service_dir, role_obj, config, update)
 
 
 def _make_topology(nodes, roles):
@@ -322,7 +322,7 @@ def _make_topology(nodes, roles):
 
 
 def _create_namespace(namespace):
-    if CONF.action.dry_run:
+    if getattr(CONF.action, 'dry_run', False):
         return
     client = kubernetes.get_client()
     api = kubernetes.get_v1_api(client)
@@ -353,10 +353,19 @@ def _create_openrc(config, namespace):
              os.getcwd(), namespace)
 
 
-def deploy_components(components=None):
+def deploy_components(components=None, update=False):
     if components is None:
         components = CONF.repositories.names
-    if CONF.action.export_dir:
+    else:
+        repositories_set = []
+        for component in components:
+            pattern = re.compile(re.escape(component))
+            matched_repos = list(filter(
+                pattern.search, CONF.repositories.names))
+            repositories_set.extend(matched_repos)
+        components = list(set(repositories_set))
+    
+    if getattr(CONF.action, 'export_dir', False):
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     config = utils.get_global_parameters("configs", "nodes", "roles")
@@ -370,7 +379,7 @@ def deploy_components(components=None):
     _create_start_script_configmap()
 
     for component in components:
-        deploy_component(component, config)
+        deploy_component(component, config, update)
 
     if 'fuel-ccp-keystone' in components:
         _create_openrc(config['configs'], namespace)
