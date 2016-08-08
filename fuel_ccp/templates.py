@@ -1,4 +1,5 @@
 import json
+import time
 
 from oslo_config import cfg
 
@@ -80,7 +81,11 @@ def serialize_daemon_container_spec(container):
         "name": container["name"],
         "image": _get_image_name(container["image"]),
         "command": _get_start_cmd(container["name"]),
-        "volumeMounts": serialize_volume_mounts(container)
+        "volumeMounts": serialize_volume_mounts(container),
+        "env": [{
+            "name": "VERSION",
+            "value": str(time.time())
+        }]
     }
     if container.get("probes", {}).get("readiness"):
         cont_spec["readinessProbe"] = {
@@ -252,6 +257,12 @@ def serialize_deployment(name, spec, affinity):
         },
         "spec": {
             "replicas": 1,
+            "strategy": {
+                "rollingUpdate": {
+                    "maxSurge": 1,
+                    "maxUnavailable": 0
+                }
+            },
             "template": {
                 "metadata": {
                     "annotations": affinity,

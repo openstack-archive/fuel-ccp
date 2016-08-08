@@ -23,6 +23,11 @@ def add_parsers(subparsers):
 
     subparsers.add_parser('fetch')
 
+    update_action = subparsers.add_parser('update')
+    update_action.add_argument('-c', '--components',
+                               nargs='+',
+                               help='MCP component to update')
+
     cleanup_action = subparsers.add_parser('cleanup')
     # Making auth url configurable at least until Ingress/LB support will
     # be implemented
