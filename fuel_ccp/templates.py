@@ -15,6 +15,8 @@ FILES_CONFIG = "files"
 META_CONFIG = "meta"
 ROLE_CONFIG = "role"
 
+ENTRYPOINT_PATH = "/opt/mcp_start_script/bin/start_script.py"
+
 
 def _get_image_name(image_name):
     image_name = "%s/%s:%s" % (CONF.images.namespace, image_name,
@@ -24,9 +26,12 @@ def _get_image_name(image_name):
     return image_name
 
 
-def _get_start_cmd(cmd_name):
-    return ["dumb-init", "python",
-            "/opt/mcp_start_script/bin/start_script.py", cmd_name]
+def _get_start_cmd(role_name):
+    return ["dumb-init", "python", ENTRYPOINT_PATH, "provision", role_name]
+
+
+def _get_readiness_cmd(role_name):
+    return ["python", ENTRYPOINT_PATH, "status", role_name]
 
 
 def serialize_configmap(name, data):
@@ -80,15 +85,14 @@ def serialize_daemon_container_spec(container):
         "name": container["name"],
         "image": _get_image_name(container["image"]),
         "command": _get_start_cmd(container["name"]),
-        "volumeMounts": serialize_volume_mounts(container)
-    }
-    if container.get("probes", {}).get("readiness"):
-        cont_spec["readinessProbe"] = {
+        "volumeMounts": serialize_volume_mounts(container),
+        "readinessProbe": {
             "exec": {
-                "command": [container["probes"]["readiness"]]
+                "command": _get_readiness_cmd(container["name"])
             },
             "timeoutSeconds": 1
         }
+    }
     if container.get("probes", {}).get("liveness"):
         cont_spec["livenessProbe"] = {
             "exec": {
