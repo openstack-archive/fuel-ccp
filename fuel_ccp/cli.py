@@ -8,6 +8,7 @@ from fuel_ccp import build
 from fuel_ccp import cleanup
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import show_dep
 
 
 CONF = cfg.CONF
@@ -39,6 +40,12 @@ def do_cleanup():
                     skip_os_cleanup=CONF.action.skip_os_cleanup)
 
 
+def do_show_dep():
+    if CONF.repositories.clone:
+        do_fetch()
+    show_dep.show_dep(CONF.action.component)
+
+
 def signal_handler(signo, frame):
     sys.exit(-signo)
 
@@ -50,7 +57,7 @@ def main():
     CONF(sys.argv[1:])
     logging.setup(CONF, 'fuel-ccp')
 
-    func = globals()['do_%s' % CONF.action.name]
+    func = globals()['do_%s' % CONF.action.name.replace('-', '_')]
     func()
 
 
