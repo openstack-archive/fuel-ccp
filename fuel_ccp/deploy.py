@@ -158,6 +158,9 @@ def _create_daemon(workflow, container):
     workflow["daemon"] = {}
     _fill_cmd(workflow["daemon"], daemon)
     _push_files_to_workflow(workflow, daemon.get("files"))
+    readiness_cmd = container.get("probes", {}).get("readiness")
+    if readiness_cmd:
+        workflow["readiness"] = readiness_cmd
 
 
 def _create_post_commands(workflow, container):
