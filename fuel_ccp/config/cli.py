@@ -33,6 +33,10 @@ def add_parsers(subparsers):
                                 action='store_true',
                                 help='Skip cleanup of OpenStack environment')
 
+    show_dep_action = subparsers.add_parser('show-dep')
+    show_dep_action.add_argument('component',
+                              help='MCP component to show dependencies')
+
 
 CONF.register_cli_opt(cfg.SubCommandOpt('action',
                                         handler=add_parsers))
