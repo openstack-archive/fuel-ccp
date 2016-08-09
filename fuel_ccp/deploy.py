@@ -356,6 +356,15 @@ def _create_openrc(config, namespace):
 def deploy_components(components=None):
     if components is None:
         components = CONF.repositories.names
+    else:
+        repositories_set = set()
+        for component in components:
+            pattern = re.compile(re.escape(component))
+            matched_repos = set(filter(
+                pattern.search, CONF.repositories.names))
+            repositories_set = repositories_set.union(matched_repos)
+        components = list(repositories_set)
+
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
