@@ -155,7 +155,8 @@ def push_dockerfile(dc, dockerfile):
             LOG.info('%s: %s' % (
                 dockerfile['name'], build_data['progress'].rstrip()))
 
-        if build_data.get('status') == 'Layer already exists':
+        if any(st in build_data.get('status', '') for st in [
+                'Layer already exists', 'Mounted from']):
             dockerfile['push_result'] = 'Exists'
         elif 'errorDetail' in build_data:
             LOG.error('%s: %s', dockerfile['name'],
