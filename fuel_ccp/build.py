@@ -71,7 +71,7 @@ def find_dockerfiles(repository_name, tmp_dir, config, match=True):
             path = create_rendered_dockerfile(path, name, tmp_dir, config)
         dockerfiles[name] = {
             'name': name,
-            'full_name': '%s/%s' % (namespace, name),
+            'full_name': '%s/%s:%s' % (namespace, name, CONF.images.tag),
             'path': path,
             'parent': None,
             'children': [],
@@ -204,8 +204,10 @@ def get_ready_image_names():
             matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
             if not matcher:
                 continue
-            ns, name = matcher.group("namespace"), matcher.group("name")
-            if CONF.images.namespace == ns:
+            ns = matcher.group("namespace")
+            name = matcher.group("name")
+            tag = matcher.group("tag")
+            if CONF.images.namespace == ns and CONF.images.tag == tag:
                 ready_images.append(name)
     return ready_images
 
