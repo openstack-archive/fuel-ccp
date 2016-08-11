@@ -133,13 +133,14 @@ def build_dockerfile(dc, dockerfile):
             ))
         build_data = json.loads(line.decode("UTF-8"))
         if 'stream' in build_data:
-            LOG.info('%s: %s' % (dockerfile['name'],
+            LOG.debug('%s: %s' % (dockerfile['name'],
                                  build_data['stream'].rstrip()))
             dockerfile['build_result'] = 'Success'
         if 'errorDetail' in build_data:
             LOG.error('%s: %s' % (dockerfile['name'],
                                   build_data['errorDetail']['message']))
             dockerfile['build_result'] = 'Failure'
+    LOG.info("%s: Build succeeded", dockerfile['name'])
 
 
 def push_dockerfile(dc, dockerfile):
@@ -151,22 +152,30 @@ def push_dockerfile(dc, dockerfile):
                         stream=True,
                         insecure_registry=CONF.registry.insecure):
         build_data = json.loads(line.decode("UTF-8"))
-        if build_data.get('progress'):
-            LOG.info('%s: %s' % (
-                dockerfile['name'], build_data['progress'].rstrip()))
 
         status = build_data.get('status', '')
-        if 'Layer already exists' in status or 'Mounted from' in status:
+
+        if status:
+            LOG.debug('%s: %s' % (dockerfile['name'], status))
+        if build_data.get('progress'):
+            LOG.debug('%s: %s' % (
+                dockerfile['name'], build_data['progress'].rstrip()))
+
+        if ('Layer already exists' in status and
+                not dockerfile['push_result']):
             dockerfile['push_result'] = 'Exists'
         elif 'errorDetail' in build_data:
             LOG.error('%s: %s', dockerfile['name'],
                       build_data['errorDetail']['message'])
             dockerfile['push_result'] = 'Failure'
-        elif build_data.get('status') == 'Pushed':
-            LOG.info('%s: pushed to the registry', dockerfile['name'])
+        elif status == 'Pushed' or 'Mounted from' in status:
             dockerfile['push_result'] = 'Success'
-    LOG.info("%s - Push into %s registry finished", dockerfile['name'],
-             CONF.registry.address)
+    if dockerfile['push_result'] == 'Success':
+        LOG.info("%s: Push into %s registry finished", dockerfile['name'],
+                 CONF.registry.address)
+    elif dockerfile['push_result'] == 'Exists':
+        LOG.info("%s: Already in %s registry", dockerfile['name'],
+                 CONF.registry.address)
 
 
 def process_dockerfile(dockerfile, executor, future_list, ready_images):
