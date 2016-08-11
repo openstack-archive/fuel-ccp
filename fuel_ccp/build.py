@@ -170,7 +170,8 @@ def push_dockerfile(dc, dockerfile):
 
 
 def process_dockerfile(dockerfile, executor, future_list, ready_images):
-    with contextlib.closing(docker.Client()) as dc:
+    with contextlib.closing(docker.Client(
+            timeout=CONF.builder.docker_timeout)) as dc:
         build_dockerfile(dc, dockerfile)
         if CONF.builder.push and CONF.registry.address:
             push_dockerfile(dc, dockerfile)
@@ -199,7 +200,8 @@ def match_not_ready_base_dockerfiles(dockerfile, ready_images):
 
 
 def get_ready_image_names():
-    with contextlib.closing(docker.Client()) as dc:
+    with contextlib.closing(docker.Client(
+            timeout=CONF.builder.docker_timeout)) as dc:
         ready_images = []
         for image in dc.images():
             matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])

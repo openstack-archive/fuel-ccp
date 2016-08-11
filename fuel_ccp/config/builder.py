@@ -22,7 +22,10 @@ builder_opts = [
                 help='Push to the Docker registry'),
     cfg.BoolOpt('no-cache',
                 default=False,
-                help='Dont use docker cache')
+                help='Dont use docker cache'),
+    cfg.IntOpt('docker-timeout',
+               default=300,
+               help='Docker request timeout, in seconds')
 ]
 builder_opt_group = cfg.OptGroup(name='builder',
                                  title='Images builder')
