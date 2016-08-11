@@ -14,7 +14,10 @@ registry_opts = [
                help='Username for Docker registry'),
     cfg.StrOpt('password',
                default='',
-               help='Password for Docker registry')
+               help='Password for Docker registry'),
+    cfg.IntOpt('timeout',
+               default=300,
+               help='Registry request timeout, in seconds')
 ]
 registry_opt_group = cfg.OptGroup(name='registry',
                                   title='Docker registry data')
