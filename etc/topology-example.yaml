@@ -43,3 +43,4 @@ roles:
     - kibana
   stacklight-collector:
     - heka
+    - stacklight-collector
