@@ -201,14 +201,15 @@ def get_ready_image_names():
     with contextlib.closing(docker.Client()) as dc:
         ready_images = []
         for image in dc.images():
-            matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
-            if not matcher:
-                continue
-            ns = matcher.group("namespace")
-            name = matcher.group("name")
-            tag = matcher.group("tag")
-            if CONF.images.namespace == ns and CONF.images.tag == tag:
-                ready_images.append(name)
+            if image["RepoTags"]:
+                matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
+                if not matcher:
+                    continue
+                ns = matcher.group("namespace")
+                name = matcher.group("name")
+                tag = matcher.group("tag")
+                if CONF.images.namespace == ns and CONF.images.tag == tag:
+                    ready_images.append(name)
     return ready_images
 
 
