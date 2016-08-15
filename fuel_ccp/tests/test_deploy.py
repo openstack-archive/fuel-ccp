@@ -320,6 +320,11 @@ class TestDeployParseWorkflow(base.TestCase):
 
 
 class TestDeployMakeTopology(base.TestCase):
+    def setUp(self):
+        super(TestDeployMakeTopology, self).setUp()
+        self.m_get_nodes = mock.patch("fuel_ccp.kubernetes.list_k8s_nodes")
+        self.m_get_nodes.start()
+
     def test_make_empty_topology(self):
         self.assertRaises(RuntimeError,
                           deploy._make_topology, None, None)
@@ -355,7 +360,11 @@ class TestDeployMakeTopology(base.TestCase):
             "nova-compute": ["node2", "node3"],
             "libvirtd": ["node2", "node3"]
         }
-        with mock.patch("fuel_ccp.kubernetes.list_k8s_nodes") as p:
+        with mock.patch("fuel_ccp.kubernetes.get_object_names") as p:
             p.return_value = node_list
             topology = deploy._make_topology(nodes, roles)
         self.assertDictEqual(expected_topology, topology)
+
+    def tearDown(self):
+        self.m_get_nodes.stop()
+        super(TestDeployMakeTopology, self).tearDown()
