@@ -8,6 +8,7 @@ from fuel_ccp import build
 from fuel_ccp import cleanup
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import status
 
 
 CONF = cfg.CONF
@@ -37,6 +38,11 @@ def do_fetch():
 def do_cleanup():
     cleanup.cleanup(auth_url=CONF.action.auth_url,
                     skip_os_cleanup=CONF.action.skip_os_cleanup)
+
+
+def do_status():
+    status.show_status()
+
 
 
 def signal_handler(signo, frame):

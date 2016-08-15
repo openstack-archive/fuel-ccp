@@ -298,11 +298,12 @@ def _make_topology(nodes, roles):
 
     # TODO(sreshetniak): add validation
     k8s_nodes = kubernetes.list_k8s_nodes()
+    k8s_node_names = kubernetes.get_object_names(k8s_nodes)
 
     def find_match(glob):
         matcher = re.compile(glob)
         nodes = []
-        for node in k8s_nodes:
+        for node in k8s_node_names:
             match = matcher.match(node)
             if match:
                 nodes.append(match.group(0))
