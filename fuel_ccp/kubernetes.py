@@ -89,11 +89,30 @@ def get_v1_api(client):
 
 def list_k8s_nodes():
     api = get_v1_api(get_client())
-    resp = api.list_namespaced_node()
-    nodes = []
-    for node in resp.items:
-        nodes.append(node.metadata.name)
-    return nodes
+    return api.list_namespaced_node()
+
+
+def list_cluster_daemonsets():
+    client = get_client()
+    api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
+    return api.list_namespaced_daemon_set(
+        namespace=CONF.kubernetes.namespace,
+        label_selector="mcp=true").items
+
+
+def list_cluster_deployments():
+    client = get_client()
+    api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
+    return api.list_namespaced_deployment(
+        namespace=CONF.kubernetes.namespace,
+        label_selector="mcp=true").items
+
+
+def get_object_names(items):
+    names = []
+    for item in items:
+        names.append(item.metadata.name)
+    return names
 
 
 def handle_exists(fct, *args, **kwargs):
