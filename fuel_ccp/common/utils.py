@@ -10,7 +10,7 @@ import fuel_ccp
 
 CONF = cfg.CONF
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')
-CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
+CONF.import_opt("global_config", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ def get_global_parameters(*config_groups):
                                   "service/files/defaults.yaml"))
 
     # And finaly we add cluster-wide globals conf, if provided.
-    if CONF.deploy_config:
-        paths.append(CONF.deploy_config)
+    if CONF.global_config:
+        paths.append(CONF.global_config)
 
     for path in paths:
         if os.path.isfile(path):

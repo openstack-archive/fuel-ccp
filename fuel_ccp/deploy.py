@@ -14,7 +14,6 @@ from fuel_ccp import templates
 CONF = cfg.CONF
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 CONF.import_opt("action", "fuel_ccp.config.cli")
-CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 
