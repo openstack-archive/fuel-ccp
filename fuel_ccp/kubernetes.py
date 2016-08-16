@@ -89,7 +89,7 @@ def get_v1_api(client):
 
 def list_k8s_nodes():
     api = get_v1_api(get_client())
-    return api.list_namespaced_node()
+    return api.list_namespaced_node().items
 
 
 def list_cluster_daemonsets():

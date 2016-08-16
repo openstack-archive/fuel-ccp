@@ -12,14 +12,13 @@ Example:
         ccp --config-file=~/ccp.conf show-dep heat-api
 """
 
-import os
 import re
 import sys
 
-import yaml
-
 from oslo_config import cfg
 from oslo_log import log as logging
+
+from fuel_ccp.common import utils
 
 
 CONF = cfg.CONF
@@ -52,30 +51,17 @@ class Node(object):
         return self.sort == 'service'
 
 
-def _get_deps_map():
+def get_deps_map(components_map=None):
     """Returns dependencies map."""
-    components = CONF.repositories.names
-    components_map = {}
-
-    for component in components:
-        service_dir = os.path.join(CONF.repositories.path,
-                                   component,
-                                   'service')
-        if not os.path.isdir(service_dir):
-            continue
-        for service_file in os.listdir(service_dir):
-            if YAML_FILE_RE.search(service_file):
-                LOG.debug("Parse role file: %s", service_file)
-                with open(os.path.join(service_dir, service_file), "r") as f:
-                    role_obj = yaml.load(f)
-                    components_map[role_obj['service']['name']] = role_obj
+    components_map = components_map or utils.get_components_map()
 
     deps_map = {}
     for service_name, service_map in components_map.items():
-        deps_map[service_name] = Node(service_name,
-                                      'service',
-                                      _parse_service_deps(service_map))
-        deps_map.update(_parse_pre_and_post_deps(service_map))
+        deps_map[service_name] = Node(
+            service_name, 'service', _parse_service_deps(
+                service_map['service_content']))
+        deps_map.update(_parse_pre_and_post_deps(
+            service_map['service_content']))
 
     return deps_map
 
@@ -136,8 +122,8 @@ def _calculate_service_deps(service_name, deps_map):
     return deps, job_parents
 
 
-def _get_deps(components):
-    deps_map = _get_deps_map()
+def get_deps(components, components_map=None):
+    deps_map = get_deps_map(components_map)
 
     result_deps = set()
     for service_name in components:
@@ -156,10 +142,11 @@ def _get_deps(components):
                 job_parents.update(parent_parents)
 
         result_deps.update(deps)
+    result_deps.add('etcd')
 
-    return list(result_deps - set(components))
+    return result_deps - set(components)
 
 
 def show_dep(components):
-    deps = _get_deps(components)
+    deps = get_deps(components)
     print(" ".join(deps))
