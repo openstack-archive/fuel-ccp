@@ -122,6 +122,7 @@ def find_dependencies(dockerfiles):
 
 
 def build_dockerfile(dc, dockerfile):
+    LOG.info("Starting %s container build", dockerfile['name'])
     for line in dc.build(rm=True,
                          forcerm=True,
                          nocache=CONF.builder.no_cache,
