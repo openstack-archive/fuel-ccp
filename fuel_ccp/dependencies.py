@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from fuel_ccp.common import utils
+from fuel_ccp.validation import base_validation
 
 
 CONF = cfg.CONF
@@ -147,5 +148,8 @@ def get_deps(components, components_map=None):
 
 
 def show_dep(components):
-    deps = get_deps(components)
+    components_map = utils.get_components_map()
+    base_validation.validate_components_names(components, components_map)
+
+    deps = get_deps(components, components_map)
     print(" ".join(deps))
