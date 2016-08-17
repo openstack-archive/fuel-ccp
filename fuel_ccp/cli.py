@@ -7,6 +7,7 @@ import sys
 from cliff import app
 from cliff import command
 from cliff import commandmanager
+from cliff import show
 
 import fuel_ccp
 from fuel_ccp import build
@@ -16,6 +17,7 @@ from fuel_ccp import config
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import status
 from fuel_ccp import validate
 from fuel_ccp.validation import service as validation_service
 
@@ -173,6 +175,16 @@ class ConfigDump(BaseCommand):
             do_fetch()
         config.load_component_defaults()
         config.dump_yaml(self.app.stdout)
+
+
+class ShowStatus(show.ShowOne):
+    def get_parser(self, *args, **kwargs):
+        parser = super(ShowStatus, self).get_parser(*args, **kwargs)
+        parser.set_defaults(**CONF.action._dict)
+        return parser
+
+    def take_action(self, parsed_args):
+        return status.show_status()
 
 
 def signal_handler(signo, frame):
