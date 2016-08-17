@@ -108,6 +108,15 @@ def list_cluster_deployments():
         label_selector="ccp=true").items
 
 
+def list_cluster_pods(service=None):
+    api = get_v1_api(get_client())
+    selector = "ccp=true"
+    if service:
+        selector = ",".join((selector, "app=%s" % service))
+    return api.list_namespaced_pod(namespace=CONF.kubernetes.namespace,
+                                   label_selector=selector).items
+
+
 def get_object_names(items):
     names = []
     for item in items:
