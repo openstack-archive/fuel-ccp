@@ -7,6 +7,7 @@ import sys
 from cliff import app
 from cliff import command
 from cliff import commandmanager
+from cliff import lister
 
 import fuel_ccp
 from fuel_ccp import build
@@ -16,6 +17,7 @@ from fuel_ccp import config
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import status
 from fuel_ccp import validate
 from fuel_ccp.validation import service as validation_service
 
@@ -173,6 +175,34 @@ class ConfigDump(BaseCommand):
             do_fetch()
         config.load_component_defaults()
         config.dump_yaml(self.app.stdout)
+
+
+class ShowStatus(lister.Lister):
+    """Show status of deployment"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ShowStatus, self).get_parser(*args, **kwargs)
+        parser.set_defaults(**CONF.action._dict)
+
+        parser.add_argument("-l", "--long",
+                            action="store_true",
+                            help="show all components status")
+        parser.add_argument("-s", "--short",
+                            action="store_true",
+                            help="show cluster status (ready or not)")
+        parser.add_argument("components",
+                            nargs="*",
+                            help="CCP conponents to show status")
+        return parser
+
+    def take_action(self, parsed_args):
+        config.load_component_defaults()
+        if parsed_args.long:
+            return status.show_long_status()
+        elif parsed_args.short:
+            return status.show_short_status()
+        else:
+            return status.show_long_status(parsed_args.components)
 
 
 def signal_handler(signo, frame):

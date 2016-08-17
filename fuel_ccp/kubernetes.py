@@ -137,6 +137,30 @@ def list_cluster_deployments():
         selector="ccp=true")
 
 
+def list_cluster_pods(service=None):
+    selector = "ccp=true"
+    if service:
+        selector = ",".join((selector, "app=%s" % service))
+    client = get_client()
+    return pykube.Pod.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector=str(selector))
+
+
+def list_cluster_jobs():
+    client = get_client()
+    return pykube.Job.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true")
+
+
+def list_cluster_services():
+    client = get_client()
+    return pykube.Service.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true")
+
+
 def get_object_names(items):
     names = []
     for item in items:
