@@ -33,6 +33,8 @@ def add_parsers(subparsers):
                                 action='store_true',
                                 help='Skip cleanup of OpenStack environment')
 
+    subparsers.add_parser("status")
+
 
 CONF.register_cli_opt(cfg.SubCommandOpt('action',
                                         handler=add_parsers))
