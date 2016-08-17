@@ -9,6 +9,7 @@ from fuel_ccp import cleanup
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
+from fuel_ccp import status
 
 
 CONF = cfg.CONF
@@ -44,6 +45,10 @@ def do_show_dep():
     if CONF.repositories.clone:
         do_fetch()
     dependencies.show_dep(CONF.action.components)
+
+
+def do_status():
+    status.show_status()
 
 
 def signal_handler(signo, frame):
