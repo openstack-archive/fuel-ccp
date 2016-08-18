@@ -1,5 +1,6 @@
 import os
 import pkg_resources
+import re
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -52,3 +53,26 @@ def get_global_parameters(*config_groups):
             LOG.debug("\"%s\" not found, skipping", path)
 
     return cfg
+
+
+def get_deploy_components_info():
+    yaml_file_re = re.compile(r'\.yaml$')
+    components_map = {}
+
+    for component in CONF.repositories.names:
+        service_dir = os.path.join(CONF.repositories.path,
+                                   component,
+                                   'service')
+        if not os.path.isdir(service_dir):
+            continue
+        for service_file in os.listdir(service_dir):
+            if yaml_file_re.search(service_file):
+                LOG.debug("Parse service definition: %s", service_file)
+                with open(os.path.join(service_dir, service_file), "r") as f:
+                    service_definition = yaml.load(f)
+                service_name = service_definition['service']['name']
+                components_map[service_name] = {
+                    'service_dir': service_dir,
+                    'service_content': service_definition
+                }
+    return components_map
