@@ -122,7 +122,12 @@ Parameters description
 |         | commands will be executed after daemon     |          |                  |         |
 |         | process has been started                   |          |                  |         |
 +---------+--------------------------------------------+----------+------------------+---------+
+| env     | An array of environment variables defined  | false    | env_ arrat       |         |
+|         | in kubernetes way.                         |          |                  |         |
+|         |                                            |          |                  |         |
++---------+--------------------------------------------+----------+------------------+---------+
 
+.. _env: http://kubernetes.io/docs/api-reference/v1/definitions/#_v1_envvar
 .. _volume:
 
 **volume**
