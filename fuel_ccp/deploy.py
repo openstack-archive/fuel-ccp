@@ -356,8 +356,9 @@ def _create_openrc(config, namespace):
 
 
 def deploy_components(components=None):
-    if components is None:
-        components = CONF.repositories.names
+    components_map = utils.get_components_map()
+    components = set(components) if components else set(components_map.keys())
+
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
@@ -372,7 +373,9 @@ def deploy_components(components=None):
     _create_start_script_configmap()
 
     for component in components:
-        deploy_component(component, config)
+        parse_role(components_map[component]['service_dir'],
+                   components_map[component]['service_content'],
+                   config)
 
-    if 'fuel-ccp-keystone' in components:
+    if 'keystone' in components:
         _create_openrc(config['configs'], namespace)

@@ -6,9 +6,9 @@ from oslo_log import log as logging
 
 from fuel_ccp import build
 from fuel_ccp import cleanup
+from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
-from fuel_ccp import show_dep
 
 
 CONF = cfg.CONF
@@ -43,7 +43,7 @@ def do_cleanup():
 def do_show_dep():
     if CONF.repositories.clone:
         do_fetch()
-    show_dep.show_dep(CONF.action.components)
+    dependencies.show_dep(CONF.action.components)
 
 
 def signal_handler(signo, frame):
