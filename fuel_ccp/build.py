@@ -135,11 +135,12 @@ def build_dockerfile(dc, dockerfile):
         if 'stream' in build_data:
             LOG.debug('%s: %s' % (dockerfile['name'],
                                   build_data['stream'].rstrip()))
-            dockerfile['build_result'] = 'Success'
         if 'errorDetail' in build_data:
             LOG.error('%s: %s' % (dockerfile['name'],
                                   build_data['errorDetail']['message']))
             dockerfile['build_result'] = 'Failure'
+            return
+    dockerfile['build_result'] = 'Success'
     LOG.info("%s: Build succeeded", dockerfile['name'])
 
 
