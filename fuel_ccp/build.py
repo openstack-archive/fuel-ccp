@@ -144,6 +144,11 @@ def build_dockerfile(dc, dockerfile):
 
 
 def push_dockerfile(dc, dockerfile):
+    if dockerfile['build_result'] == 'Failure':
+        dockerfile['push_result'] = 'Failure'
+        LOG.error("%s: Push will be skipped due to build failure",
+                  dockerfile['name'])
+        return
     if CONF.registry.username and CONF.registry.password:
         dc.login(username=CONF.registry.username,
                  password=CONF.registry.password,
