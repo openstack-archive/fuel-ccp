@@ -10,8 +10,6 @@
 
 KUBE_CMD=`which kubectl`
 
-set -e
-
 if [ -z $KUBE_CMD ]; then
     echo "kubectl not found"
     exit 1
@@ -22,4 +20,42 @@ if [ $# -ne 0 ];then
 fi
 
 $KUBE_CMD create $SRV_OPT -f registry-pod.yaml
+if [ $? -ne 0 ]; then
+    exit
+fi
+
 $KUBE_CMD create $SRV_OPT -f registry-service.yaml
+if [ $? -ne 0 ]; then
+    exit
+fi
+
+# Waiting for status Running
+while true; do
+    echo "Waiting for 'Running' status"
+    $KUBE_CMD describe pod registry | grep -q "Status:.*Running"
+    if [ $? -eq 0 ]; then
+        break
+    fi
+    sleep 3
+
+done
+
+# Waiting for readiness
+while true; do
+    echo "Waiting for 'Ready' condition"
+    EXIT_LOOP=1
+    for STATUS in `${KUBE_CMD} describe pod registry | grep  Ready | tr -d ':' | awk '{print $2}'`;
+    do
+        if [ "$STATUS" != "True" ]
+        then
+            EXIT_LOOP=0
+        fi
+    done
+
+    if [ "$EXIT_LOOP" -eq 1 ]; then
+        break
+    fi
+    sleep 3
+done
+
+echo "Registy service is ready"
