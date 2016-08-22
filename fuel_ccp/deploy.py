@@ -269,21 +269,6 @@ def _create_meta_configmap(service):
         kubernetes.create_object_from_definition, template)
 
 
-def deploy_component(component, config):
-    service_dir = os.path.join(CONF.repositories.path, component, 'service')
-
-    if not os.path.isdir(service_dir):
-        return
-
-    for service_file in os.listdir(service_dir):
-        if YAML_FILE_RE.search(service_file):
-            LOG.debug("Parse role file: %s", service_file)
-            with open(os.path.join(service_dir, service_file), "r") as f:
-                role_obj = yaml.load(f)
-
-            parse_role(service_dir, role_obj, config)
-
-
 def _make_topology(nodes, roles):
     failed = False
     # TODO(sreshetniak): move it to validation
