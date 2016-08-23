@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 import docker
+import git
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -29,12 +30,32 @@ _SHUTDOWN = False
 
 
 def create_rendered_dockerfile(path, name, tmp_path, config):
+    def copy_sources(project_name, cont_dir):
+        tmp_dir = os.path.join(tmp_path, name, project_name)
+
+        git_url = config['sources'].get(project_name, {}).get('git_url')
+        if git_url:
+            LOG.info('%s: Cloning repository "%s"', name, git_url)
+            repo = git.Repo.clone_from(git_url, tmp_dir)
+            ref = config['sources'][project_name]['git_ref']
+            LOG.info('%s: Changing reference to "%s"', name, ref)
+            repo.git.checkout(ref)
+            LOG.info('%s: Repository %s has been cloned', name, git_url)
+
+        source_dir = config['sources'].get(project_name, {}).get('source_dir')
+        if source_dir:
+            LOG.info('%s: Using local directory %s', name, source_dir)
+            shutil.copytree(source_dir, tmp_dir)
+
+        return 'COPY %s %s' % (project_name, cont_dir)
+
     LOG.info('%s: Rendering dockerfile', name)
-    content = jinja_utils.jinja_render(path, config)
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
     os.makedirs(dest_dir)
     dockerfilename = os.path.join(dest_dir, 'Dockerfile')
+    content = jinja_utils.jinja_render(
+        path, config['render'], [copy_sources])
     with open(dockerfilename, 'w') as f:
         f.write(content)
 
@@ -270,11 +291,14 @@ def wait_futures(future_list, skip_errors=False):
 
 
 def _get_config():
-    cfg = dict(CONF.images.items())
+    cfg = {'render': dict(CONF.images.items())}
     if CONF.registry.address:
-        cfg['namespace'] = '%s/%s' % (CONF.registry.address, cfg['namespace'])
+        cfg['render']['namespace'] = '%s/%s' % (
+            CONF.registry.address, cfg['render']['namespace'])
 
-    cfg.update(utils.get_global_parameters('versions')["versions"])
+    global_params = utils.get_global_parameters('versions', 'sources')
+    cfg['render'].update(global_params['versions'])
+    cfg['sources'] = global_params['sources']
 
     return cfg
 
