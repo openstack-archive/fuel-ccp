@@ -28,7 +28,16 @@ LOG = logging.getLogger(__name__)
 _SHUTDOWN = False
 
 
+def render_dockerfiles(dockerfiles, tmp_dir, config):
+    for df_name, df in dockerfiles.items():
+        if df['match']:
+            path = create_rendered_dockerfile(
+                df['path'], df['name'], tmp_dir, config)
+            dockerfiles[df_name]['path'] = path
+
+
 def create_rendered_dockerfile(path, name, tmp_path, config):
+    LOG.info('%s: Rendering dockerfile', name)
     content = jinja_utils.jinja_render(path, config)
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
@@ -49,7 +58,7 @@ def create_rendered_dockerfile(path, name, tmp_path, config):
     return dockerfilename
 
 
-def find_dockerfiles(repository_name, tmp_dir, config, match=True):
+def find_dockerfiles(repository_name, match=True):
     dockerfiles = {}
     repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
@@ -60,15 +69,9 @@ def find_dockerfiles(repository_name, tmp_dir, config, match=True):
     for root, __, files in os.walk(repository_dir):
         if 'Dockerfile.j2' in files:
             path = os.path.join(root, 'Dockerfile.j2')
-            is_jinja2 = True
-        elif 'Dockerfile' in files:
-            path = os.path.join(root, 'Dockerfile')
-            is_jinja2 = False
         else:
             continue
         name = os.path.basename(os.path.dirname(path))
-        if is_jinja2:
-            path = create_rendered_dockerfile(path, name, tmp_dir, config)
         dockerfiles[name] = {
             'name': name,
             'full_name': '%s/%s:%s' % (namespace, name, CONF.images.tag),
@@ -95,8 +98,13 @@ IMAGE_FULL_NAME_RE = r"((?P<namespace>[\w:\.-]+)/){0,2}" \
                      "(?P<name>[\w_-]+)" \
                      "(:(?P<tag>[\w_\.-]+))?"
 IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
+# This regex is needed for matching not yet rendered images
+NOT_RENDERED_IMAGE_PATTERN = (r"((?P<namespace>[\w:\.\-}{ ]+)/){0,2}"
+                              r"(?P<name>[\w_\-}{ ]+)"
+                              r"(:(?P<tag>[\w_\.\-}{ ]+))?")
+
 DOCKER_FILE_FROM_PATTERN = re.compile(
-    r"^\s?FROM\s+{}\s?$".format(IMAGE_FULL_NAME_RE), re.MULTILINE
+    r"^\s?FROM\s+{}\s?$".format(NOT_RENDERED_IMAGE_PATTERN), re.MULTILINE
 )
 
 
@@ -112,10 +120,9 @@ def find_dependencies(dockerfiles):
             )
 
         parent_ns = matcher.group("namespace")
-        parent_name = matcher.group("name")
-
-        if CONF.images.namespace != parent_ns:
+        if not parent_ns:
             continue
+        parent_name = matcher.group("name")
 
         dockerfile['parent'] = dockerfiles[parent_name]
         dockerfiles[parent_name]['children'].append(dockerfile)
@@ -324,8 +331,7 @@ def build_components(components=None):
         match = not bool(components)
         for repository_name in CONF.repositories.names:
             dockerfiles.update(
-                find_dockerfiles(
-                    repository_name, tmp_dir, config, match=match))
+                find_dockerfiles(repository_name, match=match))
 
         find_dependencies(dockerfiles)
 
@@ -335,6 +341,8 @@ def build_components(components=None):
             for component in components:
                 match_dockerfiles_by_component(dockerfiles, component,
                                                ready_images)
+
+        render_dockerfiles(dockerfiles, tmp_dir, config)
 
         with futures.ThreadPoolExecutor(max_workers=CONF.builder.workers) as (
                 executor):
