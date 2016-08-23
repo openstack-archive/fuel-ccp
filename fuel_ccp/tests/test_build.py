@@ -92,29 +92,34 @@ class TestBuild(base.TestCase):
     @mock.patch("docker.Client")
     @mock.patch("fuel_ccp.build.build_dockerfile")
     @mock.patch("fuel_ccp.build.submit_dockerfile_processing")
-    def test_process_dockerfile_middle(self, submit_dockerfile_processing_mock,
-                                       build_dockerfile_mock, dc_mock):
+    @mock.patch("fuel_ccp.build.create_rendered_dockerfile")
+    def test_process_dockerfile_middle(
+            self, render_mock, submit_dockerfile_processing_mock,
+            build_dockerfile_mock, dc_mock):
         dockerfiles = {
             'root': {
                 'name': 'root',
                 'full_name': 'ms/root',
                 'parent': None,
                 'children': ['middle'],
-                'match': False
+                'match': False,
+                'path': '/tmp'
             },
             'middle': {
                 'name': 'middle',
                 'full_name': 'ms/middle',
                 'parent': 'root',
                 'children': ['leaf'],
-                'match': True
+                'match': True,
+                'path': '/tmp'
             },
             'leaf': {
                 'name': 'leaf',
                 'full_name': 'ms/leaf',
                 'parent': 'middle',
                 'children': [],
-                'match': False
+                'match': False,
+                'path': '/tmp'
             }
         }
 
@@ -126,17 +131,20 @@ class TestBuild(base.TestCase):
                     dockerfiles[dockerfile['children'][i]]
                 )
 
-        build.process_dockerfile(dockerfiles["middle"], mock.ANY, mock.ANY,
-                                 ["root", "middle", "leaf"])
+        build.process_dockerfile(
+            dockerfiles["middle"], mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+            ["root", "middle", "leaf"])
 
         submit_dockerfile_processing_mock.assert_called_once_with(
-            dockerfiles["leaf"], mock.ANY, mock.ANY, mock.ANY)
+            dockerfiles["leaf"], mock.ANY, mock.ANY, mock.ANY,
+            mock.ANY, ["root", "middle", "leaf"])
 
     @mock.patch("docker.Client")
     @mock.patch("fuel_ccp.build.build_dockerfile")
     @mock.patch("fuel_ccp.build.submit_dockerfile_processing")
+    @mock.patch("fuel_ccp.build.create_rendered_dockerfile")
     def test_process_dockerfile_middle_keep_consistency_off(
-            self, submit_dockerfile_processing_mock,
+            self, render_mock, submit_dockerfile_processing_mock,
             build_dockerfile_mock, dc_mock):
         dockerfiles = {
             'root': {
@@ -144,21 +152,24 @@ class TestBuild(base.TestCase):
                 'full_name': 'ms/root',
                 'parent': None,
                 'children': ['middle'],
-                'match': False
+                'match': False,
+                'path': '/tmp'
             },
             'middle': {
                 'name': 'middle',
                 'full_name': 'ms/middle',
                 'parent': 'root',
                 'children': ['leaf'],
-                'match': True
+                'match': True,
+                'path': '/tmp'
             },
             'leaf': {
                 'name': 'leaf',
                 'full_name': 'ms/leaf',
                 'parent': 'middle',
                 'children': [],
-                'match': False
+                'match': False,
+                'path': '/tmp'
             }
         }
 
@@ -172,7 +183,8 @@ class TestBuild(base.TestCase):
                     dockerfiles[dockerfile['children'][i]]
                 )
 
-        build.process_dockerfile(dockerfiles["middle"], mock.ANY, mock.ANY, [])
+        build.process_dockerfile(dockerfiles["middle"], mock.ANY, mock.ANY,
+                                 mock.ANY, mock.ANY, [])
 
         self.assertTrue(not submit_dockerfile_processing_mock.called)
 
