@@ -29,6 +29,7 @@ _SHUTDOWN = False
 
 
 def create_rendered_dockerfile(path, name, tmp_path, config):
+    LOG.info('%s: Rendering dockerfile', name)
     content = jinja_utils.jinja_render(path, config)
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
@@ -49,7 +50,7 @@ def create_rendered_dockerfile(path, name, tmp_path, config):
     return dockerfilename
 
 
-def find_dockerfiles(repository_name, tmp_dir, config, match=True):
+def find_dockerfiles(repository_name, match=True):
     dockerfiles = {}
     repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
@@ -60,15 +61,9 @@ def find_dockerfiles(repository_name, tmp_dir, config, match=True):
     for root, __, files in os.walk(repository_dir):
         if 'Dockerfile.j2' in files:
             path = os.path.join(root, 'Dockerfile.j2')
-            is_jinja2 = True
-        elif 'Dockerfile' in files:
-            path = os.path.join(root, 'Dockerfile')
-            is_jinja2 = False
         else:
             continue
         name = os.path.basename(os.path.dirname(path))
-        if is_jinja2:
-            path = create_rendered_dockerfile(path, name, tmp_dir, config)
         dockerfiles[name] = {
             'name': name,
             'full_name': '%s/%s:%s' % (namespace, name, CONF.images.tag),
@@ -95,8 +90,13 @@ IMAGE_FULL_NAME_RE = r"((?P<namespace>[\w:\.-]+)/){0,2}" \
                      "(?P<name>[\w_-]+)" \
                      "(:(?P<tag>[\w_\.-]+))?"
 IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
+# This regex is needed for matching not yet rendered images
+NOT_RENDERED_IMAGE_PATTERN = (r"((?P<namespace>[\w:\.\-}{ ]+)/){0,2}"
+                              r"(?P<name>[\w_\-}{ ]+)"
+                              r"(:(?P<tag>[\w_\.\-}{ ]+))?")
+
 DOCKER_FILE_FROM_PATTERN = re.compile(
-    r"^\s?FROM\s+{}\s?$".format(IMAGE_FULL_NAME_RE), re.MULTILINE
+    r"^\s?FROM\s+{}\s?$".format(NOT_RENDERED_IMAGE_PATTERN), re.MULTILINE
 )
 
 
@@ -112,10 +112,9 @@ def find_dependencies(dockerfiles):
             )
 
         parent_ns = matcher.group("namespace")
-        parent_name = matcher.group("name")
-
-        if CONF.images.namespace != parent_ns:
+        if not parent_ns:
             continue
+        parent_name = matcher.group("name")
 
         dockerfile['parent'] = dockerfiles[parent_name]
         dockerfiles[parent_name]['children'].append(dockerfile)
@@ -184,7 +183,11 @@ def push_dockerfile(dc, dockerfile):
                  CONF.registry.address)
 
 
-def process_dockerfile(dockerfile, executor, future_list, ready_images):
+def process_dockerfile(dockerfile, config, tmp_dir, executor, future_list,
+                       ready_images):
+    path = create_rendered_dockerfile(
+                dockerfile['path'], dockerfile['name'], tmp_dir, config)
+    dockerfile['path'] = path
     with contextlib.closing(docker.Client(
             timeout=CONF.registry.timeout)) as dc:
         build_dockerfile(dc, dockerfile)
@@ -194,14 +197,15 @@ def process_dockerfile(dockerfile, executor, future_list, ready_images):
     for child in dockerfile['children']:
         if child['match'] or (CONF.builder.keep_image_tree_consistency and
                               child['name'] in ready_images):
-            submit_dockerfile_processing(child, executor, future_list,
-                                         ready_images)
+            submit_dockerfile_processing(child, executor, config, tmp_dir,
+                                         future_list, ready_images)
 
 
-def submit_dockerfile_processing(dockerfile, executor, future_list,
-                                 ready_images):
+def submit_dockerfile_processing(dockerfile, config, tmp_dir, executor,
+                                 future_list, ready_images):
     future_list.append(executor.submit(
-        process_dockerfile, dockerfile, executor, future_list, ready_images
+        process_dockerfile, dockerfile, config, tmp_dir,
+        executor, future_list, ready_images
     ))
 
 
@@ -324,8 +328,7 @@ def build_components(components=None):
         match = not bool(components)
         for repository_name in CONF.repositories.names:
             dockerfiles.update(
-                find_dockerfiles(
-                    repository_name, tmp_dir, config, match=match))
+                find_dockerfiles(repository_name, match=match))
 
         find_dependencies(dockerfiles)
 
@@ -344,8 +347,9 @@ def build_components(components=None):
                     if dockerfile['match'] and (
                             dockerfile['parent'] is None or
                             not dockerfile['parent']['match']):
-                        submit_dockerfile_processing(dockerfile, executor,
-                                                     future_list, ready_images)
+                        submit_dockerfile_processing(
+                            dockerfile, tmp_dir, config, executor,
+                            future_list, ready_images)
 
                 wait_futures(future_list)
             except SystemExit:
