@@ -14,13 +14,15 @@ LOG = logging.getLogger(__name__)
 FETCH_TIMEOUT = 2 ** 16  # in seconds
 
 
-def fetch_repository(repository_name):
+def fetch_repository(repository_name, ref=None):
     dest_dir = os.path.join(CONF.repositories.path, repository_name)
     if os.path.isdir(dest_dir):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
     git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-    git.Repo.clone_from(git_url, dest_dir)
+    repo = git.Repo.clone_from(git_url, dest_dir)
+    if ref:
+        repo.head.reference = repo.commit(ref)
     LOG.info('Cloned %s repo', repository_name)
 
 
