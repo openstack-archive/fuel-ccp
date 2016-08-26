@@ -304,9 +304,10 @@ def _make_topology(nodes, roles):
             roles_to_node[role].extend(matched_nodes)
     service_to_node = {}
     for role in roles.keys():
-        for svc in roles[role]:
-            service_to_node.setdefault(svc, [])
-            service_to_node[svc].extend(roles_to_node[role])
+        if role in roles_to_node:
+            for svc in roles[role]:
+                service_to_node.setdefault(svc, [])
+                service_to_node[svc].extend(roles_to_node[role])
     return service_to_node
 
 
