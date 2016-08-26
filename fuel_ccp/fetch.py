@@ -7,7 +7,8 @@ from oslo_log import log as logging
 
 
 CONF = cfg.CONF
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+group = cfg.OptGroup('repositories')
+CONF.import_group(group, 'fuel_ccp.config.repositories')
 
 LOG = logging.getLogger(__name__)
 
@@ -19,15 +20,28 @@ def fetch_repository(repository_name):
     if os.path.isdir(dest_dir):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
-    git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-    git.Repo.clone_from(git_url, dest_dir)
-    LOG.info('Cloned %s repo', repository_name)
+    name = repository_name.replace('-', '_')
+    git_url = getattr(CONF.repositories, name, None)
+    if git_url:
+        git.Repo.clone_from(git_url, dest_dir)
+        LOG.info('Cloned %s repo', repository_name)
+    else:
+        LOG.error('Repository "%s" is unknown.' % repository_name)
 
 
-def fetch_repositories(repository_names=None):
-    if repository_names is None:
-        repository_names = CONF.repositories.names
+def register_repositories_as_options(repository_names=None):
+    options = []
+    for repo in repository_names:
+        # skip if an option is already registered
+        if not hasattr(CONF, repo):
+            url = '$protocol://$username@$hostname:$port/$project/'
+            options.append(cfg.StrOpt(repo, default=url + repo))
+    CONF.register_opts(options, group)
 
+
+def fetch_repositories(repository_names=CONF.repositories.names):
+
+    register_repositories_as_options(repository_names)
     LOG.info('Cloning repositories into %s', CONF.repositories.path)
 
     errors = 0

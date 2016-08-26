@@ -26,6 +26,7 @@ class TestFetch(base.TestCase):
 
     def test_fetch_default_repositories(self, m_clone):
         # All repos except ms-openstack-base
+
         components = ['fuel-ccp-debian-base',
                       'fuel-ccp-entrypoint',
                       'fuel-ccp-etcd',
@@ -38,6 +39,8 @@ class TestFetch(base.TestCase):
                       'fuel-ccp-nova',
                       'fuel-ccp-rabbitmq',
                       'fuel-ccp-stacklight']
+
+        fetch.register_repositories_as_options(components)
         expected_calls = [
             mock.call('https://%s@review.openstack.org:443/openstack/%s' % (
                 '', component), os.path.join(self.tmp_path, component))
