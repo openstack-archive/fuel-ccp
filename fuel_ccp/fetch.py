@@ -5,13 +5,19 @@ import git
 from oslo_config import cfg
 from oslo_log import log as logging
 
-
 CONF = cfg.CONF
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
+group = cfg.OptGroup('repositories')
+CONF.import_group(group, 'fuel_ccp.config.repositories')
 
 LOG = logging.getLogger(__name__)
 
 FETCH_TIMEOUT = 2 ** 16  # in seconds
+
+
+def register_repository(name):
+    url = '$protocol://$username@$hostname:$port/$project/'
+    opt = cfg.StrOpt(name=name, default=url + name)
+    CONF.register_opt(opt, group)
 
 
 def fetch_repository(repository_name):
@@ -19,17 +25,16 @@ def fetch_repository(repository_name):
     if os.path.isdir(dest_dir):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
-    git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
+    opt_name = repository_name.replace('-', '_')
+    if opt_name not in CONF.repositories:
+        register_repository(repository_name)
+    git_url = getattr(CONF.repositories, opt_name)
     git.Repo.clone_from(git_url, dest_dir)
     LOG.info('Cloned %s repo', repository_name)
 
 
-def fetch_repositories(repository_names=None):
-    if repository_names is None:
-        repository_names = CONF.repositories.names
-
+def fetch_repositories(repository_names=CONF.repositories.names):
     LOG.info('Cloning repositories into %s', CONF.repositories.path)
-
     errors = 0
     with futures.ThreadPoolExecutor(
             max_workers=CONF.repositories.clone_concurrency) as executor:

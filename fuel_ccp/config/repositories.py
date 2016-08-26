@@ -19,6 +19,7 @@ DEFAULT_REPOS = ['fuel-ccp-debian-base',
                  'fuel-ccp-stacklight']
 
 CONF = cfg.CONF
+
 repositories_opts = [
     cfg.BoolOpt('clone',
                 default=True,
@@ -52,11 +53,6 @@ repositories_opts = [
                 default=DEFAULT_REPOS,
                 help='List of repository names'),
 ]
-
-for repo in DEFAULT_REPOS:
-    url = '$protocol://$username@$hostname:$port/$project/'
-    option = cfg.StrOpt(repo, default=url + repo)
-    repositories_opts.append(option)
 
 repositories_opt_group = cfg.OptGroup(name='repositories',
                                       title='Git repositories for components')
