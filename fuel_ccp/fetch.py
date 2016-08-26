@@ -19,9 +19,13 @@ def fetch_repository(repository_name):
     if os.path.isdir(dest_dir):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
-    git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-    git.Repo.clone_from(git_url, dest_dir)
-    LOG.info('Cloned %s repo', repository_name)
+    name = repository_name.replace('-', '_')
+    git_url = getattr(CONF.repositories, name, None)
+    if git_url:
+        git.Repo.clone_from(git_url, dest_dir)
+        LOG.info('Cloned %s repo', repository_name)
+    else:
+        LOG.error('Repository with name %s does not exist.' % repository_name)
 
 
 def fetch_repositories(repository_names=None):
