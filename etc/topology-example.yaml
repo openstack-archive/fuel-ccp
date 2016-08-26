@@ -46,3 +46,4 @@ roles:
   stacklight-collector:
     - heka
     - stacklight-collector
+    - cron
