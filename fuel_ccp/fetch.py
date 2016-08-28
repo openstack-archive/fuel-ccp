@@ -20,7 +20,7 @@ def fetch_repository(repository_name):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
     git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-    git.Repo.clone_from(git_url, dest_dir)
+    git.Repo.clone_from(git_url, dest_dir, depth=1)
     LOG.info('Cloned %s repo', repository_name)
 
 
