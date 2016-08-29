@@ -53,13 +53,19 @@ repositories_opts = [
                 help='List of repository names'),
 ]
 
-for repo in DEFAULT_REPOS:
-    url = '$protocol://$username@$hostname:$port/$project/'
-    option = cfg.StrOpt(repo, default=url + repo)
-    repositories_opts.append(option)
-
 repositories_opt_group = cfg.OptGroup(name='repositories',
                                       title='Git repositories for components')
 CONF.register_group(repositories_opt_group)
 CONF.register_cli_opts(repositories_opts, repositories_opt_group)
 CONF.register_opts(repositories_opts, repositories_opt_group)
+
+repositories_url_opts = []
+for repo in DEFAULT_REPOS:
+    if CONF.repositories.username:
+        url = '$protocol://$username@$hostname:$port/$project/'
+    else:
+        url = '$protocol://$hostname:$port/$project/'
+    option = cfg.StrOpt(repo, default=url + repo)
+    repositories_url_opts.append(option)
+
+CONF.register_opts(repositories_url_opts, repositories_opt_group)
