@@ -15,7 +15,7 @@ FILES_CONFIG = "files"
 META_CONFIG = "meta"
 ROLE_CONFIG = "role"
 
-ENTRYPOINT_PATH = "/opt/mcp_start_script/bin/start_script.py"
+ENTRYPOINT_PATH = "/opt/ccp_start_script/bin/start_script.py"
 
 
 def _get_image_name(image_name):
@@ -41,7 +41,7 @@ def serialize_configmap(name, data):
         "metadata": {
             "name": name,
             "labels": {
-                "mcp": "true"
+                "ccp": "true"
             }
         },
         "data": data
@@ -52,23 +52,23 @@ def serialize_volume_mounts(container):
     spec = [
         {
             "name": GLOBAL_CONFIG,
-            "mountPath": "/etc/mcp/%s" % GLOBAL_CONFIG
+            "mountPath": "/etc/ccp/%s" % GLOBAL_CONFIG
         },
         {
             "name": ROLE_CONFIG,
-            "mountPath": "/etc/mcp/%s" % ROLE_CONFIG
+            "mountPath": "/etc/ccp/%s" % ROLE_CONFIG
         },
         {
             "name": META_CONFIG,
-            "mountPath": "/etc/mcp/%s" % META_CONFIG
+            "mountPath": "/etc/ccp/%s" % META_CONFIG
         },
         {
             "name": SCRIPT_CONFIG,
-            "mountPath": "/opt/mcp_start_script/bin"
+            "mountPath": "/opt/ccp_start_script/bin"
         },
         {
             "name": FILES_CONFIG,
-            "mountPath": "/etc/mcp/%s" % FILES_CONFIG
+            "mountPath": "/etc/ccp/%s" % FILES_CONFIG
         }
     ]
     for v in container.get("volumes", ()):
@@ -240,7 +240,7 @@ def serialize_job(name, spec):
         "metadata": {
             "name": name,
             "labels": {
-                "mcp": "true"
+                "ccp": "true"
             }
         },
         "spec": {
@@ -262,7 +262,7 @@ def serialize_deployment(name, spec, affinity):
                 "metadata": {
                     "annotations": affinity,
                     "labels": {
-                        "mcp": "true",
+                        "ccp": "true",
                         "app": name
                     }
                 },
@@ -284,7 +284,7 @@ def serialize_daemonset(name, spec, affinity):
                 "metadata": {
                     "annotations": affinity,
                     "labels": {
-                        "mcp": "true",
+                        "ccp": "true",
                         "app": name
                     }
                 },
@@ -327,7 +327,7 @@ def serialize_service(name, ports):
         "metadata": {
             "name": name,
             "labels": {
-                "mcp": "true"
+                "ccp": "true"
             }
         },
         "spec": {

@@ -97,7 +97,7 @@ def list_cluster_daemonsets():
     api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
     return api.list_namespaced_daemon_set(
         namespace=CONF.kubernetes.namespace,
-        label_selector="mcp=true").items
+        label_selector="ccp=true").items
 
 
 def list_cluster_deployments():
@@ -105,7 +105,7 @@ def list_cluster_deployments():
     api = apisextensionsvbeta_api.ApisextensionsvbetaApi(client)
     return api.list_namespaced_deployment(
         namespace=CONF.kubernetes.namespace,
-        label_selector="mcp=true").items
+        label_selector="ccp=true").items
 
 
 def get_object_names(items):

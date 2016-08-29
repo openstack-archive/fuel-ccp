@@ -8,12 +8,12 @@ def add_parsers(subparsers):
     build_action = subparsers.add_parser('build')
     build_action.add_argument('-c', '--components',
                               nargs='+',
-                              help='MCP component to build')
+                              help='CCP component to build')
 
     deploy_action = subparsers.add_parser('deploy')
     deploy_action.add_argument('-c', '--components',
                                nargs='+',
-                               help='MCP component to deploy')
+                               help='CCP component to deploy')
     deploy_action.add_argument("--dry-run",
                                action='store_true',
                                help="Print k8s objects definitions without"

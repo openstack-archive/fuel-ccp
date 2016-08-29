@@ -177,7 +177,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    mcp: "true"
+    ccp: "true"
   name: foo
 spec:
   ports:
