@@ -296,7 +296,7 @@ def _make_topology(nodes, roles):
         for node in k8s_node_names:
             match = matcher.match(node)
             if match:
-                nodes.append(match.group(0))
+                nodes.append(node)
         return nodes
 
     roles_to_node = {}
