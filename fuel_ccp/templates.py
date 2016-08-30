@@ -254,7 +254,7 @@ def serialize_job(name, spec):
     }
 
 
-def serialize_deployment(name, spec, affinity):
+def serialize_deployment(name, spec, affinity, replicas):
     return {
         "apiVersion": "extensions/v1beta1",
         "kind": "Deployment",
@@ -262,7 +262,7 @@ def serialize_deployment(name, spec, affinity):
             "name": name
         },
         "spec": {
-            "replicas": 1,
+            "replicas": replicas,
             "strategy": {
                 "rollingUpdate": {
                     "maxSurge": 1,
@@ -313,7 +313,7 @@ def serialize_affinity(service, topology):
                     "matchExpressions": [{
                         "key": "kubernetes.io/hostname",
                         "operator": "In",
-                        "values": topology[service["name"]]
+                        "values": topology[service["name"]['nodes']]
                     }]
                 }]
             }

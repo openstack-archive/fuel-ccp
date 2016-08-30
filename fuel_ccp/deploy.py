@@ -71,13 +71,14 @@ def parse_role(service_dir, role, config, update=False):
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
+    replicas = config['topology'][service['name']]['replicas']
 
     if service.get("daemonset", False):
         obj = templates.serialize_daemonset(service["name"], cont_spec,
                                             affinity)
     else:
         obj = templates.serialize_deployment(service["name"], cont_spec,
-                                             affinity)
+                                             affinity, replicas)
     kubernetes.create_object_from_definition(obj, update=update)
 
     _create_service(service, config["configs"], update=update)
@@ -309,8 +310,14 @@ def _make_topology(nodes, roles):
     for role in roles.keys():
         if role in roles_to_node:
             for svc in roles[role]:
-                service_to_node.setdefault(svc, [])
-                service_to_node[svc].extend(roles_to_node[role])
+                svc, _, replicas = svc.partition(":")
+                replicas = replicas or 1
+                LOG.error(svc)
+                LOG.error(replicas)
+                service_to_node.setdefault(svc, {'nodes': [],
+                                                 'replicas': 0})
+                service_to_node[svc]['nodes'].extend(roles_to_node[role])
+                service_to_node[svc]['replicas'] += int(replicas)
         else:
             LOG.warning("Role '%s' defined, but unused", role)
     return service_to_node
