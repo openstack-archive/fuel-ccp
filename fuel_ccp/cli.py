@@ -31,6 +31,10 @@ def do_deploy():
     deploy.deploy_components(components=CONF.action.components)
 
 
+def do_update():
+    deploy.deploy_components(components=CONF.action.components, update=True)
+
+
 def do_fetch():
     fetch.fetch_repositories(CONF.repositories.names)
 
