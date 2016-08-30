@@ -38,6 +38,11 @@ def add_parsers(subparsers):
                                  nargs='+',
                                  help='CCP components to show dependencies')
 
+    update_action = subparsers.add_parser('update')
+    update_action.add_argument('-c', '--components',
+                               nargs='+',
+                               help='CCP components to update')
+
 
 CONF.register_cli_opt(cfg.SubCommandOpt('action',
                                         handler=add_parsers))

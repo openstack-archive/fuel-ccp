@@ -1,4 +1,5 @@
 import json
+import time
 
 from oslo_config import cfg
 
@@ -91,7 +92,11 @@ def serialize_daemon_container_spec(container):
                 "command": _get_readiness_cmd(container["name"])
             },
             "timeoutSeconds": 1
-        }
+        },
+        "env": [{
+            "name": "VERSION",
+            "value": str(time.time())
+        }]
     }
     if container.get("probes", {}).get("liveness"):
         cont_spec["livenessProbe"] = {
@@ -258,6 +263,12 @@ def serialize_deployment(name, spec, affinity):
         },
         "spec": {
             "replicas": 1,
+            "strategy": {
+                "rollingUpdate": {
+                    "maxSurge": 1,
+                    "maxUnavailable": 0
+                }
+            },
             "template": {
                 "metadata": {
                     "annotations": affinity,
