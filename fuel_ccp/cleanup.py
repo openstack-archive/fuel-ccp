@@ -151,8 +151,16 @@ def _wait_for_namespace_delete(k8s_api):
 
 
 def _cleanup_kubernetes_objects():
-    LOG.info('Starting Kubernetes objects cleanup')
     k8s_api = kubernetes.get_v1_api(kubernetes.get_client())
+
+    try:
+        k8s_api.read_namespaced_namespace(CONF.kubernetes.namespace)
+    except rest.ApiException as e:
+        if e.status == 404:
+            LOG.info('Kubernetes namespace not found')
+            return
+
+    LOG.info('Starting Kubernetes objects cleanup')
     k8s_api.delete_namespaced_namespace({}, CONF.kubernetes.namespace)
     _wait_for_namespace_delete(k8s_api)
     LOG.info('Kubernetes objects cleanup has been finished successfully.')
