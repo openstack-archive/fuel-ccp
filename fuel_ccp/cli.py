@@ -54,7 +54,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
     logging.register_options(CONF)
-    CONF(sys.argv[1:])
+    CONF(project='ccp')
     logging.setup(CONF, 'fuel-ccp')
 
     func = globals()['do_%s' % CONF.action.name.replace('-', '_')]
