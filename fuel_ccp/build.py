@@ -112,7 +112,7 @@ def find_dockerfiles(repository_name, match=True):
     if len(dockerfiles) == 0:
         msg = 'No dockerfile for %s found'
         if CONF.repositories.skip_empty:
-            LOG.warn(msg, repository_name)
+            LOG.debug(msg, repository_name)
         else:
             LOG.error(msg, repository_name)
             sys.exit(1)
@@ -155,7 +155,7 @@ def find_dependencies(dockerfiles):
 
 
 def build_dockerfile(dc, dockerfile):
-    LOG.info("Starting %s container build", dockerfile['name'])
+    LOG.info("%s: Starting image build", dockerfile['name'])
     for line in dc.build(rm=True,
                          forcerm=True,
                          nocache=CONF.builder.no_cache,
