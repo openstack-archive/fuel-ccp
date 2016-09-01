@@ -259,14 +259,15 @@ def get_ready_image_names():
         ready_images = []
         for image in dc.images():
             if image["RepoTags"]:
-                matcher = IMAGE_FULL_NAME_PATTERN.match(image["RepoTags"][0])
-                if not matcher:
-                    continue
-                ns = matcher.group("namespace")
-                name = matcher.group("name")
-                tag = matcher.group("tag")
-                if CONF.images.namespace == ns and CONF.images.tag == tag:
-                    ready_images.append(name)
+                for repo_tag in image["RepoTags"]:
+                    matcher = IMAGE_FULL_NAME_PATTERN.match(repo_tag)
+                    if not matcher:
+                        continue
+                    ns = matcher.group("namespace")
+                    name = matcher.group("name")
+                    tag = matcher.group("tag")
+                    if CONF.images.namespace == ns and CONF.images.tag == tag:
+                        ready_images.append(name)
     return ready_images
 
 
