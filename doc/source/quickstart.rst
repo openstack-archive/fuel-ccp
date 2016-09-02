@@ -31,11 +31,14 @@ Calico-node             0.20.0       0.21.0
 Additionaly, you will need to have working kube-proxy, kube-dns and docker
 registry.
 
-If you dont have running k8s environment, please check out
-:doc:`deploying-k8s-via-kargo`
+If you don't have a running k8s environment, please check out `this guide
+<http://docs.openstack.org/developer/fuel-ccp-installer/quickstart.html>`__
 
-.. WARNING:: All further steps assume what you already have a working k8s
+.. WARNING:: All further steps assume that you already have a working k8s
  installation.
+
+Deploy CCP
+==========
 
 Install CCP CLI
 ---------------
@@ -85,12 +88,12 @@ Create global CCP configuration file:
         neutron_external_interface: eth2
     EOF
 
-Make sure adjust it to your environment, since the network configuration of
+Make sure to adjust it to your environment, since the network configuration of
 your environment may be different.
 
 - ``private_interface`` - should point to eth with private ip address.
 - ``public_interface`` - should point to eth with public ip address (you can
-  use private iface here too, if you want to bind all services to internal
+  use private iface here, if you want to bind all services to internal
   network)
 - ``neutron_external_interface`` - should point to eth without ip addr (it
   actually might be non-existing interface, CCP will create it).
@@ -135,7 +138,7 @@ Check deploy status
 -------------------
 
 By default, CCP deploying all components into "ccp" k8s
-`namespace <http://kubernetes.io/docs/user-guide/namespaces/>`__. 
+`namespace <http://kubernetes.io/docs/user-guide/namespaces/>`__.
 You could set context for all kubectl commands to use this namespace:
 
 ::
