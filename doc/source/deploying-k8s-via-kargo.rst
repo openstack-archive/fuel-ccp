@@ -2,4 +2,58 @@
 Deploying k8s using Kargo
 =========================
 
-Placeholder
+This guide provides a step by step instruction of how to deploy k8s cluster on
+bare metal or a virtual machine using
+`Kargo <https://github.com/kubespray/kargo>`__.
+
+Node requirements
+=================
+
+The recommended deployment target requirements:
+
+- At least 3 nodes
+- At least 8Gb of RAM per node
+- At least 20Gb of disk space on each node.
+
+Deploy k8s cluster
+------------------
+
+Clone fuel-ccp-installer repository:
+
+::
+
+    git clone https://review.openstack.org/openstack/fuel-ccp-installer
+
+Create deployment script:
+
+.. NOTE:: HA setup is not supported right now, so you can't have multiple IPs
+          in ADMIN_IP variable.
+
+::
+
+    cat > ~/create-kargo-env.sh << EOF
+    #!/bin/bash
+    set -ex
+
+    # CHANGE ADMIN_IP AND SLAVE_IPS TO MATCH YOUR ENVIRONMENT
+    export ADMIN_IP="10.90.0.2"
+    export SLAVE_IPS="10.90.0.2 10.90.0.3 10.90.0.4"
+    export DEPLOY_METHOD="kargo"
+    export WORKSPACE="~/workspace"
+
+    mkdir -p $WORKSPACE
+    cd ~/fuel-ccp-installer
+    bash -x "~/utils/jenkins/run_k8s_deploy_test.sh"
+    EOF
+
+- ``ADMIN_IP`` - IP of the k8s master node. 
+- ``SLAVE_IPS`` - IPs of the k8s minion nodes. May include master node ip.
+
+.. WARNING:: Please make sure, what all nodes are accessible via ssh keys and
+             have an access to the Internet.
+
+Run script:
+
+::
+
+    bash ~/create-kargo-env.sh

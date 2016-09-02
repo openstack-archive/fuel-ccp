@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    quickstart
+   deploying-k8s-via-kargo
    readme
    usage
    contributing
