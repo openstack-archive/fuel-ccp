@@ -9,10 +9,9 @@ Welcome to Fuel-ccp's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    quickstart
-   readme
    usage
    contributing
    dsl
