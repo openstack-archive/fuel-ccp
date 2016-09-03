@@ -59,8 +59,7 @@ def _cleanup_servers(session):
     if server_list:
         LOG.warning("Some instances were not removed, trying to force delete")
         for server in server_list:
-            LOG.info('Force deleting instance %s (%s)',
-                     (server.name, server.id))
+            LOG.info('Force deleting instance %s (%s)', server.name, server.id)
             nova.servers.force_delete(server.id)
     server_list = _wait_until_empty(
         60, None, nova.servers.list, search_opts={"all_tenants": True})
