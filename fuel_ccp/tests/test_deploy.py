@@ -1,6 +1,7 @@
 import filecmp
 import os
 
+import fixtures
 import mock
 from oslo_config import cfg
 import yaml
@@ -145,9 +146,9 @@ class TestDeploy(base.TestCase):
 class TestDeployCreateService(base.TestCase):
     def setUp(self):
         super(TestDeployCreateService, self).setUp()
-        self._create_obj = mock.patch(
-            "fuel_ccp.kubernetes.create_object_from_definition")
-        self.create_obj = self._create_obj.start()
+        fixture = self.useFixture(fixtures.MockPatch(
+            "fuel_ccp.kubernetes.create_object_from_definition"))
+        self.create_obj = fixture.mock
 
     def test_create_service_without_ports(self):
         deploy._create_service({"name": "spam"}, {})
@@ -218,10 +219,6 @@ spec:
   type: NodePort"""
         deploy._create_service(service, defaults)
         self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
-
-    def teadDown(self):
-        super(TestDeployCreateService, self).teadDown()
-        self._create_obj.stop()
 
 
 class TestDeployParseWorkflow(base.TestCase):
