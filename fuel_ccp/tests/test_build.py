@@ -27,12 +27,7 @@ class TestBuild(base.TestCase):
 
     def setUp(self):
         super(TestBuild, self).setUp()
-        self.cfg = conf_fixture.Config()
-        self.cfg.setUp()
-
-    def tearDown(self):
-        super(TestBuild, self).tearDown()
-        self.cfg.cleanUp()
+        self.cfg = self.useFixture(conf_fixture.Config())
 
     @staticmethod
     def __create_dockerfile_objects():
