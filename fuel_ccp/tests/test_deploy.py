@@ -319,8 +319,8 @@ class TestDeployParseWorkflow(base.TestCase):
 class TestDeployMakeTopology(base.TestCase):
     def setUp(self):
         super(TestDeployMakeTopology, self).setUp()
-        self.m_get_nodes = mock.patch("fuel_ccp.kubernetes.list_k8s_nodes")
-        self.m_get_nodes.start()
+        self.useFixture(
+            fixtures.MockPatch("fuel_ccp.kubernetes.list_k8s_nodes"))
 
     def test_make_empty_topology(self):
         self.assertRaises(RuntimeError,
@@ -361,7 +361,3 @@ class TestDeployMakeTopology(base.TestCase):
             p.return_value = node_list
             topology = deploy._make_topology(nodes, roles)
         self.assertDictEqual(expected_topology, topology)
-
-    def tearDown(self):
-        self.m_get_nodes.stop()
-        super(TestDeployMakeTopology, self).tearDown()
