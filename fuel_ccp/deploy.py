@@ -104,8 +104,7 @@ def _fill_cmd(workflow, cmd):
 def _create_workflow(workflow, name):
     configmap_name = "%s-%s" % (name, templates.ROLE_CONFIG)
     template = templates.serialize_configmap(configmap_name, workflow)
-    kubernetes.handle_exists(
-        kubernetes.create_object_from_definition, template)
+    kubernetes.create_object_from_definition(template)
 
 
 def _create_service(service, config):
@@ -216,7 +215,7 @@ def _create_globals_configmap(config):
         templates.GLOBAL_CONFIG: json.dumps(config, sort_keys=True)
     }
     cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
+    kubernetes.create_object_from_definition(cm)
 
 
 def _create_start_script_configmap():
@@ -231,7 +230,7 @@ def _create_start_script_configmap():
         templates.SCRIPT_CONFIG: start_scr_data
     }
     cm = templates.serialize_configmap(templates.SCRIPT_CONFIG, data)
-    kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
+    kubernetes.create_object_from_definition(cm)
 
 
 def _create_files_configmap(service_dir, service_name, configs):
@@ -244,8 +243,7 @@ def _create_files_configmap(service_dir, service_name, configs):
                 data[filename] = f.read()
     data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
-    kubernetes.handle_exists(
-        kubernetes.create_object_from_definition, template)
+    kubernetes.create_object_from_definition(template)
 
 
 def _create_meta_configmap(service):
@@ -256,8 +254,7 @@ def _create_meta_configmap(service):
              "host-net": service.get("host-net", False)}, sort_keys=True)
     }
     template = templates.serialize_configmap(configmap_name, data)
-    kubernetes.handle_exists(
-        kubernetes.create_object_from_definition, template)
+    kubernetes.create_object_from_definition(template)
 
 
 def _make_topology(nodes, roles):
@@ -305,18 +302,9 @@ def _make_topology(nodes, roles):
 def _create_namespace(namespace):
     if CONF.action.dry_run:
         return
-    client = kubernetes.get_client()
-    api = kubernetes.get_v1_api(client)
-    # TODO(sreshetniak): add selector??
-    namespaces = api.list_namespaced_namespace().items
-    for ns in namespaces:
-        if ns.metadata.name == namespace:
-            LOG.info("Namespace \"%s\" exists", namespace)
-            break
-    else:
-        LOG.info("Create namespace \"%s\"", namespace)
-        api.create_namespaced_namespace(
-            body={"metadata": {"name": namespace}})
+
+    template = templates.serialize_namespace(namespace)
+    kubernetes.create_object_from_definition(template)
 
 
 def _create_openrc(config, namespace):

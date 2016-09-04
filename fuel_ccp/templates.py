@@ -31,6 +31,16 @@ def _get_readiness_cmd(role_name):
     return ["python", ENTRYPOINT_PATH, "status", role_name]
 
 
+def serialize_namespace(name):
+    return {
+        "apiVersion": "v1",
+        "kind": "Namespace",
+        "metadata": {
+            "name": name
+        }
+    }
+
+
 def serialize_configmap(name, data):
     return {
         "apiVersion": "v1",
