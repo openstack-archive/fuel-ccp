@@ -1,12 +1,12 @@
 import time
 
-from k8sclient.client import rest
 from keystoneauth1 import exceptions as keystoneauth_exceptions
 from keystoneauth1.identity import v3
 from keystoneauth1 import session as keystone_session
 from neutronclient.v2_0 import client as neutron_client
 from novaclient import client as nova_client
 from oslo_log import log as logging
+import pykube
 
 from fuel_ccp.common import utils
 from fuel_ccp import config
@@ -131,15 +131,11 @@ def _cleanup_openstack_environment(configs, auth_url=None):
     LOG.info('OpenStack cleanup has been finished successfully.')
 
 
-def _wait_for_namespace_delete(k8s_api):
+def _wait_for_namespace_delete(namespace):
     attempts = 60
     while attempts > 0:
-        try:
-            k8s_api.read_namespaced_namespace(CONF.kubernetes.namespace)
-        except rest.ApiException as e:
-            if e.status == 404:
-                return
-            raise e
+        if not namespace.exists():
+            return
         time.sleep(3)
         attempts -= 1
     raise RuntimeError(
@@ -147,19 +143,17 @@ def _wait_for_namespace_delete(k8s_api):
 
 
 def _cleanup_kubernetes_objects():
-    k8s_api = kubernetes.get_v1_api(kubernetes.get_client())
+    k8s_api = kubernetes.get_client()
+    ns = pykube.Namespace.objects(k8s_api).get_or_none(
+        name=CONF.kubernetes.namespace)
+    if ns:
+        LOG.info('Starting Kubernetes objects cleanup')
+        ns.delete()
+    else:
+        LOG.info('Kubernetes namespace not found')
+        return
 
-    try:
-        k8s_api.read_namespaced_namespace(CONF.kubernetes.namespace)
-    except rest.ApiException as e:
-        if e.status == 404:
-            LOG.info('Kubernetes namespace not found')
-            return
-        raise e
-
-    LOG.info('Starting Kubernetes objects cleanup')
-    k8s_api.delete_namespaced_namespace({}, CONF.kubernetes.namespace)
-    _wait_for_namespace_delete(k8s_api)
+    _wait_for_namespace_delete(ns)
     LOG.info('Kubernetes objects cleanup has been finished successfully.')
 
 
