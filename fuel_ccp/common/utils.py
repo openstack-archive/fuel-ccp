@@ -1,3 +1,4 @@
+import itertools
 import os
 import pkg_resources
 
@@ -82,6 +83,5 @@ def get_deployed_components():
     deployed_daemonsets = kubernetes.list_cluster_daemonsets()
     deployed_deployments = kubernetes.list_cluster_deployments()
     deployed_components = set(kubernetes.get_object_names(
-        deployed_daemonsets + deployed_deployments))
-
+        itertools.chain(deployed_daemonsets, deployed_deployments)))
     return deployed_components

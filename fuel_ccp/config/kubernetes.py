@@ -4,12 +4,12 @@ from oslo_config import cfg
 CONF = cfg.CONF
 kubernetes_opts = [
     cfg.StrOpt('server',
-               default='127.0.0.1:8080',
+               default='http://localhost:8080',
                help='Addres and port for kube-apiserver'),
     cfg.StrOpt('namespace',
                default='ccp',
                help='The name of the namespace'),
-    cfg.StrOpt('ca-certs',
+    cfg.StrOpt('ca-cert',
                help='The location of the CA certificate files'),
     cfg.StrOpt('key-file',
                help='The location of the key file'),
