@@ -4,17 +4,19 @@ from oslo_config import cfg
 CONF = cfg.CONF
 kubernetes_opts = [
     cfg.StrOpt('server',
-               default='127.0.0.1:8080',
-               help='Addres and port for kube-apiserver'),
+               default='http://localhost:8080',
+               help='The URL for the Kubernetes API server'),
     cfg.StrOpt('namespace',
                default='ccp',
                help='The name of the namespace'),
-    cfg.StrOpt('ca-certs',
-               help='The location of the CA certificate files'),
+    cfg.StrOpt('ca-cert',
+               help='The location of the CA certificate file'),
     cfg.StrOpt('key-file',
                help='The location of the key file'),
     cfg.StrOpt('cert-file',
-               help='The location of the certificate file')
+               help='The location of the certificate file'),
+    cfg.BoolOpt('insecure',
+                help='Disable certificate checking')
 ]
 kubernetes_opt_group = cfg.OptGroup(name='kubernetes',
                                     title='Kubernetes client')
@@ -26,9 +28,10 @@ DEFAULTS = {
     'kubernetes': {
         'server': '127.0.0.1:8080',
         'namespace': 'ccp',
-        'ca_certs': None,
+        'ca_cert': None,
         'key_file': None,
         'cert_file': None,
+        'insecure': None,
     },
 }
 
@@ -39,9 +42,10 @@ SCHEMA = {
         'properties': {
             'server': {'type': 'string'},
             'namespace': {'type': 'string'},
-            'ca_certs': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'ca_cert': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'key_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'insecure': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
         },
     },
 }

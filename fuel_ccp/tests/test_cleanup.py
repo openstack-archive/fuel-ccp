@@ -1,7 +1,5 @@
 import mock
 
-from k8sclient.client import rest
-
 from fuel_ccp import cleanup
 from fuel_ccp.tests import base
 
@@ -25,10 +23,10 @@ class TestCleanup(base.TestCase):
     @mock.patch('time.sleep')
     def test_wait_for_namespace_delete(self, m_sleep):
         # namespace was deleted
-        k8s_api = mock.Mock()
-        k8s_api.read_namespaced_namespace.side_effect = [
-            'ns', 'ns', rest.ApiException(404)]
-        cleanup._wait_for_namespace_delete(k8s_api)
+        namespace = mock.Mock()
+        namespace.exists.side_effect = [
+            True, True, False]
+        cleanup._wait_for_namespace_delete(namespace)
         self.assertEqual(2, m_sleep.call_count)
 
         # namespace is still exists
