@@ -2,13 +2,10 @@ import os
 
 import fixtures
 import mock
-from oslo_config import cfg
+from oslo_config import fixture as conf_fixture
 
 from fuel_ccp import fetch
 from fuel_ccp.tests import base
-
-
-CONF = cfg.CONF
 
 
 @mock.patch('git.Repo.clone_from')
@@ -20,7 +17,8 @@ class TestFetch(base.TestCase):
         tmp_dir = fixtures.TempDir()
         tmp_dir.setUp()
         self.tmp_path = tmp_dir.path
-        CONF.set_override('path', self.tmp_path, group='repositories')
+        conf = self.useFixture(conf_fixture.Config())
+        conf.config(path=self.tmp_path, group='repositories')
         # Create temporary directory for openstack-base to not clone it
         os.mkdir(os.path.join(self.tmp_path, 'ms-openstack-base'))
 
