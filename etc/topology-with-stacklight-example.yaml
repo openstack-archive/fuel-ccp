@@ -2,10 +2,13 @@ nodes:
   node1:
     roles:
       - controller
+      - stacklight-collector
+      - stacklight-backend
       - openvswitch
   node[2-3]:
     roles:
       - compute
+      - stacklight-collector
       - openvswitch
 roles:
   controller:
@@ -35,3 +38,12 @@ roles:
     - neutron-openvswitch-agent
     - openvswitch-db
     - openvswitch-vswitchd
+  stacklight-backend:
+    - elasticsearch
+    - grafana
+    - influxdb
+    - kibana
+  stacklight-collector:
+    - heka
+    - stacklight-collector
+    - cron
