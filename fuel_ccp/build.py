@@ -9,16 +9,15 @@ import tempfile
 
 import docker
 import git
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
-
+from fuel_ccp import config
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
 
-CONF = cfg.CONF
+CONF = config.CONF
 CONF.import_group('builder', 'fuel_ccp.config.builder')
 CONF.import_group('images', 'fuel_ccp.config.images')
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')

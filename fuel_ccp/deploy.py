@@ -2,18 +2,18 @@ import os
 import re
 import yaml
 
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
+from fuel_ccp import config
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
 from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
 
 
-CONF = cfg.CONF
+CONF = config.CONF
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 CONF.import_group('kubernetes', 'fuel_ccp.config.kubernetes')
 CONF.import_opt("action", "fuel_ccp.config.cli")

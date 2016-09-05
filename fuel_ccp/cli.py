@@ -1,17 +1,14 @@
 import signal
 import sys
 
-from oslo_config import cfg
-from oslo_log import log as logging
-
 from fuel_ccp import build
 from fuel_ccp import cleanup
+from fuel_ccp import config
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
 from fuel_ccp import fetch
 
-
-CONF = cfg.CONF
+CONF = config.CONF
 CONF.import_group('registry', 'fuel_ccp.config.registry')
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 CONF.import_opt('action', 'fuel_ccp.config.cli')
@@ -53,9 +50,7 @@ def signal_handler(signo, frame):
 def main():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-    logging.register_options(CONF)
-    CONF(project='ccp')
-    logging.setup(CONF, 'fuel-ccp')
+    config.setup_config()
 
     func = globals()['do_%s' % CONF.action.name.replace('-', '_')]
     func()

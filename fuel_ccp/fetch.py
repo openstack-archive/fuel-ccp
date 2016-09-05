@@ -2,11 +2,12 @@ import os
 
 from concurrent import futures
 import git
-from oslo_config import cfg
 from oslo_log import log as logging
 
+from fuel_ccp import config
 
-CONF = cfg.CONF
+
+CONF = config.CONF
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 
 LOG = logging.getLogger(__name__)
