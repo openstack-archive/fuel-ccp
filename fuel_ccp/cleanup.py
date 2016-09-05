@@ -13,7 +13,6 @@ from fuel_ccp import config
 from fuel_ccp import kubernetes
 
 CONF = config.CONF
-CONF.import_group('kubernetes', 'fuel_ccp.config.kubernetes')
 
 LOG = logging.getLogger(__name__)
 

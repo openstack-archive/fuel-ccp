@@ -8,7 +8,6 @@ from fuel_ccp import config
 
 
 CONF = config.CONF
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 
 LOG = logging.getLogger(__name__)
 

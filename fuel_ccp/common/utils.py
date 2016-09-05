@@ -10,8 +10,6 @@ from fuel_ccp import kubernetes
 
 
 CONF = config.CONF
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
-CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 

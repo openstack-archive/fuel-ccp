@@ -14,9 +14,6 @@ from fuel_ccp.validation import deploy as deploy_validation
 
 
 CONF = config.CONF
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
-CONF.import_group('kubernetes', 'fuel_ccp.config.kubernetes')
-CONF.import_opt("action", "fuel_ccp.config.cli")
 
 LOG = logging.getLogger(__name__)
 

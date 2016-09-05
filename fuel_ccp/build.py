@@ -18,10 +18,6 @@ from fuel_ccp import config
 BUILD_TIMEOUT = 2 ** 16  # in seconds
 
 CONF = config.CONF
-CONF.import_group('builder', 'fuel_ccp.config.builder')
-CONF.import_group('images', 'fuel_ccp.config.images')
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
-CONF.import_group('registry', 'fuel_ccp.config.registry')
 
 LOG = logging.getLogger(__name__)
 
