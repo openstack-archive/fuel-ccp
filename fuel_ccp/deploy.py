@@ -1,6 +1,6 @@
+import json
 import os
 import re
-import yaml
 
 from oslo_log import log as logging
 
@@ -91,7 +91,8 @@ def _parse_workflows(service):
         _create_pre_commands(wf, cont)
         _create_daemon(wf, cont)
         _create_post_commands(wf, cont)
-        workflows.update({cont["name"]: yaml.dump({"workflow": wf})})
+        workflows.update({cont["name"]: json.dumps(
+            {"workflow": wf}, sort_keys=True)})
     return workflows
 
 
@@ -208,7 +209,7 @@ def _create_job_wf(job, post=False, service_name=None):
     wrk["job"] = {}
     _fill_cmd(wrk["job"], job)
     _push_files_to_workflow(wrk, job.get("files"))
-    return {job["name"]: yaml.dump({"workflow": wrk})}
+    return {job["name"]: json.dumps({"workflow": wrk}, sort_keys=True)}
 
 
 def _push_files_to_workflow(workflow, files):
@@ -219,12 +220,12 @@ def _push_files_to_workflow(workflow, files):
         "path": f["path"],
         "perm": f.get("perm"),
         "user": f.get("user")
-    } for filename, f in files.items()]
+    } for filename, f in sorted(files.items())]
 
 
 def _create_globals_configmap(config):
     data = {
-        templates.GLOBAL_CONFIG: yaml.dump(config)
+        templates.GLOBAL_CONFIG: json.dumps(config, sort_keys=True)
     }
     cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
     kubernetes.handle_exists(kubernetes.create_object_from_definition, cm)
@@ -262,9 +263,9 @@ def _create_files_configmap(service_dir, service_name, configs):
 def _create_meta_configmap(service):
     configmap_name = "%s-%s" % (service["name"], templates.META_CONFIG)
     data = {
-        templates.META_CONFIG: yaml.dump(
+        templates.META_CONFIG: json.dumps(
             {"service-name": service["name"],
-             "host-net": service.get("host-net", False)})
+             "host-net": service.get("host-net", False)}, sort_keys=True)
     }
     template = templates.serialize_configmap(configmap_name, data)
     kubernetes.handle_exists(

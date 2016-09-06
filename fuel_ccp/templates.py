@@ -146,12 +146,12 @@ def serialize_volumes(service):
     workflow_items = []
     for cont in service["containers"]:
         workflow_items.append(
-            {"key": cont["name"], "path": "%s.yaml" % cont["name"]})
+            {"key": cont["name"], "path": "%s.json" % cont["name"]})
         for job_type in ("pre", "post"):
             for job in cont.get(job_type, ()):
                 if job.get("type", "local") == "single":
                     workflow_items.append(
-                        {"key": job["name"], "path": "%s.yaml" % job["name"]})
+                        {"key": job["name"], "path": "%s.json" % job["name"]})
 
     file_items = []
     for c in service["containers"]:
@@ -169,7 +169,7 @@ def serialize_volumes(service):
             "configMap": {
                 "name": GLOBAL_CONFIG,
                 "items": [{"key": GLOBAL_CONFIG,
-                           "path": "globals.yaml"}]
+                           "path": "globals.json"}]
             }
         },
         {
@@ -192,7 +192,7 @@ def serialize_volumes(service):
             "configMap": {
                 "name": "%s-%s" % (service["name"], META_CONFIG),
                 "items": [{"key": META_CONFIG,
-                           "path": "meta.yaml"}]
+                           "path": "meta.json"}]
             }
         },
         {
