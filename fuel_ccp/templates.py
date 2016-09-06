@@ -5,8 +5,6 @@ from fuel_ccp import config
 
 
 CONF = config.CONF
-CONF.import_group('images', 'fuel_ccp.config.images')
-CONF.import_group('registry', 'fuel_ccp.config.registry')
 
 GLOBAL_CONFIG = "globals"
 SCRIPT_CONFIG = "start-script"

@@ -9,9 +9,6 @@ from fuel_ccp import deploy
 from fuel_ccp import fetch
 
 CONF = config.CONF
-CONF.import_group('registry', 'fuel_ccp.config.registry')
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
-CONF.import_opt('action', 'fuel_ccp.config.cli')
 
 
 def do_build():
