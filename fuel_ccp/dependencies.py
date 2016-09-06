@@ -15,15 +15,10 @@ Example:
 import re
 import sys
 
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from fuel_ccp.common import utils
 from fuel_ccp.validation import base as base_validation
-
-
-CONF = cfg.CONF
-CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 
 LOG = logging.getLogger(__name__)
 

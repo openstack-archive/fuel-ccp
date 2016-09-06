@@ -1,11 +1,6 @@
 import os
 
 import jinja2
-from oslo_config import cfg
-
-
-CONF = cfg.CONF
-CONF.import_group('images', 'fuel_ccp.config.images')
 
 
 def str_to_bool(text):
