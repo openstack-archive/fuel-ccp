@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 1
 
    quickstart
+   monitoring_and_logging
    contributing
    dsl
 
