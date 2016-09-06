@@ -234,7 +234,7 @@ def _create_globals_configmap(config):
 def _create_start_script_configmap():
     start_scr_path = os.path.join(CONF.repositories.path,
                                   "fuel-ccp-entrypoint",
-                                  "ms_ext_config",
+                                  "fuel_ccp_entrypoint",
                                   "start_script.py")
     with open(start_scr_path) as f:
         start_scr_data = f.read()
