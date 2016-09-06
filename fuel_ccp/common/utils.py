@@ -1,15 +1,15 @@
 import os
 import pkg_resources
 
-from oslo_config import cfg
 from oslo_log import log as logging
 import yaml
 
 import fuel_ccp
+from fuel_ccp import config
 from fuel_ccp import kubernetes
 
 
-CONF = cfg.CONF
+CONF = config.CONF
 CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
 

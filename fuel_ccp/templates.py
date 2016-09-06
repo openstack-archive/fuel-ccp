@@ -1,11 +1,10 @@
 import json
 
-from oslo_config import cfg
-
 from fuel_ccp.common import utils
+from fuel_ccp import config
 
 
-CONF = cfg.CONF
+CONF = config.CONF
 CONF.import_group('images', 'fuel_ccp.config.images')
 CONF.import_group('registry', 'fuel_ccp.config.registry')
 

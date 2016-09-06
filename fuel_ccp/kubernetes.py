@@ -6,11 +6,12 @@ from k8sclient.client.apis import apisbatchv_api
 from k8sclient.client.apis import apisextensionsvbeta_api
 from k8sclient.client.apis import apiv_api
 import k8sclient.client.rest
-from oslo_config import cfg
 from oslo_log import log as logging
 
+from fuel_ccp import config
 
-CONF = cfg.CONF
+
+CONF = config.CONF
 CONF.import_opt("action", "fuel_ccp.config.cli")
 CONF.import_group('kubernetes', 'fuel_ccp.config.kubernetes')
 
