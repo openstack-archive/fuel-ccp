@@ -59,18 +59,14 @@ Create CCP CLI configuration file:
 ::
 
     mkdir /etc/ccp
-    cat > /etc/ccp/ccp.conf << EOF
-    [DEFAULT]
-    deploy_config = /etc/ccp/globals.yaml
-
-    [builder]
-    push = True
-
-    [registry]
-    address = "127.0.0.1:31500"
-
-    [repositories]
-    skip_empty = True
+    cat > /etc/ccp/ccp.yaml << EOF
+    deploy_config: /etc/ccp/globals.yaml
+    builder:
+      push: True
+    registry:
+      address: "127.0.0.1:31500"
+    repositories:
+      skip_empty: True
     EOF
 
 Create global CCP configuration file:
