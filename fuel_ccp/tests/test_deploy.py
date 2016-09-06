@@ -3,13 +3,10 @@ import os
 
 import fixtures
 import mock
-from oslo_config import cfg
 import yaml
 
 from fuel_ccp import deploy
 from fuel_ccp.tests import base
-
-CONF = cfg.CONF
 
 
 class TestDeploy(base.TestCase):
