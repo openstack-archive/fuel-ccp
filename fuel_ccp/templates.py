@@ -158,7 +158,7 @@ def serialize_volumes(service):
 
     file_items = []
     for c in service["containers"]:
-        for f_name, f_item in c["daemon"].get("files", {}).items():
+        for f_name, f_item in sorted(c["daemon"].get("files", {}).items()):
             file_items.append({"key": f_name, "path": f_name})
         for job_type in ("pre", "post"):
             for job in c.get(job_type, ()):
@@ -308,7 +308,8 @@ def serialize_affinity(service, topology):
             }
         }
     }
-    return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(policy)}
+    return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(
+        policy, sort_keys=True)}
 
 
 def serialize_service(name, ports):
