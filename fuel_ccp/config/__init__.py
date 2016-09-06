@@ -6,6 +6,8 @@ from oslo_log import log
 import six
 import yaml
 
+LOG = log.getLogger(__name__)
+
 CONF = cfg.CONF
 CONF.import_group('builder', 'fuel_ccp.config.builder')
 CONF.import_opt("action", "fuel_ccp.config.cli")
@@ -17,8 +19,9 @@ CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 
 
 def setup_config():
-    # TODO(yorik-sar): add file lookup in usual places
     config_file, args = get_cli_config()
+    if config_file is None:
+        config_file = find_config()
     log.register_options(CONF)
     if config_file:
         yconf = parse_config(config_file)
@@ -26,6 +29,10 @@ def setup_config():
     # Don't let oslo.config parse any config files
     CONF(args, project='ccp', default_config_files=[])
     log.setup(CONF, 'fuel-ccp')
+    if config_file:
+        LOG.debug('Loaded config from file %s', config_file)
+    else:
+        LOG.debug('No config file loaded')
 
 
 def get_cli_config():
@@ -40,6 +47,21 @@ def get_cli_config():
     else:
         config_file = None
     return config_file, rest
+
+
+def find_config():
+    home = os.path.expanduser('~')
+    candidates = [
+        os.path.join(home, '.ccp.yaml'),
+        os.path.join(home, '.ccp/ccp.yaml'),
+        '/etc/ccp.yaml',
+        '/etc/ccp/ccp.yaml',
+    ]
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    else:
+        return None
 
 
 def parse_config(config_file):
