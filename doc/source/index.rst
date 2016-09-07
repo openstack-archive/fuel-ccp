@@ -22,6 +22,7 @@ Developer docs
 
    contributing
    docker
+   app_def_guide
    dsl
 
 Indices and tables
