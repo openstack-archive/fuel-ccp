@@ -6,12 +6,20 @@
 Welcome to Fuel-ccp's documentation!
 ========================================================
 
-Contents:
+General docs
+------------
 
 .. toctree::
    :maxdepth: 1
 
    quickstart
+
+Developer docs
+--------------
+
+.. toctree::
+   :maxdepth: 1
+
    contributing
    dsl
 
