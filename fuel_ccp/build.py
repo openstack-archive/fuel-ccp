@@ -301,7 +301,7 @@ def wait_futures(future_list, skip_errors=False):
 
 
 def _get_config():
-    cfg = {'render': dict(CONF.images.items())}
+    cfg = {'render': dict(CONF.images)}
     if CONF.registry.address:
         cfg['render']['namespace'] = '%s/%s' % (
             CONF.registry.address, cfg['render']['namespace'])
