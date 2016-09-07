@@ -107,4 +107,7 @@ class _Wrapper(object):
     def __getattr__(self, name):
         return getattr(_REAL_CONF, name)
 
+    def __getitem__(self, name):
+        return _REAL_CONF[name]
+
 CONF = _Wrapper()
