@@ -12,7 +12,6 @@ Contents:
    :maxdepth: 1
 
    quickstart
-   usage
    contributing
    dsl
 
