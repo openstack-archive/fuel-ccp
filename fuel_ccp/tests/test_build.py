@@ -2,7 +2,6 @@ import collections
 import io
 
 import mock
-from oslo_config import fixture as conf_fixture
 
 from fuel_ccp import build
 from fuel_ccp.tests import base
@@ -24,10 +23,6 @@ RUN apt-get -y install \
 
 
 class TestBuild(base.TestCase):
-
-    def setUp(self):
-        super(TestBuild, self).setUp()
-        self.cfg = self.useFixture(conf_fixture.Config())
 
     @staticmethod
     def __create_dockerfile_objects():
@@ -168,7 +163,7 @@ class TestBuild(base.TestCase):
             }
         }
 
-        self.cfg.config(group="builder", keep_image_tree_consistency=False)
+        self.conf["builder"]["keep_image_tree_consistency"] = False
 
         for dockerfile in dockerfiles.values():
             if dockerfile['parent']:

@@ -17,7 +17,12 @@
 
 from oslotest import base
 
+from fuel_ccp.tests import conf_fixture
+
 
 class TestCase(base.BaseTestCase):
-
     """Test case base class for all unit tests."""
+
+    def setUp(self):
+        super(TestCase, self).setUp()
+        self.conf = self.useFixture(conf_fixture.Config()).conf

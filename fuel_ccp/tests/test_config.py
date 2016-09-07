@@ -3,10 +3,11 @@ import functools
 
 import fixtures
 from oslo_config import cfg
-from oslo_config import fixture as conf_fixture
+import six
 import testscenarios
 
 from fuel_ccp import config
+from fuel_ccp.config import _yaml
 from fuel_ccp.tests import base
 
 
@@ -42,6 +43,16 @@ class TestGetCLIConfig(testscenarios.WithScenarios, base.TestCase):
         self.assertEqual(result, self.expected_result)
 
 
+def nested_dict_to_attrdict(d):
+    if isinstance(d, dict):
+        return _yaml.AttrDict({k: nested_dict_to_attrdict(v)
+                               for k, v in six.iteritems(d)})
+    elif isinstance(d, list):
+        return list(map(nested_dict_to_attrdict, d))
+    else:
+        return d
+
+
 class TestSetOsloDefaults(testscenarios.WithScenarios, base.TestCase):
     scenarios = [
         ('empty', {'yconf': {}, 'expected_defaults': {}}),
@@ -64,7 +75,6 @@ class TestSetOsloDefaults(testscenarios.WithScenarios, base.TestCase):
         self.conf = cfg.ConfigOpts()
         self.conf.register_opt(cfg.BoolOpt('debug', default=False))
         self.conf.register_opt(cfg.IntOpt('count'), group='thegroup')
-        self.useFixture(conf_fixture.Config(self.conf))
 
     def get_defaults(self):
         res = collections.defaultdict(
@@ -80,5 +90,50 @@ class TestSetOsloDefaults(testscenarios.WithScenarios, base.TestCase):
         return res
 
     def test_set_oslo_defaults(self):
-        config.set_oslo_defaults(self.conf, self.yconf)
+        yconf = nested_dict_to_attrdict(self.yconf)
+        config.set_oslo_defaults(self.conf, yconf)
         self.assertEqual(self.get_defaults(), self.expected_defaults)
+
+
+class TestCopyValuesFromOslo(testscenarios.WithScenarios, base.TestCase):
+    scenarios = [
+        ('simple', {
+            'yconf': {},
+            'oconf': {None: {'debug': True}},
+            'expected_result': {'debug': True, 'thegroup': {'count': None}},
+        }),
+        ('overwrite', {
+            'yconf': {'debug': False},
+            'oconf': {None: {'debug': True}},
+            'expected_result': {'debug': True, 'thegroup': {'count': None}},
+        }),
+        ('deep', {
+            'yconf': {'debug': False},
+            'oconf': {'thegroup': {'count': 3}},
+            'expected_result': {'debug': False, 'thegroup': {'count': 3}},
+        }),
+        ('deep_overwrite_with_bogus', {
+            'yconf': {'thegroup': {'bogus': 'value'}, 'other': 1},
+            'oconf': {'thegroup': {'count': 3}},
+            'expected_result': {
+                'debug': False,
+                'thegroup': {'count': 3, 'bogus': 'value'},
+                'other': 1,
+            },
+        }),
+    ]
+
+    yconf = None
+    oconf = None
+    expected_result = None
+
+    def test_copy_values_from_oslo(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.BoolOpt('debug', default=False))
+        conf.register_opt(cfg.IntOpt('count'), group='thegroup')
+        for group, values in six.iteritems(self.oconf):
+            for key, value in six.iteritems(values):
+                conf.set_default(group=group, name=key, default=value)
+        yconf = nested_dict_to_attrdict(self.yconf)
+        config.copy_values_from_oslo(conf, yconf)
+        self.assertEqual(yconf, self.expected_result)
