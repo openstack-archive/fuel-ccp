@@ -50,6 +50,15 @@ def get_global_parameters(*config_groups):
         else:
             LOG.debug("\"%s\" not found, skipping", path)
 
+    for group in config_groups:
+        cfg.setdefault(group, {})
+        try:
+            config_group = CONF[group]
+        except KeyError:
+            continue
+        else:
+            cfg[group].update(config_group._items())
+
     return cfg
 
 
