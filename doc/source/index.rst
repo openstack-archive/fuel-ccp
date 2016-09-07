@@ -22,6 +22,7 @@ Developer docs
    :maxdepth: 1
 
    contributing
+   docker
    dsl
 
 Indices and tables
