@@ -101,7 +101,8 @@ class TestBuild(base.TestCase):
                 'parent': 'root',
                 'children': ['leaf'],
                 'match': True,
-                'path': '/tmp'
+                'path': '/tmp',
+                'build_result': 'Success'
             },
             'leaf': {
                 'name': 'leaf',
@@ -128,6 +129,46 @@ class TestBuild(base.TestCase):
         submit_dockerfile_processing_mock.assert_called_once_with(
             dockerfiles["leaf"], mock.ANY, mock.ANY, mock.ANY,
             mock.ANY, ["root", "middle", "leaf"])
+
+    @mock.patch("docker.Client")
+    @mock.patch("fuel_ccp.build.build_dockerfile")
+    @mock.patch("fuel_ccp.build.submit_dockerfile_processing")
+    @mock.patch("fuel_ccp.build.create_rendered_dockerfile")
+    def test_process_dockerfile_parent_build_failed(
+            self, render_mock, submit_dockerfile_processing_mock,
+            build_dockerfile_mock, dc_mock):
+        dockerfiles = {
+            'parent': {
+                'name': 'parent',
+                'full_name': 'ms/parent',
+                'parent': None,
+                'children': ['child'],
+                'match': True,
+                'path': '/tmp',
+                'build_result': 'Failure'
+            },
+            'child': {
+                'name': 'child',
+                'full_name': 'ms/child',
+                'parent': 'parent',
+                'children': [],
+                'match': True,
+                'path': '/tmp'
+            }
+        }
+
+        for dockerfile in dockerfiles.values():
+            if dockerfile['parent']:
+                dockerfile['parent'] = dockerfiles[dockerfile['parent']]
+            for i in range(len(dockerfile['children'])):
+                dockerfile['children'][i] = (
+                    dockerfiles[dockerfile['children'][i]]
+                )
+
+        build.process_dockerfile(
+            dockerfiles["parent"], mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+            [])
+        submit_dockerfile_processing_mock.assert_not_called()
 
     @mock.patch("docker.Client")
     @mock.patch("fuel_ccp.build.build_dockerfile")

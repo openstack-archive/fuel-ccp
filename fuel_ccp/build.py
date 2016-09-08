@@ -227,8 +227,14 @@ def process_dockerfile(dockerfile, tmp_dir, config, executor, future_list,
     for child in dockerfile['children']:
         if child['match'] or (CONF.builder.keep_image_tree_consistency and
                               child['name'] in ready_images):
-            submit_dockerfile_processing(child, tmp_dir, config, executor,
-                                         future_list, ready_images)
+            if dockerfile['build_result'] == 'Failure':
+                LOG.error("%s: Build will be skipped due to parent image (%s) "
+                          "build failure", child['name'], dockerfile['name'])
+                child['build_result'] = 'Failure'
+                child['push_result'] = 'Failure'
+            else:
+                submit_dockerfile_processing(child, tmp_dir, config, executor,
+                                             future_list, ready_images)
 
 
 def submit_dockerfile_processing(dockerfile, tmp_dir, config, executor,
