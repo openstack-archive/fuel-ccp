@@ -1,0 +1,68 @@
+service:
+  name: component
+  ports:
+    - keystone_public_port
+    - keystone_admin_port
+  containers:
+    - name: keystone
+      image: keystone
+      probes:
+        readiness: "true"
+        liveness: "true"
+      volumes:
+      - name: keystone-logs
+        path: "/var/log/ccp/keystone"
+        type: host
+        readOnly: False
+      pre:
+        - name: chown-logs-dir
+          command: "sudo /bin/chown keystone:keystone /var/log/ccp/keystone"
+        - name: keystone-db-create
+          dependencies:
+            - mariadb
+          type: single
+          command:
+            mysql -u root -p{{ db_root_password }} -h mariadb -e "create database {{ keystone_db_name }};
+            grant all privileges on {{ keystone_db_name }}.* to '{{ keystone_db_username }}'@'%' identified by '{{ keystone_db_password }}'"
+        - name: keystone-db-sync
+          files:
+            - keystone-conf
+          dependencies:
+            - keystone-db-create
+          type: single
+          command: keystone-manage db_sync
+        - name: keystone-db-bootstrap
+          files:
+            - keystone-conf
+          dependencies:
+            - keystone-db-sync
+          type: single
+          command: keystone-manage bootstrap
+                   --bootstrap-password {{ openstack_user_password }}
+                   --bootstrap-username {{ openstack_user_name }}
+                   --bootstrap-project-name {{ openstack_project_name }}
+                   --bootstrap-role-name {{ openstack_role_name }}
+                   --bootstrap-service-name keystone --bootstrap-region-id RegionOne
+                   --bootstrap-admin-url http://keystone:{{ keystone_admin_port }}
+                   --bootstrap-public-url http://keystone:{{ keystone_public_port }}
+                   --bootstrap-internal-url http://keystone:{{ keystone_public_port }}
+
+      daemon:
+        dependencies:
+          - memcached
+        files:
+          - keystone-conf
+          - wsgi-keystone-conf
+        command: daemon.sh
+      post:
+        - name: keystone-create-project
+          type: single
+          command: openstack project create service
+
+files:
+  keystone-conf:
+    path: /etc/keystone/keystone.conf
+    content: keystone.conf.j2
+  wsgi-keystone-conf:
+    path: /etc/apache2/conf-enabled/wsgi-keystone.conf
+content: wsgi-keystone.conf.j2
