@@ -1,58 +1,57 @@
 #!/bin/bash
 
-# Simple script to deploy local registry
-# Usage:
-#       ./deploy-registry.sh
-#       or
-#       ./deploy-registry.sh <k8s_server:k8s_port>
-# registry will be exposed on port 31500 at every node
+set -e
 
+function usage {
+    local base_name=$(basename $0)
+    echo "Usage:"
+    echo "  $base_name -s <address>"
+    echo "  $base_name -n <namespace>"
+}
 
-KUBE_CMD=`which kubectl`
+NAMESPACE_OPT=" --namespace kube-system"
 
-if [ -z $KUBE_CMD ]; then
-    echo "kubectl not found"
-    exit 1
-fi
+while getopts "s:n:" opt; do
+    case $opt in
+        "s" )
+            SRV_OPT=" -s $OPTARG"
+            ;;
+        "n" )
+            NAMESPACE_OPT=" --namespace $OPTARG"
+            ;;
+        * )
+            usage
+            exit 1
+            ;;
+    esac
+done
 
-if [ $# -ne 0 ];then
-  SRV_OPT=" -s $1 "
-fi
+which kubectl 1>/dev/null
 
-$KUBE_CMD create $SRV_OPT -f registry-pod.yaml
-if [ $? -ne 0 ]; then
-    exit
-fi
+function kube_cmd {
+    kubectl "$SRV_OPT" "$NAMESPACE_OPT" "$@"
+}
 
-$KUBE_CMD create $SRV_OPT -f registry-service.yaml
-if [ $? -ne 0 ]; then
-    exit
-fi
+workdir=$(dirname $0)
+
+kube_cmd create -f $workdir/registry-pod.yaml
+kube_cmd create -f $workdir/registry-service.yaml
 
 # Waiting for status Running
 while true; do
-    echo "Waiting for 'Running' status"
-    $KUBE_CMD describe pod registry | grep -q "Status:.*Running"
-    if [ $? -eq 0 ]; then
+    echo "Waiting for 'Running' state"
+    cont_running=$(kube_cmd get pod registry -o template --template="{{ .status.phase }}")
+    if [ "$cont_running" == "Running" ]; then
         break
     fi
     sleep 3
-
 done
 
 # Waiting for readiness
 while true; do
     echo "Waiting for 'Ready' condition"
-    EXIT_LOOP=1
-    for STATUS in `${KUBE_CMD} describe pod registry | grep  Ready | tr -d ':' | awk '{print $2}'`;
-    do
-        if [ "$STATUS" != "True" ]
-        then
-            EXIT_LOOP=0
-        fi
-    done
-
-    if [ "$EXIT_LOOP" -eq 1 ]; then
+    cont_ready=$(kube_cmd get pod registry -o template --template="{{ range.status.containerStatuses }}{{ .ready }}{{ end }}")
+    if [ "$cont_ready" == "true" ]; then
         break
     fi
     sleep 3
