@@ -1,0 +1,5 @@
+builder:
+  push: true
+
+registry:
+  address: localhost:31500
