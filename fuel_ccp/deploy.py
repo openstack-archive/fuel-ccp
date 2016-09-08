@@ -4,7 +4,6 @@ import re
 
 from oslo_log import log as logging
 
-from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp import kubernetes
@@ -33,16 +32,6 @@ def _expand_files(service, files):
             _expand(cmd)
 
 
-def _update_container_volumes(cont, jvars):
-    """Loop though all volumes and render jinja2 templates, if available"""
-
-    for v in cont.get('volumes', {}):
-        v['path'] = jinja_utils.jinja_render_str(v['path'], jvars)
-        if v.get('mount-path'):
-            v['mount-path'] = jinja_utils.jinja_render_str(v['mount-path'],
-                                                           jvars)
-
-
 def parse_role(service_dir, role, config):
     service = role["service"]
     if service["name"] not in config.get("topology", {}):
@@ -62,7 +51,6 @@ def parse_role(service_dir, role, config):
         daemon_cmd = cont["daemon"]
         daemon_cmd["name"] = cont["name"]
 
-        _update_container_volumes(cont, config['configs'])
         _create_pre_jobs(service, cont)
         _create_post_jobs(service, cont)
 
@@ -347,18 +335,18 @@ def _create_openrc(config, namespace):
 
 
 def deploy_components(components=None):
-    components_map = utils.get_deploy_components_info()
-    components = set(components) if components else set(components_map.keys())
-
-    base_validation.validate_components_names(components, components_map)
-    deploy_validation.validate_requested_components(components, components_map)
-
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     config = utils.get_global_parameters("configs", "nodes", "roles")
     config["topology"] = _make_topology(config.get("nodes"),
                                         config.get("roles"))
+
+    components_map = utils.get_deploy_components_info(config["configs"])
+    components = set(components) if components else set(components_map.keys())
+
+    base_validation.validate_components_names(components, components_map)
+    deploy_validation.validate_requested_components(components, components_map)
 
     namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
