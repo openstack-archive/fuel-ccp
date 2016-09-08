@@ -5,6 +5,7 @@ from oslo_log import log as logging
 import yaml
 
 import fuel_ccp
+from fuel_ccp.common import jinja_utils
 from fuel_ccp import config
 from fuel_ccp import kubernetes
 
@@ -53,7 +54,9 @@ def get_global_parameters(*config_groups):
     return cfg
 
 
-def get_deploy_components_info():
+def get_deploy_components_info(rendering_context=None):
+    if rendering_context is None:
+        rendering_context = get_global_parameters("configs")["configs"]
     components_map = {}
 
     for component in CONF.repositories.names:
@@ -64,9 +67,12 @@ def get_deploy_components_info():
             continue
         for service_file in os.listdir(service_dir):
             if service_file.endswith('.yaml'):
+                LOG.debug("Rendering service definition: %s", service_file)
+                content = jinja_utils.jinja_render(
+                    os.path.join(service_dir, service_file), rendering_context
+                )
                 LOG.debug("Parse service definition: %s", service_file)
-                with open(os.path.join(service_dir, service_file), "r") as f:
-                    service_definition = yaml.load(f)
+                service_definition = yaml.load(content)
                 service_name = service_definition['service']['name']
                 components_map[service_name] = {
                     'service_dir': service_dir,

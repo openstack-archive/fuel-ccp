@@ -15,9 +15,3 @@ def jinja_render(path, context, functions=()):
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
     return content
-
-
-def jinja_render_str(content, jvars):
-    env = jinja2.Environment(loader=jinja2.DictLoader({'default': content}))
-    env.filters['bool'] = str_to_bool
-    return env.get_template('default').render(jvars)
