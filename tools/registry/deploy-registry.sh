@@ -29,7 +29,7 @@ done
 which kubectl 1>/dev/null
 
 function kube_cmd {
-    kubectl "$SRV_OPT" "$NAMESPACE_OPT" "$@"
+    kubectl $SRV_OPT $NAMESPACE_OPT "$@"
 }
 
 workdir=$(dirname $0)
