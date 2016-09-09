@@ -58,8 +58,8 @@ as a separate deployment process. You may also want to deploy just the
 "logging" components of StackLight, or just the "monitoring" components. Or you
 may want to deploy all the StackLight components at once.
 
-In any case you will need to create StackLight-related roles in your CCP global
-configuration file (e.g. ``/etc/ccp/globals.yaml``) and you will need to assign
+In any case you will need to create StackLight-related roles in your CCP
+configuration file (e.g. ``/etc/ccp/ccp.yaml``) and you will need to assign
 these roles to nodes.
 
 For example:

@@ -63,7 +63,6 @@ Create CCP CLI configuration file:
 
     mkdir /etc/ccp
     cat > /etc/ccp/ccp.yaml << EOF
-    deploy_config: /etc/ccp/globals.yaml
     builder:
       push: True
     registry:
@@ -72,12 +71,17 @@ Create CCP CLI configuration file:
       skip_empty: True
     EOF
 
-Create global CCP configuration file:
+Append default topology and edit it, if needed:
 
 ::
 
-    cat > /etc/ccp/globals.yaml << EOF
-    ---
+    cat fuel-ccp/etc/topology-example.yaml >> /etc/ccp/ccp.yaml
+
+Append global CCP configuration:
+
+::
+
+    cat >> /etc/ccp/ccp.yaml << EOF
     configs:
         private_interface: eth0
         public_interface: eth1
@@ -93,12 +97,6 @@ your environment may be different.
   network)
 - ``neutron_external_interface`` - should point to eth without ip addr (it
   actually might be non-existing interface, CCP will create it).
-
-Copy and edit topology file, if needed:
-
-::
-
-    cat fuel-ccp/etc/topology-example.yaml >> /etc/ccp/globals.yaml
 
 Fetch CCP components repos:
 
