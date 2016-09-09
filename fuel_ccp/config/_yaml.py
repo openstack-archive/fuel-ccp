@@ -1,3 +1,6 @@
+import collections
+import os
+
 import six
 import yaml
 
@@ -36,6 +39,19 @@ class AttrDict(object):
     def __repr__(self):
         return 'AttrDict({})'.format(self._dict)
 
+    def _merge(self, other):
+        for key, other_value in other._items():
+            try:
+                value = self._dict[key]
+            except KeyError:
+                merge = False
+            else:
+                merge = isinstance(value, AttrDict)
+            if merge:
+                value._merge(other_value)
+            else:
+                self._dict[key] = other_value
+
 
 class Loader(yaml.SafeLoader):
     pass
@@ -50,6 +66,35 @@ Loader.add_constructor(
     construct_mapping,
 )
 
+Includes = collections.namedtuple('Includes', 'lst')
+
+
+def construct_includes(loader, node):
+    return Includes(loader.construct_sequence(node))
+
+Loader.add_constructor('!include', construct_includes)
+
 
 def load(stream):
     return yaml.load(stream, Loader=Loader)
+
+
+def load_all(stream):
+    return yaml.load_all(stream, Loader=Loader)
+
+
+def load_with_includes(filename):
+    with open(filename) as f:
+        docs = list(load_all(f))
+    base_dir = os.path.dirname(filename)
+    res = AttrDict()
+    for doc in docs:
+        if isinstance(doc, Includes):
+            for inc_file in doc.lst:
+                if not os.path.isabs(inc_file):
+                    inc_file = os.path.join(base_dir, inc_file)
+                inc_res = load_with_includes(inc_file)
+                res._merge(inc_res)
+        else:
+            res._merge(doc)
+    return res

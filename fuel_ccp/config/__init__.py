@@ -26,7 +26,7 @@ def setup_config():
         config_file = find_config()
     log.register_options(cfg.CONF)
     if config_file:
-        yconf = parse_config(config_file)
+        yconf = _yaml.load_with_includes(config_file)
         set_oslo_defaults(cfg.CONF, yconf)
     # Don't let oslo.config parse any config files
     cfg.CONF(args, project='ccp', default_config_files=[])
@@ -68,11 +68,6 @@ def find_config():
             return candidate
     else:
         return None
-
-
-def parse_config(config_file):
-    with open(config_file) as f:
-        return _yaml.load(f)
 
 
 def set_oslo_defaults(oconf, yconf):
