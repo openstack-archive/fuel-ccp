@@ -32,8 +32,8 @@ repositories_opts = [
                 help='Skip repositories not containing Dockerfiles without '
                      'error'),
     cfg.StrOpt('path',
-               default=os.path.expanduser('~/microservices-repos/'),
-               help='Path where the microservice repositories are cloned'),
+               default=os.path.expanduser('~/ccp-repos/'),
+               help='Path where the Git repositories are cloned'),
     cfg.HostnameOpt('hostname',
                     default='review.openstack.org',
                     help='Git server hostname to pull repositories from'),
