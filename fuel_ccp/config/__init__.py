@@ -42,7 +42,7 @@ def setup_config():
 
 
 def get_cli_config():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
         '--config-file',
         metavar='PATH',
