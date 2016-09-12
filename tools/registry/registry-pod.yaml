@@ -12,9 +12,18 @@ spec:
       ports:
         - containerPort: 5000
           hostPort: 5000
+      volumeMounts:
+        - mountPath: /var/lib/registry
+          name: registry-volume
       readinessProbe:
-          httpGet:
-              path: /v2/_catalog
-              port: 5000
-          initialDelaySeconds: 3
-          timeoutSeconds: 1
+        httpGet:
+          path: /v2/_catalog
+          port: 5000
+        initialDelaySeconds: 3
+        timeoutSeconds: 1
+  nodeSelector:
+    app: ccp-registry
+  volumes:
+    - name: registry-volume
+      hostPath:
+        path: /var/lib/ccp-registry

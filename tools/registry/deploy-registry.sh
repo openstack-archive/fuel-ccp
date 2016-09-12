@@ -32,6 +32,11 @@ function kube_cmd {
     kubectl $SRV_OPT $NAMESPACE_OPT "$@"
 }
 
+first_node=$(kubectl get nodes -o template --template="{{ with index .items 0 }}{{ .metadata.name }}{{ end }}")
+if [ -z "$first_node" ]; then
+    kubectl label node $first_node app=ccp-registry
+fi
+
 workdir=$(dirname $0)
 
 kube_cmd create -f $workdir/registry-pod.yaml
