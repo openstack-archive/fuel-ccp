@@ -6,13 +6,21 @@
 Welcome to Fuel-ccp's documentation!
 ========================================================
 
-Contents:
+User docs
+------------
 
 .. toctree::
    :maxdepth: 1
 
    quickstart
    monitoring_and_logging
+
+Developer docs
+--------------
+
+.. toctree::
+   :maxdepth: 1
+
    contributing
    dsl
 
