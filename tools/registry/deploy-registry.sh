@@ -7,17 +7,21 @@ function usage {
     echo "Usage:"
     echo "  $base_name -s <address>"
     echo "  $base_name -n <namespace>"
+    echo "  $base_name -i <node>"
 }
 
 NAMESPACE_OPT=" --namespace kube-system"
 
-while getopts "s:n:" opt; do
+while getopts "s:n:i:" opt; do
     case $opt in
         "s" )
             SRV_OPT=" -s $OPTARG"
             ;;
         "n" )
             NAMESPACE_OPT=" --namespace $OPTARG"
+            ;;
+        "i" )
+            NODE="$OPTARG"
             ;;
         * )
             usage
@@ -31,6 +35,13 @@ which kubectl 1>/dev/null
 function kube_cmd {
     kubectl $SRV_OPT $NAMESPACE_OPT "$@"
 }
+
+if [ -z $NODE ]; then
+    NODE=$(kubectl get nodes -o template --template="{{ with index .items 0 }}{{ .metadata.name }}{{ end }}")
+    echo "K8S node is not specified, using $NODE"
+fi
+
+kubectl label node $NODE app=ccp-registry --overwrite
 
 workdir=$(dirname $0)
 
