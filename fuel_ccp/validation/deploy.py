@@ -5,16 +5,10 @@ from fuel_ccp import dependencies
 def validate_requested_components(components, components_map):
     """Validate requested components.
 
-    Validate that requested components are not already deployed and all
-    required components provided.
+    Validate that all required components provided.
     """
     deployed_components = utils.get_deployed_components()
     required_components = dependencies.get_deps(components, components_map)
-
-    already_deployed_components = components & deployed_components
-    if already_deployed_components:
-        raise RuntimeError('Following components are already deployed: '
-                           '%s' % ' '.join(already_deployed_components))
 
     not_provided_components = (required_components - components -
                                deployed_components)

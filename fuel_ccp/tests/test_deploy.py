@@ -2,6 +2,7 @@ import filecmp
 import os
 
 import fixtures
+import mock
 import yaml
 
 from fuel_ccp import deploy
@@ -122,12 +123,20 @@ class TestDeploy(base.TestCase):
                              shallow=False)
         self.assertTrue(result)
 
+    def test_get_configmaps_version(self):
+        cm_list = [mock.Mock(obj={'metadata': {'resourceVersion': '1'}})
+                   for _ in range(3)]
+        self.assertEqual('111', deploy._get_configmaps_version(cm_list))
+
+        cm_list = []
+        self.assertEqual('', deploy._get_configmaps_version(cm_list))
+
 
 class TestDeployCreateService(base.TestCase):
     def setUp(self):
         super(TestDeployCreateService, self).setUp()
         fixture = self.useFixture(fixtures.MockPatch(
-            "fuel_ccp.kubernetes.create_object_from_definition"))
+            "fuel_ccp.kubernetes.process_object"))
         self.create_obj = fixture.mock
 
     def test_create_service_without_ports(self):

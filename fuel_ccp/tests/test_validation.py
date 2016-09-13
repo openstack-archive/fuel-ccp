@@ -80,12 +80,3 @@ class TestDeployValidation(base.TestCase):
             'deployment: service2',
             deploy_validation.validate_requested_components,
             {'service1'}, COMPONENTS_MAP)
-
-        # requested services already deployed
-        m_get_deps.return_value = {}
-        m_get_deployed.return_value = {'service1'}
-        self.assertRaisesRegexp(
-            RuntimeError,
-            'Following components are already deployed: service1',
-            deploy_validation.validate_requested_components,
-            {'service1'}, COMPONENTS_MAP)
