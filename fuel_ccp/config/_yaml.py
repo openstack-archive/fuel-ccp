@@ -101,3 +101,14 @@ def load_with_includes(filename):
         else:
             res._merge(doc)
     return res
+
+
+class UnwrapAttrDict(dict):
+    def __init__(self, attr_dict):
+        return super(UnwrapAttrDict, self).__init__(attr_dict._dict)
+
+    def __getitem__(self, name):
+        res = super(UnwrapAttrDict, self).__getitem__(name)
+        if isinstance(res, AttrDict):
+            res = UnwrapAttrDict(res)
+        return res

@@ -24,3 +24,17 @@ registry_opt_group = cfg.OptGroup(name='registry',
 CONF.register_group(registry_opt_group)
 CONF.register_cli_opts(registry_opts, registry_opt_group)
 CONF.register_opts(registry_opts, registry_opt_group)
+
+SCHEMA = {
+    'registry': {
+        'type': 'object',
+        'additionalProperties': False,
+        'properties': {
+            'address': {'type': 'string'},
+            'insecure': {'type': 'boolean'},
+            'username': {'type': 'string'},
+            'password': {'type': 'string'},
+            'timeout': {'type': 'integer'},
+        },
+    },
+}
