@@ -87,11 +87,22 @@ def set_oslo_defaults(oconf, yconf):
 
 def copy_values_from_oslo(oconf, yconf):
     for key, value in six.iteritems(oconf):
-        if isinstance(value, cfg.ConfigOpts.GroupAttr):
+        if isinstance(value, (cfg.ConfigOpts.GroupAttr,
+                              cfg.ConfigOpts.SubCommandAttr)):
             try:
                 yconf_value = yconf[key]
             except KeyError:
-                yconf[key] = _yaml.AttrDict(value)
+                yconf_value = yconf[key] = _yaml.AttrDict()
+            if isinstance(value, cfg.ConfigOpts.SubCommandAttr):
+                yconf_items = set(yconf_value)
+                for skey in ['name', 'components', 'dry_run', 'export_dir',
+                             'auth_url', 'skip_os_cleanup']:
+                    try:
+                        svalue = getattr(value, skey)
+                    except cfg.NoSuchOptError:
+                        continue
+                    if skey not in yconf_items or svalue is not None:
+                        yconf_value[skey] = svalue
             else:
                 yconf_value._update(value)
         else:
