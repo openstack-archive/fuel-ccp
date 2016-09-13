@@ -29,3 +29,17 @@ builder_opt_group = cfg.OptGroup(name='builder',
 CONF.register_group(builder_opt_group)
 CONF.register_cli_opts(builder_opts, builder_opt_group)
 CONF.register_opts(builder_opts, builder_opt_group)
+
+SCHEMA = {
+    'builder': {
+        'type': 'object',
+        'additionalProperties': False,
+        'properties': {k: {'anyOf': [v, {'type': 'null'}]} for k, v in {
+            'workers': {'type': 'integer'},
+            'keep_image_tree_consistency': {'type': 'boolean'},
+            'build_base_images_if_not_exist': {'type': 'boolean'},
+            'push': {'type': 'boolean'},
+            'no_cache': {'type': 'boolean'},
+        }.items()},
+    },
+}

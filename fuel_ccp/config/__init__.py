@@ -1,21 +1,22 @@
 import argparse
 
+import itertools
+import jsonschema
 import os
 from oslo_config import cfg
+from oslo_log import _options as log_options
 from oslo_log import log
 import six
 
 from fuel_ccp.config import _yaml
+from fuel_ccp.config import builder
+from fuel_ccp.config import cli
+from fuel_ccp.config import images
+from fuel_ccp.config import kubernetes
+from fuel_ccp.config import registry
+from fuel_ccp.config import repositories
 
 LOG = log.getLogger(__name__)
-
-cfg.CONF.import_group('builder', 'fuel_ccp.config.builder')
-cfg.CONF.import_opt("action", "fuel_ccp.config.cli")
-cfg.CONF.import_opt("deploy_config", "fuel_ccp.config.cli")
-cfg.CONF.import_group('images', 'fuel_ccp.config.images')
-cfg.CONF.import_group('kubernetes', 'fuel_ccp.config.kubernetes')
-cfg.CONF.import_group('registry', 'fuel_ccp.config.registry')
-cfg.CONF.import_group('repositories', 'fuel_ccp.config.repositories')
 
 _REAL_CONF = None
 
@@ -37,6 +38,7 @@ def setup_config():
         LOG.debug('No config file loaded')
         yconf = _yaml.AttrDict()
     copy_values_from_oslo(cfg.CONF, yconf)
+    validate_config(yconf)
     global _REAL_CONF
     _REAL_CONF = yconf
 
@@ -117,3 +119,35 @@ class _Wrapper(object):
         return _REAL_CONF[name]
 
 CONF = _Wrapper()
+
+
+def get_config_schema():
+    schema = {
+        '$schema': 'http://json-schema.org/draft-04/schema#',
+        'additionalProperties': False,
+        'properties': {
+            'debug': {'type': 'boolean'},
+            'verbose': {'type': 'boolean'},
+        },
+    }
+    for module in [cli, builder, images, kubernetes, registry, repositories]:
+        schema['properties'].update(module.SCHEMA)
+    # Don't validate all options added from oslo.log and oslo.config
+    ignore_opts = ['config_file', 'config_dir']
+    for opt in itertools.chain(log_options.logging_cli_opts,
+                               log_options.generic_log_opts,
+                               log_options.log_opts):
+        ignore_opts.append(opt.name.replace('-', '_'))
+    for name in ignore_opts:
+        schema['properties'][name] = {}
+    # Also for now don't validate sections that used to be in deploy config
+    for name in ['configs', 'nodes', 'roles', 'sources', 'versions']:
+        schema['properties'][name] = {'type': 'object'}
+    return schema
+
+
+def validate_config(yconf=None):
+    if yconf is None:
+        yconf = _REAL_CONF
+    schema = get_config_schema()
+    jsonschema.validate(_yaml.UnwrapAttrDict(yconf), schema)

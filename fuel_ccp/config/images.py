@@ -23,3 +23,17 @@ images_opt_group = cfg.OptGroup(name='images',
 CONF.register_group(images_opt_group)
 CONF.register_cli_opts(images_opts, images_opt_group)
 CONF.register_opts(images_opts, images_opt_group)
+
+SCHEMA = {
+    'images': {
+        'type': 'object',
+        'additionalProperties': False,
+        'properties': {
+            'namespace': {'type': 'string'},
+            'tag': {'type': 'string'},
+            'base_distro': {'type': 'string'},
+            'base_tag': {'type': 'string'},
+            'maintainer': {'type': 'string'},
+        },
+    },
+}

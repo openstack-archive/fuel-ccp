@@ -53,10 +53,31 @@ repositories_opts = [
                 help='List of repository names'),
 ]
 
+SCHEMA = {
+    'repositories': {
+        'type': 'object',
+        'additionalProperties': False,
+        'properties': {
+            'clone': {'type': 'boolean'},
+            'clone_concurrency': {'type': 'integer'},
+            'skip_empty': {'type': 'boolean'},
+            'path': {'type': 'string'},
+            'hostname': {'type': 'string'},
+            'port': {'type': 'integer'},
+            'protocol': {'type': 'string'},
+            'project': {'type': 'string'},
+            'username': {'type': 'string'},
+            'names': {'type': 'array', 'items': {'type': 'string'}},
+        },
+    },
+}
+
 for repo in DEFAULT_REPOS:
     url = '$protocol://$username@$hostname:$port/$project/'
     option = cfg.StrOpt(repo, default=url + repo)
     repositories_opts.append(option)
+    SCHEMA['repositories']['properties'][repo.replace('-', '_')] = \
+        {'type': 'string'}
 
 repositories_opt_group = cfg.OptGroup(name='repositories',
                                       title='Git repositories for components')

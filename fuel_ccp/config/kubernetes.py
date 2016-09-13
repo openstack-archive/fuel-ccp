@@ -21,3 +21,17 @@ kubernetes_opt_group = cfg.OptGroup(name='kubernetes',
 CONF.register_group(kubernetes_opt_group)
 CONF.register_cli_opts(kubernetes_opts, kubernetes_opt_group)
 CONF.register_cli_opts(kubernetes_opts, kubernetes_opt_group)
+
+SCHEMA = {
+    'kubernetes': {
+        'type': 'object',
+        'additionalProperties': False,
+        'properties': {
+            'server': {'type': 'string'},
+            'namespace': {'type': 'string'},
+            'ca_certs': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'key_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+        },
+    },
+}
