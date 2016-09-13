@@ -39,6 +39,9 @@ class AttrDict(object):
     def __repr__(self):
         return 'AttrDict({})'.format(self._dict)
 
+    def __iter__(self):
+        return iter(self._dict)
+
     def _merge(self, other):
         for key, other_value in other._items():
             try:

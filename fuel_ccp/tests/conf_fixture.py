@@ -1,5 +1,6 @@
 import fixtures
 from oslo_config import cfg
+from oslo_config import fixture as oslo_fixture
 
 from fuel_ccp import config
 from fuel_ccp.config import _yaml
@@ -7,6 +8,8 @@ from fuel_ccp.config import _yaml
 
 class Config(fixtures.Fixture):
     def _setUp(self):
+        self.useFixture(oslo_fixture.Config())
+        cfg.CONF(['build'], default_config_files=[])
         self.conf = _yaml.AttrDict()
         config.copy_values_from_oslo(cfg.CONF, self.conf)
         self.useFixture(
