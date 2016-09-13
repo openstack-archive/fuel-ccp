@@ -10,6 +10,8 @@ CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 
+UPDATABLE_OBJECTS = ('ConfigMap', 'Deployment', 'Service')
+
 
 def get_client(kube_apiserver=None, key_file=None, cert_file=None,
                ca_cert=None, insecure=None):
@@ -70,7 +72,7 @@ def export_object(object_dict):
             object_dict, default_flow_style=False))
 
 
-def create_object_from_definition(object_dict, namespace=None, client=None):
+def process_object(object_dict, namespace=None, client=None):
     LOG.debug("Deploying %s: \"%s\"",
               object_dict["kind"], object_dict["metadata"]["name"])
     if not object_dict['kind'] == 'Namespace':
@@ -94,10 +96,17 @@ def create_object_from_definition(object_dict, namespace=None, client=None):
     if obj.exists():
         LOG.debug('%s "%s" already exists', object_dict['kind'],
                   object_dict['metadata']['name'])
-        return obj
-    obj.create()
-    LOG.debug('%s "%s" has been created', object_dict['kind'],
-              object_dict['metadata']['name'])
+        if object_dict['kind'] in UPDATABLE_OBJECTS:
+            obj.update()
+            LOG.debug('%s "%s" has been updated', object_dict['kind'],
+                      object_dict['metadata']['name'])
+        if object_dict['kind'] == 'DaemonSet':
+            LOG.warning('%s will not be updated (DaemonSet objects cannot be '
+                        'updated' % object_dict['metadata']['name'])
+    else:
+        obj.create()
+        LOG.debug('%s "%s" has been created', object_dict['kind'],
+                  object_dict['metadata']['name'])
     return obj
 
 
