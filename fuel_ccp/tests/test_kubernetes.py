@@ -57,12 +57,12 @@ class TestKubernetesClient(base.TestCase):
 
 class TestKubernetesObjects(testscenarios.WithScenarios, base.TestCase):
     scenarios = (
-        ('ConfigMap', {'kind': 'ConfigMap'}),
-        ('Deployment', {'kind': 'Deployment'}),
-        ('DaemonSet', {'kind': 'DaemonSet'}),
-        ('Job', {'kind': 'Job'}),
-        ('Namespace', {'kind': 'Namespace'}),
-        ('Service', {'kind': 'Service'})
+        ('ConfigMap', {'kind': 'ConfigMap', 'update': True}),
+        ('Deployment', {'kind': 'Deployment', 'update': True}),
+        ('DaemonSet', {'kind': 'DaemonSet', 'update': False}),
+        ('Job', {'kind': 'Job', 'update': False}),
+        ('Namespace', {'kind': 'Namespace', 'update': False}),
+        ('Service', {'kind': 'Service', 'update': True})
     )
 
     def setUp(self):
@@ -76,19 +76,19 @@ class TestKubernetesObjects(testscenarios.WithScenarios, base.TestCase):
         m_class = self.useFixture(fixtures.MockPatch(
             'pykube.{}'.format(self.kind), return_value=m_obj))
 
-        kubernetes.create_object_from_definition(
-            obj_dict, client=mock.Mock())
+        kubernetes.process_object(obj_dict, client=mock.Mock())
         m_class.mock.assert_called_once_with(mock.ANY, obj_dict)
         m_obj.create.assert_called_once_with()
 
-    def test_object_exists(self):
+    def test_object_update(self):
         obj_dict = {'kind': self.kind, 'metadata': {'name': 'test'}}
         m_obj = mock.Mock(exists=mock.Mock(return_value=True))
         m_class = self.useFixture(fixtures.MockPatch(
             'pykube.{}'.format(self.kind), return_value=m_obj))
 
-        kubernetes.create_object_from_definition(
-            obj_dict, client=mock.Mock())
+        kubernetes.process_object(obj_dict, client=mock.Mock())
         m_class.mock.assert_called_once_with(mock.ANY, obj_dict)
         m_obj.exists.assert_called_once_with()
         m_obj.create.assert_not_called()
+        if self.update:
+            m_obj.update.assert_called_once_with()
