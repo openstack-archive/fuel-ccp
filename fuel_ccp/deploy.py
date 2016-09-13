@@ -43,6 +43,16 @@ def _update_container_volumes(cont, jvars):
                                                            jvars)
 
 
+def _get_configmaps_version(configmaps):
+    """Get sum of configmap versions
+
+    If version of any of the ConfigMaps changed, the overall version will be
+    changed and deployment will be updated no matter was updated deployment
+    spec or not.
+    """
+    return ''.join(cm.obj['metadata']['resourceVersion'] for cm in configmaps)
+
+
 def parse_role(service_dir, role, config):
     service = role["service"]
     if service["name"] not in config.get("topology", {}):
@@ -52,11 +62,13 @@ def parse_role(service_dir, role, config):
     LOG.info("Scheduling service %s deployment", service["name"])
     _expand_files(service, role.get("files"))
 
-    _create_files_configmap(service_dir, service["name"], role.get("files"))
-    _create_meta_configmap(service)
+    files_cm = _create_files_configmap(
+        service_dir, service["name"], role.get("files"))
+    meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
-    _create_workflow(workflows, service["name"])
+    workflow_cm = _create_workflow(workflows, service["name"])
+    configmaps = config['configmaps'] + (files_cm, meta_cm, workflow_cm)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
@@ -65,6 +77,7 @@ def parse_role(service_dir, role, config):
         _update_container_volumes(cont, config['configs'])
         _create_pre_jobs(service, cont)
         _create_post_jobs(service, cont)
+        cont['cm_version'] = _get_configmaps_version(configmaps)
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
@@ -75,7 +88,7 @@ def parse_role(service_dir, role, config):
     else:
         obj = templates.serialize_deployment(service["name"], cont_spec,
                                              affinity)
-    kubernetes.create_object_from_definition(obj)
+    kubernetes.process_object(obj)
 
     _create_service(service, config["configs"])
     LOG.info("Service %s successfuly scheduled", service["name"])
@@ -116,7 +129,7 @@ def _fill_cmd(workflow, cmd):
 def _create_workflow(workflow, name):
     configmap_name = "%s-%s" % (name, templates.ROLE_CONFIG)
     template = templates.serialize_configmap(configmap_name, workflow)
-    kubernetes.create_object_from_definition(template)
+    return kubernetes.process_object(template)
 
 
 def _create_service(service, config):
@@ -136,7 +149,7 @@ def _create_service(service, config):
         else:
             ports.append({"port": source_port, "name": name_port})
     template = templates.serialize_service(service["name"], ports)
-    kubernetes.create_object_from_definition(template)
+    kubernetes.process_object(template)
 
 
 def _create_pre_commands(workflow, container):
@@ -189,7 +202,7 @@ def _create_job(service, container, job):
     cont_spec = templates.serialize_job_container_spec(container, job)
     pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
     job_spec = templates.serialize_job(job["name"], pod_spec)
-    kubernetes.create_object_from_definition(job_spec)
+    kubernetes.process_object(job_spec)
 
 
 def _create_command(workflow, cmd):
@@ -227,7 +240,7 @@ def _create_globals_configmap(config):
         templates.GLOBAL_CONFIG: json.dumps(config, sort_keys=True)
     }
     cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
-    kubernetes.create_object_from_definition(cm)
+    return kubernetes.process_object(cm)
 
 
 def _create_start_script_configmap():
@@ -242,7 +255,7 @@ def _create_start_script_configmap():
         templates.SCRIPT_CONFIG: start_scr_data
     }
     cm = templates.serialize_configmap(templates.SCRIPT_CONFIG, data)
-    kubernetes.create_object_from_definition(cm)
+    return kubernetes.process_object(cm)
 
 
 def _create_files_configmap(service_dir, service_name, configs):
@@ -255,7 +268,7 @@ def _create_files_configmap(service_dir, service_name, configs):
                 data[filename] = f.read()
     data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
-    kubernetes.create_object_from_definition(template)
+    return kubernetes.process_object(template)
 
 
 def _create_meta_configmap(service):
@@ -266,7 +279,7 @@ def _create_meta_configmap(service):
              "host-net": service.get("host-net", False)}, sort_keys=True)
     }
     template = templates.serialize_configmap(configmap_name, data)
-    kubernetes.create_object_from_definition(template)
+    return kubernetes.process_object(template)
 
 
 def _make_topology(nodes, roles):
@@ -316,7 +329,7 @@ def _create_namespace(namespace):
         return
 
     template = templates.serialize_namespace(namespace)
-    kubernetes.create_object_from_definition(template)
+    kubernetes.process_object(template)
 
 
 def _create_openrc(config, namespace):
@@ -351,8 +364,9 @@ def deploy_components(components=None):
     namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
 
-    _create_globals_configmap(config["configs"])
-    _create_start_script_configmap()
+    globals_cm = _create_globals_configmap(config["configs"])
+    start_script_cm = _create_start_script_configmap()
+    config['configmaps'] = (globals_cm, start_script_cm)
 
     for component in components:
         parse_role(components_map[component]['service_dir'],
