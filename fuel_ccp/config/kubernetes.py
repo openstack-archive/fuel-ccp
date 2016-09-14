@@ -22,6 +22,16 @@ CONF.register_group(kubernetes_opt_group)
 CONF.register_cli_opts(kubernetes_opts, kubernetes_opt_group)
 CONF.register_cli_opts(kubernetes_opts, kubernetes_opt_group)
 
+DEFAULTS = {
+    'kubernetes': {
+        'server': '127.0.0.1:8080',
+        'namespace': 'ccp',
+        'ca_certs': None,
+        'key_file': None,
+        'cert_file': None,
+    },
+}
+
 SCHEMA = {
     'kubernetes': {
         'type': 'object',

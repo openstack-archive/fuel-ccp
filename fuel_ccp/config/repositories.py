@@ -53,6 +53,21 @@ repositories_opts = [
                 help='List of repository names'),
 ]
 
+DEFAULTS = {
+    'repositories': {
+        'clone': True,
+        'clone_concurrency': multiprocessing.cpu_count(),
+        'skip_empty': True,
+        'path': os.path.expanduser('~/ccp-repos/'),
+        'hostname': 'review.openstack.org',
+        'port': 443,
+        'protocol': 'https',
+        'project': 'openstack',
+        'username': '',
+        'names': DEFAULT_REPOS,
+    },
+}
+
 SCHEMA = {
     'repositories': {
         'type': 'object',
@@ -76,8 +91,9 @@ for repo in DEFAULT_REPOS:
     url = '$protocol://$username@$hostname:$port/$project/'
     option = cfg.StrOpt(repo, default=url + repo)
     repositories_opts.append(option)
-    SCHEMA['repositories']['properties'][repo.replace('-', '_')] = \
-        {'type': 'string'}
+    conf_name = repo.replace('-', '_')
+    SCHEMA['repositories']['properties'][conf_name] = {'type': 'string'}
+    DEFAULTS['repositories'][conf_name] = url
 
 repositories_opt_group = cfg.OptGroup(name='repositories',
                                       title='Git repositories for components')

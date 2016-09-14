@@ -26,8 +26,10 @@ def setup_config():
     if config_file is None:
         config_file = find_config()
     log.register_options(cfg.CONF)
+    yconf = get_config_defaults()
     if config_file:
-        yconf = _yaml.load_with_includes(config_file)
+        loaded_conf = _yaml.load_with_includes(config_file)
+        yconf._merge(loaded_conf)
         set_oslo_defaults(cfg.CONF, yconf)
     # Don't let oslo.config parse any config files
     cfg.CONF(args, project='ccp', default_config_files=[])
@@ -36,7 +38,6 @@ def setup_config():
         LOG.debug('Loaded config from file %s', config_file)
     else:
         LOG.debug('No config file loaded')
-        yconf = _yaml.AttrDict()
     copy_values_from_oslo(cfg.CONF, yconf)
     validate_config(yconf)
     global _REAL_CONF
@@ -119,6 +120,13 @@ class _Wrapper(object):
         return _REAL_CONF[name]
 
 CONF = _Wrapper()
+
+
+def get_config_defaults():
+    defaults = _yaml.AttrDict()
+    for module in [cli, builder, images, kubernetes, registry, repositories]:
+        defaults._merge(module.DEFAULTS)
+    return defaults
 
 
 def get_config_schema():
