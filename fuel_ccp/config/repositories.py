@@ -53,7 +53,6 @@ repositories_opts = [
                default='openstack',
                help='Gerrit project'),
     cfg.StrOpt('username',
-               default='',
                help='Username when using git or ssh scheme'),
     cfg.ListOpt('names',
                 default=DEFAULT_REPOS,
@@ -70,7 +69,7 @@ DEFAULTS = {
         'port': 443,
         'protocol': 'https',
         'project': 'openstack',
-        'username': '',
+        'username': None,
         'names': DEFAULT_REPOS,
     },
 }
@@ -88,19 +87,19 @@ SCHEMA = {
             'port': {'type': 'integer'},
             'protocol': {'type': 'string'},
             'project': {'type': 'string'},
-            'username': {'type': 'string'},
+            'username': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'names': {'type': 'array', 'items': {'type': 'string'}},
         },
     },
 }
 
 for repo in DEFAULT_REPOS:
-    url = '$protocol://$username@$hostname:$port/$project/'
-    option = cfg.StrOpt(repo, default=url + repo)
+    option = cfg.StrOpt(repo)
     repositories_opts.append(option)
     conf_name = repo.replace('-', '_')
-    SCHEMA['repositories']['properties'][conf_name] = {'type': 'string'}
-    DEFAULTS['repositories'][conf_name] = url
+    SCHEMA['repositories']['properties'][conf_name] = \
+        {'anyOf': [{'type': 'string'}, {'type': 'null'}]}
+    DEFAULTS['repositories'][conf_name] = None
 
 repositories_opt_group = cfg.OptGroup(name='repositories',
                                       title='Git repositories for components')
