@@ -24,6 +24,16 @@ CONF.register_group(images_opt_group)
 CONF.register_cli_opts(images_opts, images_opt_group)
 CONF.register_opts(images_opts, images_opt_group)
 
+DEFAULTS = {
+    'images': {
+        'namespace': 'ccp',
+        'tag': 'latest',
+        'base_distro': 'debian',
+        'base_tag': 'jessie',
+        'maintainer': 'MOS Microservices <mos-microservices@mirantis.com>',
+    },
+}
+
 SCHEMA = {
     'images': {
         'type': 'object',

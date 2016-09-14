@@ -145,5 +145,8 @@ class TestConfigSchema(base.TestCase):
         schema = config.get_config_schema()
         jsonschema.Draft4Validator.check_schema(schema)
 
-    def test_validate_default_conf(self):
+    def test_validate_default_oslo_conf(self):
         config.validate_config(self.conf)
+
+    def test_validate_default_conf(self):
+        config.validate_config(config.get_config_defaults())

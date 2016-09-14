@@ -30,6 +30,16 @@ CONF.register_group(builder_opt_group)
 CONF.register_cli_opts(builder_opts, builder_opt_group)
 CONF.register_opts(builder_opts, builder_opt_group)
 
+DEFAULTS = {
+    'builder': {
+        'workers': multiprocessing.cpu_count(),
+        'keep_image_tree_consistency': True,
+        'build_base_images_if_not_exist': True,
+        'push': False,
+        'no_cache': False,
+    },
+}
+
 SCHEMA = {
     'builder': {
         'type': 'object',
