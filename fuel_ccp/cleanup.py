@@ -1,3 +1,4 @@
+import logging
 import time
 
 from k8sclient.client import rest
@@ -6,7 +7,6 @@ from keystoneauth1.identity import v3
 from keystoneauth1 import session as keystone_session
 from neutronclient.v2_0 import client as neutron_client
 from novaclient import client as nova_client
-from oslo_log import log as logging
 
 from fuel_ccp.common import utils
 from fuel_ccp import config

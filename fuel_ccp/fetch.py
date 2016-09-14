@@ -1,8 +1,8 @@
+import logging
 import os
 
 from concurrent import futures
 import git
-from oslo_log import log as logging
 
 from fuel_ccp import config
 

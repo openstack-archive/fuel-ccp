@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 import itertools
 import jsonschema
@@ -16,7 +17,7 @@ from fuel_ccp.config import kubernetes
 from fuel_ccp.config import registry
 from fuel_ccp.config import repositories
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 _REAL_CONF = None
 
