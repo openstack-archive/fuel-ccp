@@ -35,8 +35,8 @@ class TestFetch(base.TestCase):
                       'fuel-ccp-rabbitmq',
                       'fuel-ccp-stacklight']
         expected_calls = [
-            mock.call('https://%s@review.openstack.org:443/openstack/%s' % (
-                '', component), os.path.join(self.tmp_path, component))
+            mock.call('https://review.openstack.org:443/openstack/%s' % (
+                component), os.path.join(self.tmp_path, component))
             for component in components
         ]
         for component, expected_call in zip(components, expected_calls):

@@ -20,6 +20,14 @@ def fetch_repository(repository_name):
         LOG.info('%s was already cloned, skipping', repository_name)
         return
     git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
+    if git_url is None:
+        username = CONF.repositories.username
+        if username is None:
+            username = ''
+        else:
+            username = username + '@'
+        fmt = '{0.protocol}://{1}{0.hostname}:{0.port}/{0.project}/{2}'
+        git_url = fmt.format(CONF.repositories, username, repository_name)
     git.Repo.clone_from(git_url, dest_dir)
     LOG.info('Cloned %s repo', repository_name)
 
