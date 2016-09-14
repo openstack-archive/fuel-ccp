@@ -132,7 +132,7 @@ class TestDeployCreateService(base.TestCase):
         self.create_obj = fixture.mock
 
     def test_create_service_without_ports(self):
-        deploy._create_service({"name": "spam"}, {})
+        deploy._create_service({"name": "spam"})
         self.assertFalse(self.create_obj.called)
 
     def test_create_service(self):
@@ -142,17 +142,11 @@ class TestDeployCreateService(base.TestCase):
                 1234,
                 "1122:3344",
                 "5566",
-                "port1",
-                "port2:nodeport",
-                "7788:nodeport",
-                "port3:9900"
+                "9999",
+                "8888:6666",
+                "7788:6666",
+                "7777:9900"
             ]
-        }
-        defaults = {
-            "port1": 9999,
-            "port2": "8888",
-            "port3": 7777,
-            "nodeport": "6666"
         }
         service_k8s_obj = """
 apiVersion: v1
@@ -198,7 +192,7 @@ spec:
   selector:
     app: foo
   type: NodePort"""
-        deploy._create_service(service, defaults)
+        deploy._create_service(service)
         self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
 
 

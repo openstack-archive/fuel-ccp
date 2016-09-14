@@ -65,7 +65,7 @@ def parse_role(service_dir, role, config):
                                              affinity)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service, config["configs"])
+    _create_service(service)
     LOG.info("Service %s successfuly scheduled", service["name"])
 
 
@@ -108,17 +108,17 @@ def _create_workflow(workflow, name):
         kubernetes.create_object_from_definition, template)
 
 
-def _create_service(service, config):
+def _create_service(service):
     template_ports = service.get("ports")
     if not template_ports:
         return
     ports = []
     for port in service["ports"]:
         source_port, _, node_port = str(port).partition(":")
-        source_port = int(config.get(source_port, source_port))
-        if node_port:
-            node_port = int(config.get(node_port, node_port))
+        source_port = int(source_port)
         name_port = str(source_port)
+        if node_port:
+            node_port = int(node_port)
         if node_port:
             ports.append({"port": source_port, "name": name_port,
                           "node-port": node_port})
