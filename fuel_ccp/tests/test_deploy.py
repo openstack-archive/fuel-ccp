@@ -336,6 +336,7 @@ class TestDeployMakeTopology(base.TestCase):
         }
 
         expected_topology = {
+            "_ccp_jobs": ["node1", "node2", "node3"],
             "mysql": ["node1"],
             "keystone": ["node1"],
             "nova-compute": ["node2", "node3"],
@@ -353,6 +354,7 @@ class TestDeployMakeTopology(base.TestCase):
         }
 
         expected_topology = {
+            '_ccp_jobs': ['node1'],
             "mysql": ["node1"],
             "keystone": ["node1"]
         }
@@ -371,6 +373,7 @@ class TestDeployMakeTopology(base.TestCase):
         }
 
         expected_topology = {
+            "_ccp_jobs": ["node1", "node2", "node3"],
             "mysql": ["node1"],
             "keystone": ["node1"],
             "nova-compute": ["node1", "node2", "node3"],
