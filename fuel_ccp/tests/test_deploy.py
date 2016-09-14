@@ -360,7 +360,7 @@ class TestDeployMakeTopology(base.TestCase):
         self.assertDictEqual(expected_topology, topology)
 
         # two ways to define topology that should give the same result
-        # first
+        # valid case
         nodes = {
             "node1": {
                 "roles": ["controller", "compute"]
@@ -379,7 +379,7 @@ class TestDeployMakeTopology(base.TestCase):
         topology = deploy._make_topology(nodes, roles)
         self.assertDictEqual(expected_topology, topology)
 
-        # second
+        # invalid case
         nodes = {
             "node1": {
                 "roles": ["controller"]
@@ -389,11 +389,16 @@ class TestDeployMakeTopology(base.TestCase):
             }
         }
 
-        expected_topology = {
-            "mysql": ["node1"],
-            "keystone": ["node1"],
-            "nova-compute": ["node1", "node2", "node3"],
-            "libvirtd": ["node1", "node2", "node3"]
+        self.assertRaisesRegexp(
+            RuntimeError, 'Node\(s\) "node1" defined in topology multiple '
+                          'times', deploy._make_topology, nodes, roles)
+
+        # node was not matched
+        nodes = {
+            "node5": {
+                "roles": ["controller"]
+            }
         }
-        topology = deploy._make_topology(nodes, roles)
-        self.assertDictEqual(expected_topology, topology)
+        self.assertRaisesRegexp(
+            RuntimeError, '"node5" doesn\'t match any Kubernetes node',
+            deploy._make_topology, nodes, roles)

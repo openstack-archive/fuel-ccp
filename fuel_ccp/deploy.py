@@ -272,7 +272,6 @@ def _make_topology(nodes, roles):
     if failed:
         raise RuntimeError("Failed to create topology for services")
 
-    # TODO(sreshetniak): add validation
     k8s_nodes = kubernetes.list_k8s_nodes()
     k8s_node_names = kubernetes.get_object_names(k8s_nodes)
 
@@ -286,11 +285,21 @@ def _make_topology(nodes, roles):
         return nodes
 
     roles_to_node = {}
+    all_nodes = []
     for node in sorted(nodes.keys()):
         matched_nodes = find_match(node)
+        if not matched_nodes:
+            raise RuntimeError('"%s" doesn\'t match any Kubernetes node'
+                               % node)
+        all_nodes.extend(matched_nodes)
         for role in nodes[node]["roles"]:
             roles_to_node.setdefault(role, [])
             roles_to_node[role].extend(matched_nodes)
+
+    duplicates = [node for node in all_nodes if all_nodes.count(node) > 1]
+    if duplicates:
+        raise RuntimeError('Node(s) "%s" defined in topology multiple '
+                           'times' % ', '.join(set(duplicates)))
     service_to_node = {}
     for role in sorted(roles.keys()):
         if role in roles_to_node:
