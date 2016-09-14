@@ -286,13 +286,13 @@ def _make_topology(nodes, roles):
         return nodes
 
     roles_to_node = {}
-    for node in nodes.keys():
+    for node in sorted(nodes.keys()):
         matched_nodes = find_match(node)
         for role in nodes[node]["roles"]:
             roles_to_node.setdefault(role, [])
             roles_to_node[role].extend(matched_nodes)
     service_to_node = {}
-    for role in roles.keys():
+    for role in sorted(roles.keys()):
         if role in roles_to_node:
             for svc in roles[role]:
                 service_to_node.setdefault(svc, [])

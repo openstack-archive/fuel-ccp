@@ -2,7 +2,6 @@ import filecmp
 import os
 
 import fixtures
-import mock
 import yaml
 
 from fuel_ccp import deploy
@@ -312,14 +311,10 @@ class TestDeployMakeTopology(base.TestCase):
                           deploy._make_topology, {"spam": "eggs"}, None)
 
     def test_make_topology(self):
-        nodes = {
-            "node1": {
-                "roles": ["controller"]
-            },
-            "node[2-3]": {
-                "roles": ["compute"]
-            }
-        }
+        node_list = ["node1", "node2", "node3"]
+        self.useFixture(fixtures.MockPatch(
+            "fuel_ccp.kubernetes.get_object_names", return_value=node_list))
+
         roles = {
             "controller": [
                 "mysql",
@@ -331,14 +326,74 @@ class TestDeployMakeTopology(base.TestCase):
             ]
         }
 
-        node_list = ["node1", "node2", "node3"]
+        nodes = {
+            "node1": {
+                "roles": ["controller"]
+            },
+            "node[2-3]": {
+                "roles": ["compute"]
+            }
+        }
+
         expected_topology = {
             "mysql": ["node1"],
             "keystone": ["node1"],
             "nova-compute": ["node2", "node3"],
             "libvirtd": ["node2", "node3"]
         }
-        with mock.patch("fuel_ccp.kubernetes.get_object_names") as p:
-            p.return_value = node_list
-            topology = deploy._make_topology(nodes, roles)
+
+        topology = deploy._make_topology(nodes, roles)
+        self.assertDictEqual(expected_topology, topology)
+
+        # check if role is defined but not used
+        nodes = {
+            "node1": {
+                "roles": ["controller"]
+            },
+        }
+
+        expected_topology = {
+            "mysql": ["node1"],
+            "keystone": ["node1"]
+        }
+        topology = deploy._make_topology(nodes, roles)
+        self.assertDictEqual(expected_topology, topology)
+
+        # two ways to define topology that should give the same result
+        # first
+        nodes = {
+            "node1": {
+                "roles": ["controller", "compute"]
+            },
+            "node[2-3]": {
+                "roles": ["compute"]
+            }
+        }
+
+        expected_topology = {
+            "mysql": ["node1"],
+            "keystone": ["node1"],
+            "nova-compute": ["node1", "node2", "node3"],
+            "libvirtd": ["node1", "node2", "node3"]
+        }
+        topology = deploy._make_topology(nodes, roles)
+        self.assertDictEqual(expected_topology, topology)
+
+        # second
+        nodes = {
+            "node1": {
+                "roles": ["controller"]
+            },
+            "node[1-3]": {
+                "roles": ["compute"]
+            }
+        }
+
+        expected_topology = {
+            "mysql": ["node1"],
+            "keystone": ["node1"],
+            "nova-compute": ["node1", "node2", "node3"],
+            "libvirtd": ["node1", "node2", "node3"]
+        }
+        topology = deploy._make_topology(nodes, roles)
         self.assertDictEqual(expected_topology, topology)
