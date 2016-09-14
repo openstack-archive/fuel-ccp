@@ -47,6 +47,17 @@ common_opts = [
 ]
 CONF.register_cli_opts(common_opts)
 
+DEFAULTS = {
+    'deploy_config': None,
+    'action': {
+        'components': None,
+        'dry_run': False,
+        'export_dir': None,
+        'auth_url': None,
+        'skip_os_cleanup': False,
+    },
+}
+
 SCHEMA = {
     'deploy_config': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
     'action': {
