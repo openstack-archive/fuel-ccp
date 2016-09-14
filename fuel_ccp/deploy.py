@@ -17,6 +17,8 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 YAML_FILE_RE = re.compile(r'\.yaml$')
+# This role is added to execute k8s Jobs only on nodes affected by deployment
+JOBS_ROLE = '_ccp_jobs'
 
 
 def _expand_files(service, files):
@@ -51,11 +53,12 @@ def parse_role(service_dir, role, config):
         daemon_cmd = cont["daemon"]
         daemon_cmd["name"] = cont["name"]
 
-        _create_pre_jobs(service, cont)
-        _create_post_jobs(service, cont)
+        _create_pre_jobs(service, cont, config["topology"])
+        _create_post_jobs(service, cont, config["topology"])
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
-    affinity = templates.serialize_affinity(service, config["topology"])
+    affinity = templates.serialize_affinity(service['name'],
+                                            config["topology"])
 
     if service.get("daemonset", False):
         obj = templates.serialize_daemonset(service["name"], cont_spec,
@@ -162,21 +165,23 @@ def _is_single_job(job):
     return job.get("type", "local") == "single"
 
 
-def _create_pre_jobs(service, container):
+def _create_pre_jobs(service, container, topology):
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            _create_job(service, container, job)
+            _create_job(service, container, job, topology)
 
 
-def _create_post_jobs(service, container):
+def _create_post_jobs(service, container, topology):
     for job in container.get("post", ()):
         if _is_single_job(job):
-            _create_job(service, container, job)
+            _create_job(service, container, job, topology)
 
 
-def _create_job(service, container, job):
+def _create_job(service, container, job, topology):
     cont_spec = templates.serialize_job_container_spec(container, job)
-    pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
+    job_affinity = templates.serialize_affinity(JOBS_ROLE, topology)
+    pod_spec = templates.serialize_job_pod_spec(
+        service, job, cont_spec, job_affinity)
     job_spec = templates.serialize_job(job["name"], pod_spec)
     kubernetes.create_object_from_definition(job_spec)
 
@@ -288,7 +293,7 @@ def _make_topology(nodes, roles):
     roles_to_node = {}
     for node in nodes.keys():
         matched_nodes = find_match(node)
-        for role in nodes[node]["roles"]:
+        for role in nodes[node]["roles"] + [JOBS_ROLE]:
             roles_to_node.setdefault(role, [])
             roles_to_node[role].extend(matched_nodes)
     service_to_node = {}
@@ -299,6 +304,7 @@ def _make_topology(nodes, roles):
                 service_to_node[svc].extend(roles_to_node[role])
         else:
             LOG.warning("Role '%s' defined, but unused", role)
+    service_to_node[JOBS_ROLE] = roles_to_node[JOBS_ROLE]
     return service_to_node
 
 

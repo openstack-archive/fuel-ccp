@@ -113,10 +113,11 @@ def serialize_job_container_spec(container, job):
     }
 
 
-def serialize_job_pod_spec(service, job, cont_spec):
+def serialize_job_pod_spec(service, job, cont_spec, affinity):
     return {
         "metadata": {
-            "name": job["name"]
+            "name": job["name"],
+            "annotations": affinity
         },
         "spec": {
             "containers": [cont_spec],
@@ -291,7 +292,7 @@ def serialize_daemonset(name, spec, affinity):
     }
 
 
-def serialize_affinity(service, topology):
+def serialize_affinity(name, topology):
     policy = {
         "nodeAffinity": {
             "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -299,7 +300,7 @@ def serialize_affinity(service, topology):
                     "matchExpressions": [{
                         "key": "kubernetes.io/hostname",
                         "operator": "In",
-                        "values": topology[service["name"]]
+                        "values": topology[name]
                     }]
                 }]
             }

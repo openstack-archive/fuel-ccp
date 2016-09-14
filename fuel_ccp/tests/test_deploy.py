@@ -333,6 +333,7 @@ class TestDeployMakeTopology(base.TestCase):
 
         node_list = ["node1", "node2", "node3"]
         expected_topology = {
+            "_ccp_jobs": ["node1", "node2", "node3"],
             "mysql": ["node1"],
             "keystone": ["node1"],
             "nova-compute": ["node2", "node3"],
