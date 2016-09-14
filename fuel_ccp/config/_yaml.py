@@ -43,7 +43,11 @@ class AttrDict(object):
         return iter(self._dict)
 
     def _merge(self, other):
-        for key, other_value in other._items():
+        if isinstance(other, dict):
+            items = six.iteritems(other)
+        else:
+            items = other._items()
+        for key, other_value in items:
             try:
                 value = self._dict[key]
             except KeyError:
@@ -53,6 +57,8 @@ class AttrDict(object):
             if merge:
                 value._merge(other_value)
             else:
+                if isinstance(other_value, dict):
+                    other_value = AttrDict(other_value)
                 self._dict[key] = other_value
 
 

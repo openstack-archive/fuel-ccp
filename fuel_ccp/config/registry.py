@@ -25,6 +25,16 @@ CONF.register_group(registry_opt_group)
 CONF.register_cli_opts(registry_opts, registry_opt_group)
 CONF.register_opts(registry_opts, registry_opt_group)
 
+DEFAULTS = {
+    'registry': {
+        'address': '',
+        'insecure': False,
+        'username': '',
+        'password': '',
+        'timeout': 300,
+    },
+}
+
 SCHEMA = {
     'registry': {
         'type': 'object',
