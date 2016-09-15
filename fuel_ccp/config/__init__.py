@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 import os
 from oslo_config import cfg
@@ -7,7 +8,7 @@ import six
 
 from fuel_ccp.config import _yaml
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 cfg.CONF.import_group('builder', 'fuel_ccp.config.builder')
 cfg.CONF.import_opt("action", "fuel_ccp.config.cli")

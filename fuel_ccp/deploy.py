@@ -1,8 +1,7 @@
 import json
+import logging
 import os
 import re
-
-from oslo_log import log as logging
 
 from fuel_ccp.common import utils
 from fuel_ccp import config
