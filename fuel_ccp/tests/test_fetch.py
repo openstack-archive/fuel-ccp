@@ -1,14 +1,62 @@
 import os
 
 import fixtures
-import mock
-
 from fuel_ccp import fetch
 from fuel_ccp.tests import base
+import mock
+import testscenarios
 
 
 @mock.patch('git.Repo.clone_from')
-class TestFetch(base.TestCase):
+class TestFetch(testscenarios.WithScenarios, base.TestCase):
+    scenarios = [
+        ("default", {
+            "option": None,
+            "value": None,
+            "url": "https://review.openstack.org:443/openstack/%s"}),
+        ("hostname", {
+            "option": "hostname",
+            "value": "host.name",
+            "url": "https://host.name:443/openstack/%s"}),
+        ('username', {
+            "option": "username",
+            "value": "someuser",
+            "url": "https://someuser@review.openstack.org:443/openstack/%s",
+        }),
+        ('port', {
+            "option": "port",
+            "value": "9999",
+            'url': "https://review.openstack.org:9999/openstack/%s",
+        }),
+        ('protocol', {
+            "option": "protocol",
+            "value": "ssh",
+            'url': "ssh://review.openstack.org:443/openstack/%s",
+        }),
+        ('protocol', {
+            "option": "protocol",
+            "value": "http",
+            'url': "http://review.openstack.org:443/openstack/%s",
+        }),
+        ('protocol', {
+            "option": "protocol",
+            "value": "git",
+            'url': "git://review.openstack.org:443/openstack/%s",
+        }),
+        ('protocol', {
+            "option": "protocol",
+            "value": "https",
+            'url': "https://review.openstack.org:443/openstack/%s",
+        }),
+        ('project', {
+            "option": "project",
+            "value": "someproject",
+            'url': "https://review.openstack.org:443/someproject/%s",
+        })
+    ]
+    url = None
+    option = None
+    delta = None
 
     def setUp(self):
         super(TestFetch, self).setUp()
@@ -21,7 +69,9 @@ class TestFetch(base.TestCase):
         os.mkdir(os.path.join(self.tmp_path, 'ms-openstack-base'))
 
     def test_fetch_default_repositories(self, m_clone):
-        # All repos except ms-openstack-base
+        if self.option is not None:
+            self.conf['repositories'][self.option] = self.value
+        self.conf['repositories']['path'] = self.tmp_path
         components = ['fuel-ccp-debian-base',
                       'fuel-ccp-entrypoint',
                       'fuel-ccp-etcd',
@@ -35,10 +85,10 @@ class TestFetch(base.TestCase):
                       'fuel-ccp-rabbitmq',
                       'fuel-ccp-stacklight']
         expected_calls = [
-            mock.call('https://review.openstack.org:443/openstack/%s' % (
-                component), os.path.join(self.tmp_path, component))
-            for component in components
-        ]
+            mock.call(
+                self.url % (component),
+                os.path.join(self.tmp_path, component))
+            for component in components]
         for component, expected_call in zip(components, expected_calls):
             fetch.fetch_repository(component)
             self.assertIn(expected_call, m_clone.call_args_list)
