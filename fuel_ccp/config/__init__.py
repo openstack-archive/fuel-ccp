@@ -21,16 +21,13 @@ _REAL_CONF = None
 def setup_config(args=None):
     if args is None:
         args = sys.argv[1:]
-    config_file, args = get_cli_config(args)
+    config_file, _ = get_cli_config(args)
     if config_file is None:
         config_file = find_config()
     yconf = get_config_defaults()
     if config_file:
         loaded_conf = _yaml.load_with_includes(config_file)
         yconf._merge(loaded_conf)
-    action_dict = parse_args(args)
-    yconf._merge({'action': action_dict})
-    logging.basicConfig(level=logging.DEBUG)
     if config_file:
         LOG.debug('Loaded config from file %s', config_file)
     else:
@@ -67,20 +64,6 @@ def find_config():
             return candidate
     else:
         return None
-
-
-def parse_args(args=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--verbose', action='store_true', default=False)
-    parser.add_argument('--log-file', default=None)
-    subparsers = parser.add_subparsers(dest='action')
-    cli.add_parsers(subparsers)
-    action_dict = vars(parser.parse_args(args))
-    action_dict['name'] = action_dict.pop('action')
-    for name in ['debug', 'verbose', 'log_file']:
-        del action_dict[name]
-    return action_dict
 
 
 class _Wrapper(object):
