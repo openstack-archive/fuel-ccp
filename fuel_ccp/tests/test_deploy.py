@@ -124,12 +124,28 @@ class TestDeploy(base.TestCase):
         self.assertTrue(result)
 
     def test_get_configmaps_version(self):
+        self.useFixture(fixtures.MockPatch(
+            "fuel_ccp.deploy._get_service_files_hash", return_value='222'))
+
         cm_list = [mock.Mock(obj={'metadata': {'resourceVersion': '1'}})
                    for _ in range(3)]
-        self.assertEqual('111', deploy._get_configmaps_version(cm_list))
+        self.assertEqual('111222', deploy._get_configmaps_version(
+            cm_list, mock.ANY, mock.ANY, mock.ANY))
 
         cm_list = []
-        self.assertEqual('', deploy._get_configmaps_version(cm_list))
+        self.assertEqual('222', deploy._get_configmaps_version(
+            cm_list, mock.ANY, mock.ANY, mock.ANY))
+
+    def test_get_service_files_hash(self):
+        files = {
+            'file': {'content': '/tmp/file'}
+        }
+        self.useFixture(fixtures.MockPatch(
+            "fuel_ccp.common.jinja_utils.jinja_render",
+            return_value='rendered'))
+        expected_hash = '86e85bd63aef5a740d4b7b887ade37ec9017c961'
+        self.assertEqual(
+            expected_hash, deploy._get_service_files_hash('/tmp', files, {}))
 
 
 class TestDeployCreateService(base.TestCase):
