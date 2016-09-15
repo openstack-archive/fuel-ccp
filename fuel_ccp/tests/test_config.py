@@ -2,6 +2,7 @@ import collections
 import functools
 
 import fixtures
+import jsonschema
 from oslo_config import cfg
 import six
 import testscenarios
@@ -137,3 +138,12 @@ class TestCopyValuesFromOslo(testscenarios.WithScenarios, base.TestCase):
         yconf = nested_dict_to_attrdict(self.yconf)
         config.copy_values_from_oslo(conf, yconf)
         self.assertEqual(yconf, self.expected_result)
+
+
+class TestConfigSchema(base.TestCase):
+    def test_validate_config_schema(self):
+        schema = config.get_config_schema()
+        jsonschema.Draft4Validator.check_schema(schema)
+
+    def test_validate_default_conf(self):
+        config.validate_config(self.conf)
