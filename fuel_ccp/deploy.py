@@ -1,8 +1,10 @@
+import hashlib
 import json
 import logging
 import os
 import re
 
+from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp import kubernetes
@@ -31,14 +33,29 @@ def _expand_files(service, files):
             _expand(cmd)
 
 
-def _get_configmaps_version(configmaps):
-    """Get concatenation of ConfigMaps versions
+def _get_configmaps_version(configmaps, service_dir, files, configs):
+    """Get overall ConfigMaps version
 
-    If version of any of the ConfigMaps changed, the overall version will be
+    If any of the ConfigMaps changed, the overall version will be
     changed and deployment will be updated no matter was updated deployment
     spec or not.
     """
-    return ''.join(cm.obj['metadata']['resourceVersion'] for cm in configmaps)
+    versions = ''.join(cm.obj['metadata']['resourceVersion']
+                       for cm in configmaps)
+    files_hash = _get_service_files_hash(service_dir, files, configs)
+
+    return versions + files_hash
+
+
+def _get_service_files_hash(service_dir, files, configs):
+    data = {}
+    if files:
+        for filename, f in files.items():
+            path = os.path.join(service_dir, "files", f["content"])
+            data[filename] = jinja_utils.jinja_render(
+                path, configs, ignore_undefined=True)
+    dump = json.dumps(data, sort_keys=True)
+    return hashlib.sha1(dump).hexdigest()
 
 
 def parse_role(service_dir, role, config):
@@ -58,13 +75,16 @@ def parse_role(service_dir, role, config):
     workflow_cm = _create_workflow(workflows, service["name"])
     configmaps = config['configmaps'] + (files_cm, meta_cm, workflow_cm)
 
+    cm_version = _get_configmaps_version(
+        configmaps, service_dir, role.get("files"), config['configs'])
+
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
         daemon_cmd["name"] = cont["name"]
 
         _create_pre_jobs(service, cont)
         _create_post_jobs(service, cont)
-        cont['cm_version'] = _get_configmaps_version(configmaps)
+        cont['cm_version'] = cm_version
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
@@ -245,11 +265,11 @@ def _create_start_script_configmap():
     return kubernetes.process_object(cm)
 
 
-def _create_files_configmap(service_dir, service_name, configs):
+def _create_files_configmap(service_dir, service_name, files):
     configmap_name = "%s-%s" % (service_name, templates.FILES_CONFIG)
     data = {}
-    if configs:
-        for filename, f in configs.items():
+    if files:
+        for filename, f in files.items():
             with open(os.path.join(
                     service_dir, "files", f["content"]), "r") as f:
                 data[filename] = f.read()
@@ -351,9 +371,9 @@ def deploy_components(components=None):
     namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
 
-    globals_cm = _create_globals_configmap(config["configs"])
+    _create_globals_configmap(config["configs"])
     start_script_cm = _create_start_script_configmap()
-    config['configmaps'] = (globals_cm, start_script_cm)
+    config['configmaps'] = (start_script_cm,)
 
     for component in components:
         parse_role(components_map[component]['service_dir'],

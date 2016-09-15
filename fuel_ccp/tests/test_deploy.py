@@ -124,12 +124,17 @@ class TestDeploy(base.TestCase):
         self.assertTrue(result)
 
     def test_get_configmaps_version(self):
+        self.useFixture(fixtures.MockPatch(
+            "fuel_ccp.deploy._get_service_files_hash", return_value='222'))
+
         cm_list = [mock.Mock(obj={'metadata': {'resourceVersion': '1'}})
                    for _ in range(3)]
-        self.assertEqual('111', deploy._get_configmaps_version(cm_list))
+        self.assertEqual('111222', deploy._get_configmaps_version(
+            cm_list, mock.ANY, mock.ANY, mock.ANY))
 
         cm_list = []
-        self.assertEqual('', deploy._get_configmaps_version(cm_list))
+        self.assertEqual('222', deploy._get_configmaps_version(
+            cm_list, mock.ANY, mock.ANY, mock.ANY))
 
 
 class TestDeployCreateService(base.TestCase):
