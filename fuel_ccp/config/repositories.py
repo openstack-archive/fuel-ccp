@@ -3,20 +3,27 @@ import os
 
 from oslo_config import cfg
 
-DEFAULT_REPOS = ['fuel-ccp-debian-base',
-                 'fuel-ccp-entrypoint',
-                 'fuel-ccp-etcd',
-                 'fuel-ccp-glance',
-                 'fuel-ccp-heat',
-                 'fuel-ccp-horizon',
-                 'fuel-ccp-keystone',
-                 'fuel-ccp-mariadb',
-                 'fuel-ccp-memcached',
-                 'fuel-ccp-neutron',
-                 'fuel-ccp-nova',
-                 'fuel-ccp-openstack-base',
-                 'fuel-ccp-rabbitmq',
-                 'fuel-ccp-stacklight']
+DEFAULT_REPOS = [
+    'fuel-ccp-cinder',
+    'fuel-ccp-debian-base',
+    'fuel-ccp-entrypoint',
+    'fuel-ccp-etcd',
+    'fuel-ccp-glance',
+    'fuel-ccp-heat',
+    'fuel-ccp-horizon',
+    'fuel-ccp-ironic',
+    'fuel-ccp-keystone',
+    'fuel-ccp-mariadb',
+    'fuel-ccp-memcached',
+    'fuel-ccp-murano',
+    'fuel-ccp-neutron',
+    'fuel-ccp-nova',
+    'fuel-ccp-openstack-base',
+    'fuel-ccp-rabbitmq',
+    'fuel-ccp-sahara',
+    'fuel-ccp-searchlight',
+    'fuel-ccp-stacklight',
+]
 
 CONF = cfg.CONF
 repositories_opts = [
