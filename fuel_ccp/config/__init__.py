@@ -1,6 +1,4 @@
-import argparse
 import logging
-import sys
 
 import jsonschema
 import os
@@ -18,40 +16,14 @@ LOG = logging.getLogger(__name__)
 _REAL_CONF = None
 
 
-def setup_config(args=None):
-    if args is None:
-        args = sys.argv[1:]
-    config_file, args = get_cli_config(args)
-    if config_file is None:
-        config_file = find_config()
+def setup_config(config_file):
     yconf = get_config_defaults()
     if config_file:
         loaded_conf = _yaml.load_with_includes(config_file)
         yconf._merge(loaded_conf)
-    action_dict = parse_args(args)
-    yconf._merge({'action': action_dict})
-    logging.basicConfig(level=logging.DEBUG)
-    if config_file:
-        LOG.debug('Loaded config from file %s', config_file)
-    else:
-        LOG.debug('No config file loaded')
     validate_config(yconf)
     global _REAL_CONF
     _REAL_CONF = yconf
-
-
-def get_cli_config(args):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument(
-        '--config-file',
-        metavar='PATH',
-        help=('Path to a config file to use.'))
-    args, rest = parser.parse_known_args(args)
-    if args.config_file:
-        config_file = os.path.abspath(os.path.expanduser(args.config_file))
-    else:
-        config_file = None
-    return config_file, rest
 
 
 def find_config():
@@ -69,20 +41,6 @@ def find_config():
         return None
 
 
-def parse_args(args=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--verbose', action='store_true', default=False)
-    parser.add_argument('--log-file', default=None)
-    subparsers = parser.add_subparsers(dest='action')
-    cli.add_parsers(subparsers)
-    action_dict = vars(parser.parse_args(args))
-    action_dict['name'] = action_dict.pop('action')
-    for name in ['debug', 'verbose', 'log_file']:
-        del action_dict[name]
-    return action_dict
-
-
 class _Wrapper(object):
     def __getattr__(self, name):
         return getattr(_REAL_CONF, name)
@@ -94,7 +52,11 @@ CONF = _Wrapper()
 
 
 def get_config_defaults():
-    defaults = _yaml.AttrDict()
+    defaults = _yaml.AttrDict({
+        'debug': False,
+        'verbose_level': 1,
+        'log_file': None,
+    })
     for module in [cli, builder, images, kubernetes, registry, repositories]:
         defaults._merge(module.DEFAULTS)
     return defaults
@@ -106,7 +68,8 @@ def get_config_schema():
         'additionalProperties': False,
         'properties': {
             'debug': {'type': 'boolean'},
-            'verbose': {'type': 'boolean'},
+            'verbose_level': {'type': 'integer'},
+            'log_file': {'anyOf': [{'type': 'null'}, {'type': 'string'}]},
         },
     }
     for module in [cli, builder, images, kubernetes, registry, repositories]:
