@@ -14,6 +14,8 @@ Application definition template
         ports:
             - internal-port:external-port
         daemonset: true
+	# or
+        petset: true
         host-net: true
         containers:
             - name: container-name
@@ -89,6 +91,8 @@ Parameters description
 |               | can be specified                              |          |                  |         |
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | daemonset     | Create DaemonSet instead of Deployment        | false    | boolean          | false   |
++---------------+-----------------------------------------------+----------+------------------+---------+
+| petset        | Create PetSet instead of Deployment           | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | host-net      |                                               | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+

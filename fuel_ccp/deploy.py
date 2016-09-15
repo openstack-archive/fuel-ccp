@@ -60,12 +60,15 @@ def parse_role(service_dir, role, config):
     if service.get("daemonset", False):
         obj = templates.serialize_daemonset(service["name"], cont_spec,
                                             affinity)
+    elif service.get("petset", False):
+        obj = templates.serialize_petset(service["name"], replicas,
+                                         cont_spec, affinity)
     else:
         obj = templates.serialize_deployment(service["name"], cont_spec,
                                              affinity)
     kubernetes.create_object_from_definition(obj)
 
-    _create_service(service)
+    _create_service(service, service.get("petset", False))
     LOG.info("Service %s successfuly scheduled", service["name"])
 
 
