@@ -1,41 +1,9 @@
-import fixtures
 import jsonschema
 import six
-import testscenarios
 
 from fuel_ccp import config
 from fuel_ccp.config import _yaml
 from fuel_ccp.tests import base
-
-
-class ArgumentParserError(Exception):
-    pass
-
-
-class TestGetCLIConfig(testscenarios.WithScenarios, base.TestCase):
-    scenarios = [
-        ('base', {
-            'argv': ['--config-file', '/etc/ccp.yaml'],
-            'expected_result': ('/etc/ccp.yaml', []),
-        }),
-        ('missing', {
-            'argv': ['--other-arg', 'smth'],
-            'expected_result': (None, ['--other-arg', 'smth']),
-        }),
-        ('with_extra', {
-            'argv': ['--config-file', '/etc/ccp.yaml', '--other-arg', 'smth'],
-            'expected_result': ('/etc/ccp.yaml', ['--other-arg', 'smth']),
-        }),
-    ]
-
-    argv = None
-    expected_result = None
-
-    def test_get_cli_config(self):
-        self.useFixture(fixtures.MockPatch(
-            'argparse.ArgumentParser.error', side_effect=ArgumentParserError))
-        result = config.get_cli_config(self.argv)
-        self.assertEqual(result, self.expected_result)
 
 
 def nested_dict_to_attrdict(d):
