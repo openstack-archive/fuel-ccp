@@ -56,12 +56,14 @@ def parse_role(service_dir, role, config):
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
 
+    replicas = int(service.get("replicas", 1))
+
     if service.get("daemonset", False):
         obj = templates.serialize_daemonset(service["name"], cont_spec,
                                             affinity)
     else:
-        obj = templates.serialize_deployment(service["name"], cont_spec,
-                                             affinity)
+        obj = templates.serialize_deployment(service["name"], replicas,
+                                             cont_spec, affinity)
     kubernetes.create_object_from_definition(obj)
 
     _create_service(service)

@@ -11,6 +11,7 @@ Application definition template
 
     service:
         name: service-name
+        replicas: 1
         ports:
             - internal-port:external-port
         daemonset: true
@@ -80,6 +81,9 @@ Parameters description
 | Name          | Description                                   | Required | Schema           | Default |
 +===============+===============================================+==========+==================+=========+
 | name          | Name of the service.                          | true     | string           |         |
++---------------+-----------------------------------------------+----------+------------------+---------+
+| replicas      | Number of replicas to be deployed             | false    | int              | 1       |
+|               | (it'll be ignored if daemonset: true)         |          |                  |         |
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | containers    | List of containers under multi-container pod  | true     | container_ array |         |
 +---------------+-----------------------------------------------+----------+------------------+---------+
