@@ -6,11 +6,12 @@ set -e
 
 usage() {
     cat << EOF
-    Usage: $0 -a (create|destroy) [-n NUBER_OF_VMs]
+    Usage: $0 -a (create|destroy) [-n NUBER_OF_VMs] [-i PUBLIC_ETH_IFACE]
 
     -h   Prints this help
     -a   Required action. Choise from "create" and "destroy"
     -n   Number of VMs to spawn. (optional)
+    -i   Public eth iface. (optional)
 EOF
 }
 
@@ -29,15 +30,22 @@ create() {
     if [ -z "$NUMBER" ]; then
         NUMBER=2
     fi
-    openstack flavor create --ram 512 --disk 0 --vcpus 1 tiny
+    if [ -z "$IFACE" ]; then
+        IFACE="eth1"
+    fi
+    EXTIP="`ifconfig $IFACE | grep -Po 'addr:\d+\.\d+\.\d+\.\d+' | awk -F':' '{print $NF}'`"
+    VNCP="`kubectl get svc nova-novncproxy -o yaml | awk '/nodePort/ {print $NF}'`"
+
     openstack network create --provider-network-type vxlan --provider-segment 77 testnetwork
-    openstack subnet create --subnet-range 192.168.1.0/24 --gateway none --network testnetwork testsubnetwork
+    openstack subnet create --subnet-range 192.168.1.0/24 --gateway 192.168.1.1 --network testnetwork testsubnetwork
+    openstack flavor create --ram 512 --disk 0 --vcpus 1 tiny
     curl -o /tmp/cirros.img http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img && \
     openstack image create --disk-format qcow2 --public --file /tmp/cirros.img cirros
     rm -f /tmp/cirros.img
     NETID="$(openstack network list | awk '/testnetwork/ {print $2}')"
     openstack server create --flavor tiny --image cirros --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
     openstack server list
+    nova get-vnc-console  test_vm-1 novnc | sed "s/nova-novncproxy:6080/${EXTIP}:${VNCP}/"
 }
 
 destroy() {
@@ -45,23 +53,24 @@ destroy() {
         echo "Destroying $vm..."
         openstack server delete $vm
     done
-    echo "Destroying tiny flavor..."
-    openstack flavor delete tiny
     echo "Destroying testnetwork..."
     openstack network delete testnetwork
-    echo "Destroying testsubnetwork..."
-    openstack subnet delete testsubnetwork
+    echo "Destroying tiny flavor..."
+    openstack flavor delete tiny
     echo "Destroying cirros image..."
     openstack image delete cirros
 }
 
-while getopts ":a:n:h" opt; do
+while getopts ":a:n:i:h" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
             ;;
         n)
             NUMBER="$OPTARG"
+            ;;
+        i)
+            IFACE="$OPTARG"
             ;;
         h)
             usage
