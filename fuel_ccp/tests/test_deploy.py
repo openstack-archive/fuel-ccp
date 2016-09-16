@@ -321,20 +321,11 @@ class TestDeployMakeTopology(base.TestCase):
         self.useFixture(
             fixtures.MockPatch("fuel_ccp.kubernetes.list_k8s_nodes"))
 
-    def test_make_empty_topology(self):
-        self.assertRaises(RuntimeError,
-                          deploy._make_topology, None, None)
-        self.assertRaises(RuntimeError,
-                          deploy._make_topology, None, {"spam": "eggs"})
-        self.assertRaises(RuntimeError,
-                          deploy._make_topology, {"spam": "eggs"}, None)
-
-    def test_make_topology(self):
         node_list = ["node1", "node2", "node3"]
         self.useFixture(fixtures.MockPatch(
             "fuel_ccp.kubernetes.get_object_names", return_value=node_list))
 
-        roles = {
+        self._roles = {
             "controller": [
                 "mysql",
                 "keystone"
@@ -345,6 +336,15 @@ class TestDeployMakeTopology(base.TestCase):
             ]
         }
 
+    def test_make_empty_topology(self):
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, None, None, None)
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, None, {"spam": "eggs"}, None)
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, {"spam": "eggs"}, None, None)
+
+    def test_make_topology_without_replicas(self):
         nodes = {
             "node1": {
                 "roles": ["controller"]
@@ -361,10 +361,10 @@ class TestDeployMakeTopology(base.TestCase):
             "libvirtd": ["node2", "node3"]
         }
 
-        topology = deploy._make_topology(nodes, roles)
+        topology = deploy._make_topology(nodes, self._roles, None)
         self.assertDictEqual(expected_topology, topology)
 
-        # check if role is defined but not used
+    def test_make_topology_without_replicas_unused_role(self):
         nodes = {
             "node1": {
                 "roles": ["controller"]
@@ -375,11 +375,11 @@ class TestDeployMakeTopology(base.TestCase):
             "mysql": ["node1"],
             "keystone": ["node1"]
         }
-        topology = deploy._make_topology(nodes, roles)
+
+        topology = deploy._make_topology(nodes, self._roles, None)
         self.assertDictEqual(expected_topology, topology)
 
-        # two ways to define topology that should give the same result
-        # first
+    def test_make_topology_without_replicas_twice_used_role(self):
         nodes = {
             "node1": {
                 "roles": ["controller", "compute"]
@@ -395,10 +395,10 @@ class TestDeployMakeTopology(base.TestCase):
             "nova-compute": ["node1", "node2", "node3"],
             "libvirtd": ["node1", "node2", "node3"]
         }
-        topology = deploy._make_topology(nodes, roles)
+        topology = deploy._make_topology(nodes, self._roles, None)
         self.assertDictEqual(expected_topology, topology)
 
-        # second
+    def test_make_topology_without_replicas_twice_used_node(self):
         nodes = {
             "node1": {
                 "roles": ["controller"]
@@ -414,5 +414,52 @@ class TestDeployMakeTopology(base.TestCase):
             "nova-compute": ["node1", "node2", "node3"],
             "libvirtd": ["node1", "node2", "node3"]
         }
-        topology = deploy._make_topology(nodes, roles)
+
+        topology = deploy._make_topology(nodes, self._roles, None)
         self.assertDictEqual(expected_topology, topology)
+
+    def test_make_topology_non_positive_replicas(self):
+        replicas = {
+            "keystone": 0
+        }
+
+        nodes = {
+            "node1": {
+                "roles": ["controller"]
+            }
+        }
+
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, replicas)
+
+        replicas = {
+            "keystone": -1
+        }
+
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, replicas)
+
+    def test_make_topology_replicas_bigger_than_nodes(self):
+        replicas = {
+            "keystone": 2
+        }
+
+        nodes = {
+            "node1": {
+                "roles": ["controller"]
+            }
+        }
+
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, replicas)
+
+
+    def test_make_topology_unspecified_service_replicas(self):
+        replicas = {
+            "foobar": 42
+        }
+
+        nodes = {}
+
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, replicas)
