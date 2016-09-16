@@ -1,11 +1,12 @@
-import os
-import sys
+from jinja2 import exceptions
 
 from fuel_ccp.common import jinja_utils
+from fuel_ccp.common import utils
 from fuel_ccp.tests import base
 
 
 class TestJinjaUtils(base.TestCase):
+    filename = utils.get_resource_path('tests/common/example.j2')
 
     def test_str_to_bool(self):
         self.assertTrue(jinja_utils.str_to_bool('true'))
@@ -14,14 +15,39 @@ class TestJinjaUtils(base.TestCase):
         self.assertFalse(jinja_utils.str_to_bool('no'))
         self.assertFalse(jinja_utils.str_to_bool('some_random_string'))
 
-    def test_jinja_render(self):
-        filename = os.path.join(
-            os.path.dirname(sys.modules[__name__].__file__),
-            'example.j2')
+    def test_jinja_render_strict(self):
         context = {
             "base_distro": "debian",
             "base_tag": "jessie",
-            "maintainer": "some maintainer"
+            "maintainer": "some maintainer",
+            "duck": {"egg": "needle"}
         }
-        content = jinja_utils.jinja_render(filename, context)
-        self.assertEqual("debian\njessie\nsome maintainer", content)
+        content = jinja_utils.jinja_render(self.filename, context)
+        self.assertEqual(
+            "debian\njessie\nsome maintainer\nneedle\nneedle", content)
+
+        context = {
+            "base_distro": "debian"
+        }
+        self.assertRaises(exceptions.UndefinedError, jinja_utils.jinja_render,
+                          self.filename, context)
+
+    def test_jinja_render_silent(self):
+        context = {
+            "base_distro": "debian",
+            "base_tag": "jessie",
+            "maintainer": "some maintainer",
+            "duck": {"egg": "needle"}
+        }
+        content = jinja_utils.jinja_render(
+            self.filename, context, ignore_undefined=True)
+        self.assertEqual(
+            "debian\njessie\nsome maintainer\nneedle\nneedle", content)
+
+        context = {
+            "base_distro": "debian"
+        }
+        content = jinja_utils.jinja_render(
+            self.filename, context, ignore_undefined=True)
+        self.assertEqual(
+            "debian\n\n\n\n", content)
