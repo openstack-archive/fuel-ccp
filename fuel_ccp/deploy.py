@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import six
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
@@ -59,19 +60,21 @@ def _get_service_files_hash(service_dir, files, configs):
 
 def parse_role(service_dir, role, config):
     service = role["service"]
-    if service["name"] not in config.get("topology", {}):
+    service_name = service["name"]
+
+    if service_name not in config.get("topology", {}):
         LOG.info("Service %s not in topology config, skipping deploy",
-                 service["name"])
+                 service_name)
         return
-    LOG.info("Scheduling service %s deployment", service["name"])
+    LOG.info("Scheduling service %s deployment", service_name)
     _expand_files(service, role.get("files"))
 
     files_cm = _create_files_configmap(
-        service_dir, service["name"], role.get("files"))
+        service_dir, service_name, role.get("files"))
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
-    workflow_cm = _create_workflow(workflows, service["name"])
+    workflow_cm = _create_workflow(workflows, service_name)
     configmaps = config['configmaps'] + (files_cm, meta_cm, workflow_cm)
 
     cm_version = _get_configmaps_version(
@@ -88,16 +91,26 @@ def parse_role(service_dir, role, config):
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, config["topology"])
 
+    replicas = config.get("replicas", {}).get(service_name)
     if service.get("daemonset", False):
-        obj = templates.serialize_daemonset(service["name"], cont_spec,
+        if replicas is not None:
+            LOG.error("Replicas was specified for %s, but it's implemented "
+                      "using Kubernetes DaemonSet that will deploy service on "
+                      "all matching nodes (section 'nodes' in config file)",
+                      service_name)
+            raise RuntimeError("Replicas couldn't be specified for services "
+                               "implemented using Kubernetes DaemonSet")
+
+        obj = templates.serialize_daemonset(service_name, cont_spec,
                                             affinity)
     else:
-        obj = templates.serialize_deployment(service["name"], cont_spec,
-                                             affinity)
+        replicas = replicas or 1
+        obj = templates.serialize_deployment(service_name, cont_spec,
+                                             affinity, replicas)
     kubernetes.process_object(obj)
 
     _create_service(service)
-    LOG.info("Service %s successfuly scheduled", service["name"])
+    LOG.info("Service %s successfuly scheduled", service_name)
 
 
 def _parse_workflows(service):
@@ -288,7 +301,7 @@ def _create_meta_configmap(service):
     return kubernetes.process_object(template)
 
 
-def _make_topology(nodes, roles):
+def _make_topology(nodes, roles, replicas):
     failed = False
     # TODO(sreshetniak): move it to validation
     if not nodes:
@@ -299,6 +312,9 @@ def _make_topology(nodes, roles):
         failed = True
     if failed:
         raise RuntimeError("Failed to create topology for services")
+
+    # Replicas are optional, 1 replica will deployed by default
+    replicas = replicas or dict()
 
     # TODO(sreshetniak): add validation
     k8s_nodes = kubernetes.list_k8s_nodes()
@@ -327,6 +343,26 @@ def _make_topology(nodes, roles):
                 service_to_node[svc].extend(roles_to_node[role])
         else:
             LOG.warning("Role '%s' defined, but unused", role)
+
+    replicas = replicas.copy()
+    for svc, svc_hosts in six.iteritems(service_to_node):
+        svc_replicas = replicas.pop(svc, None)
+
+        if svc_replicas is None:
+            continue
+
+        svc_hosts_count = len(svc_hosts)
+        if svc_replicas > svc_hosts_count:
+            LOG.error("Requested %s replicas for %s while only %s hosts able "
+                      "to run that service (%s)", svc_replicas, svc,
+                      svc_hosts_count, ", ".join(svc_hosts))
+            raise RuntimeError("Replicas doesn't match available hosts.")
+
+    if replicas:
+        LOG.error("Replicas defined for unspecified service(s): %s",
+                  ", ".join(replicas.keys()))
+        raise RuntimeError("Replicas defined for unspecified service(s)")
+
     return service_to_node
 
 
@@ -362,9 +398,11 @@ def deploy_components(components_map, components):
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
-    config = utils.get_global_parameters("configs", "nodes", "roles")
+    config = utils.get_global_parameters("configs", "nodes", "roles",
+                                         "replicas")
     config["topology"] = _make_topology(config.get("nodes"),
-                                        config.get("roles"))
+                                        config.get("roles"),
+                                        config.get("replicas"))
 
     namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
