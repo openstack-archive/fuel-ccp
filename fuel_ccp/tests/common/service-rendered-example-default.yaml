@@ -10,10 +10,10 @@ service:
         readiness: "true"
         liveness: "true"
       volumes:
-      - name: keystone-logs
-        path: "/var/log/ccp/keystone"
-        type: host
-        readOnly: False
+        - name: keystone-logs
+          path: "/var/log/ccp/keystone"
+          type: host
+          readOnly: False
       pre:
         - name: chown-logs-dir
           command: "sudo /bin/chown keystone:keystone /var/log/ccp/keystone"

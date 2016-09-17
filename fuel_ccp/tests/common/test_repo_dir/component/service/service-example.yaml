@@ -1,3 +1,4 @@
+# yamllint disable
 service:
   name: {{ service_name }}
   ports:
@@ -66,3 +67,4 @@ files:
   wsgi-{{ service_name }}-conf:
     path: /etc/apache2/conf-enabled/wsgi-{{ service_name }}.conf
 content: wsgi-{{ service_name }}.conf.j2
+# yamllint enable
