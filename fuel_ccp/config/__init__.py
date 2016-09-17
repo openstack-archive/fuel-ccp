@@ -100,7 +100,7 @@ def copy_values_from_oslo(oconf, yconf):
             if isinstance(value, cfg.ConfigOpts.SubCommandAttr):
                 yconf_items = set(yconf_value)
                 for skey in ['name', 'components', 'dry_run', 'export_dir',
-                             'auth_url', 'skip_os_cleanup']:
+                             'auth_url', 'skip_os_cleanup', 'types']:
                     try:
                         svalue = getattr(value, skey)
                     except cfg.NoSuchOptError:

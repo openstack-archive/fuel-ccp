@@ -9,7 +9,6 @@ from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
-from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
 
 
@@ -354,19 +353,18 @@ def _create_openrc(config, namespace):
              os.getcwd(), namespace)
 
 
-def deploy_components(components=None):
+def deploy_components(components_map, components):
+    if not components:
+        components = set(components_map.keys())
+
+    deploy_validation.validate_requested_components(components, components_map)
+
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     config = utils.get_global_parameters("configs", "nodes", "roles")
     config["topology"] = _make_topology(config.get("nodes"),
                                         config.get("roles"))
-
-    components_map = utils.get_deploy_components_info(config["configs"])
-    components = set(components) if components else set(components_map.keys())
-
-    base_validation.validate_components_names(components, components_map)
-    deploy_validation.validate_requested_components(components, components_map)
 
     namespace = CONF.kubernetes.namespace
     _create_namespace(namespace)
