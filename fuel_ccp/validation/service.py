@@ -1,8 +1,8 @@
 import copy
+import logging
 
 from fuel_ccp.validation import base as validation_base
 import jsonschema
-from oslo_log import log as logging
 
 
 LOG = logging.getLogger(__name__)

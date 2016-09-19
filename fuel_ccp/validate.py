@@ -1,6 +1,6 @@
 from fuel_ccp.common import utils
 
-from validation import service as service_validation
+from fuel_ccp.validation import service as service_validation
 
 
 def validate(components, types):
