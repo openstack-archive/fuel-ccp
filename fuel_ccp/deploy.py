@@ -74,8 +74,11 @@ def parse_role(service_dir, role, config):
     workflow_cm = _create_workflow(workflows, service["name"])
     configmaps = config['configmaps'] + (files_cm, meta_cm, workflow_cm)
 
-    cm_version = _get_configmaps_version(
-        configmaps, service_dir, role.get("files"), config['configs'])
+    if CONF.action.dry_run:
+        cm_version = 'dry-run'
+    else:
+        cm_version = _get_configmaps_version(
+            configmaps, service_dir, role.get("files"), config['configs'])
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
