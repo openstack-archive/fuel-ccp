@@ -1,8 +1,6 @@
 import multiprocessing
 import os
 
-from oslo_config import cfg
-
 DEFAULT_REPOS = [
     'fuel-ccp-cinder',
     'fuel-ccp-debian-base',
@@ -23,40 +21,6 @@ DEFAULT_REPOS = [
     'fuel-ccp-sahara',
     'fuel-ccp-searchlight',
     'fuel-ccp-stacklight',
-]
-
-CONF = cfg.CONF
-repositories_opts = [
-    cfg.BoolOpt('clone',
-                default=True,
-                help='Automatic cloning of microservices repositories'),
-    cfg.IntOpt('clone-concurrency',
-               default=multiprocessing.cpu_count(),
-               help="Define how many 'git clone' processes will run "
-                    "concurrently"),
-    cfg.BoolOpt('skip-empty',
-                default=True,
-                help='Skip repositories not containing Dockerfiles without '
-                     'error'),
-    cfg.StrOpt('path',
-               default=os.path.expanduser('~/ccp-repos/'),
-               help='Path where the Git repositories are cloned'),
-    cfg.HostnameOpt('hostname',
-                    default='review.openstack.org',
-                    help='Git server hostname to pull repositories from'),
-    cfg.PortOpt('port', default=443, help='Git server port'),
-    cfg.StrOpt('protocol',
-               choices=['ssh', 'git', 'http', 'https'],
-               default='https',
-               help='Git access protocol'),
-    cfg.StrOpt('project',
-               default='openstack',
-               help='Gerrit project'),
-    cfg.StrOpt('username',
-               help='Username when using git or ssh scheme'),
-    cfg.ListOpt('names',
-                default=DEFAULT_REPOS,
-                help='List of repository names'),
 ]
 
 DEFAULTS = {
@@ -94,15 +58,7 @@ SCHEMA = {
 }
 
 for repo in DEFAULT_REPOS:
-    option = cfg.StrOpt(repo)
-    repositories_opts.append(option)
     conf_name = repo.replace('-', '_')
     SCHEMA['repositories']['properties'][conf_name] = \
         {'anyOf': [{'type': 'string'}, {'type': 'null'}]}
     DEFAULTS['repositories'][conf_name] = None
-
-repositories_opt_group = cfg.OptGroup(name='repositories',
-                                      title='Git repositories for components')
-CONF.register_group(repositories_opt_group)
-CONF.register_cli_opts(repositories_opts, repositories_opt_group)
-CONF.register_opts(repositories_opts, repositories_opt_group)

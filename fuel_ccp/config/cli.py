@@ -1,7 +1,3 @@
-from oslo_config import cfg
-
-
-CONF = cfg.CONF
 
 
 def add_parsers(subparsers):
@@ -47,15 +43,6 @@ def add_parsers(subparsers):
     show_dep_action.add_argument('components',
                                  nargs='+',
                                  help='CCP components to show dependencies')
-
-
-CONF.register_cli_opt(cfg.SubCommandOpt('action',
-                                        handler=add_parsers))
-
-common_opts = [
-    cfg.StrOpt('deploy-config', help='Cluster-wide configuration overrides')
-]
-CONF.register_cli_opts(common_opts)
 
 DEFAULTS = {
     'deploy_config': None,
