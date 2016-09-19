@@ -32,7 +32,7 @@ Additionaly, you will need to have working kube-proxy, kube-dns and docker
 registry.
 
 If you don't have a running k8s environment, please check out `this guide
-<http://docs.openstack.org/developer/fuel-ccp-installer/quickstart.html>`__
+<http://fuel-ccp-installer.readthedocs.io/en/latest/quickstart.html>`__
 
 .. WARNING:: All further steps assume that you already have a working k8s
  installation.
