@@ -271,8 +271,8 @@ def serialize_deployment(name, spec, affinity, replicas):
             "replicas": replicas,
             "strategy": {
                 "rollingUpdate": {
-                    "maxSurge": 1,
-                    "maxUnavailable": 0
+                    "maxSurge": 0,
+                    "maxUnavailable": "50%"
                 }
             },
             "template": {
@@ -325,6 +325,18 @@ def serialize_affinity(service, topology):
             }
         }
     }
+    if not service.get('daemonset'):
+        policy["podAntiAffinity"] = {
+            "requiredDuringSchedulingIgnoredDuringExecution": [{
+                "labelSelector": {
+                    "matchLabels": {
+                        "one-per-node": service["name"]
+                    }
+                },
+                "topologyKey": "kubernetes.io/hostname",
+                "namespaces": [CONF.kubernetes.namespace]
+            }]
+        }
     return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(
         policy, sort_keys=True)}
 
