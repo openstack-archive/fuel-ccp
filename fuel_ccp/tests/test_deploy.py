@@ -333,6 +333,9 @@ class TestDeployMakeTopology(base.TestCase):
             "compute": [
                 "nova-compute",
                 "libvirtd"
+            ],
+            "foo": [
+                "bar"
             ]
         }
 
@@ -345,14 +348,16 @@ class TestDeployMakeTopology(base.TestCase):
                           deploy._make_topology, {"spam": "eggs"}, None, None)
 
     def test_make_topology_without_replicas(self):
-        nodes = {
-            "node1": {
-                "roles": ["controller"]
+        nodes = [
+            {
+                "regex": "node1",
+                "roles": ["controller"],
             },
-            "node[2-3]": {
-                "roles": ["compute"]
-            }
-        }
+            {
+                "regex": "node[2-3]",
+                "roles": ["compute"],
+            },
+        ]
 
         expected_topology = {
             "mysql": ["node1"],
@@ -365,11 +370,12 @@ class TestDeployMakeTopology(base.TestCase):
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_without_replicas_unused_role(self):
-        nodes = {
-            "node1": {
-                "roles": ["controller"]
+        nodes = [
+            {
+                "regex": "node1",
+                "roles": ["controller"],
             },
-        }
+        ]
 
         expected_topology = {
             "mysql": ["node1"],
@@ -380,14 +386,16 @@ class TestDeployMakeTopology(base.TestCase):
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_without_replicas_twice_used_role(self):
-        nodes = {
-            "node1": {
-                "roles": ["controller", "compute"]
+        nodes = [
+            {
+                "regex": "node1",
+                "roles": ["controller", "compute"],
             },
-            "node[2-3]": {
-                "roles": ["compute"]
-            }
-        }
+            {
+                "regex": "node[2-3]",
+                "roles": ["compute"],
+            },
+        ]
 
         expected_topology = {
             "mysql": ["node1"],
@@ -399,14 +407,16 @@ class TestDeployMakeTopology(base.TestCase):
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_without_replicas_twice_used_node(self):
-        nodes = {
-            "node1": {
-                "roles": ["controller"]
+        nodes = [
+            {
+                "regex": "node1",
+                "roles": ["controller"],
             },
-            "node[1-3]": {
-                "roles": ["compute"]
-            }
-        }
+            {
+                "regex": "node[1-3]",
+                "roles": ["compute"],
+            },
+        ]
 
         expected_topology = {
             "mysql": ["node1"],
@@ -423,11 +433,12 @@ class TestDeployMakeTopology(base.TestCase):
             "keystone": 2
         }
 
-        nodes = {
-            "node1": {
-                "roles": ["controller"]
-            }
-        }
+        nodes = [
+            {
+                "regex": "node1",
+                "roles": ["controller"],
+            },
+        ]
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
@@ -437,7 +448,64 @@ class TestDeployMakeTopology(base.TestCase):
             "foobar": 42
         }
 
-        nodes = {}
+        nodes = []
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
+
+    def test_make_topology_node_filters(self):
+        nodes = [
+            {
+                "regex": "^node1$",
+                "roles": ["controller"],
+            },
+            {
+                "nodes": [
+                    "node2",
+                    "node3",
+                ],
+                "roles": ["compute"],
+            },
+            {
+                "all": True,
+                "roles": ["foo"],
+            },
+        ]
+
+        expected_topology = {
+            "mysql": ["node1"],
+            "keystone": ["node1"],
+            "nova-compute": ["node2", "node3"],
+            "libvirtd": ["node2", "node3"],
+            "bar": ["node1", "node2", "node3"]
+        }
+
+        topology = deploy._make_topology(nodes, self._roles, None)
+        self.assertDictEqual(expected_topology, topology)
+
+    def test_make_topology_except_node_filters(self):
+        nodes = [
+            {
+                "regex": "^node1$",
+                "except": True,
+                "roles": ["controller"],
+            },
+            {
+                "nodes": [
+                    "node2",
+                    "node3",
+                ],
+                "except": True,
+                "roles": ["compute"],
+            },
+        ]
+
+        expected_topology = {
+            "mysql": ["node2", "node3"],
+            "keystone": ["node2", "node3"],
+            "nova-compute": ["node1"],
+            "libvirtd": ["node1"],
+        }
+
+        topology = deploy._make_topology(nodes, self._roles, None)
+        self.assertDictEqual(expected_topology, topology)

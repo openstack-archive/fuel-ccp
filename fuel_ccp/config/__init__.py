@@ -11,6 +11,7 @@ from fuel_ccp.config import kubernetes
 from fuel_ccp.config import registry
 from fuel_ccp.config import replicas
 from fuel_ccp.config import repositories
+from fuel_ccp.config import topology
 
 LOG = logging.getLogger(__name__)
 
@@ -75,14 +76,14 @@ def get_config_schema():
         },
     }
     for module in [cli, builder, images, kubernetes, registry, replicas,
-                   repositories]:
+                   repositories, topology]:
         schema['properties'].update(module.SCHEMA)
     # Don't validate all options used to be added from oslo.log and oslo.config
     ignore_opts = ['debug', 'verbose', 'log_file']
     for name in ignore_opts:
         schema['properties'][name] = {}
     # Also for now don't validate sections that used to be in deploy config
-    for name in ['configs', 'nodes', 'roles', 'sources', 'versions']:
+    for name in ['configs', 'roles', 'sources', 'versions']:
         schema['properties'][name] = {'type': 'object'}
     return schema
 

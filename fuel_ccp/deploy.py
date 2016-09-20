@@ -304,6 +304,75 @@ def _create_meta_configmap(service):
     return kubernetes.process_object(template)
 
 
+def _process_node_filter(node_filter):
+    all_type = node_filter.get('all')
+    if all_type:
+        return lambda node: True
+
+    regex = node_filter.get('regex')
+    nodes_list = node_filter.get('nodes')
+    except_rule = node_filter.get('except')
+    predicate = lambda: False
+
+    if nodes_list is not None:
+        predicate = lambda node: node in nodes_list
+    elif regex is not None:
+        matcher = re.compile(regex)
+        predicate = lambda node: matcher.match(node)
+    else:
+        LOG.error("Failed to process nodes filter %s", node_filter)
+        raise RuntimeError("At least one rule should be specified in nodes"
+                           " list entry: all, regex or nodes")
+
+    if except_rule:
+        _pred = predicate
+        predicate = lambda node: not _pred(node)
+
+    return predicate
+
+
+def _get_service_to_node_mapping(k8s_node_names, nodes, roles):
+    role_to_node = {}
+    for node_filter in nodes:
+        predicate = _process_node_filter(node_filter)
+        matched_nodes = filter(predicate, k8s_node_names)
+        for role in node_filter["roles"]:
+            role_to_node.setdefault(role, [])
+            role_to_node[role].extend(matched_nodes)
+
+    service_to_node = {}
+    for role in sorted(roles.keys()):
+        if role in role_to_node:
+            for svc in roles[role]:
+                service_to_node.setdefault(svc, [])
+                service_to_node[svc].extend(role_to_node[role])
+        else:
+            LOG.warning("Role '%s' defined, but unused", role)
+
+    return service_to_node
+
+
+def _validate_replicas(replicas, service_to_node):
+    replicas = replicas.copy()
+    for svc, svc_hosts in six.iteritems(service_to_node):
+        svc_replicas = replicas.pop(svc, None)
+
+        if svc_replicas is None:
+            continue
+
+        svc_hosts_count = len(svc_hosts)
+        if svc_replicas > svc_hosts_count:
+            LOG.error("Requested %s replicas for %s while only %s hosts able "
+                      "to run that service (%s)", svc_replicas, svc,
+                      svc_hosts_count, ", ".join(svc_hosts))
+            raise RuntimeError("Replicas doesn't match available hosts.")
+
+    if replicas:
+        LOG.error("Replicas defined for unspecified service(s): %s",
+                  ", ".join(replicas.keys()))
+        raise RuntimeError("Replicas defined for unspecified service(s)")
+
+
 def _make_topology(nodes, roles, replicas):
     failed = False
     # TODO(sreshetniak): move it to validation
@@ -323,48 +392,10 @@ def _make_topology(nodes, roles, replicas):
     k8s_nodes = kubernetes.list_k8s_nodes()
     k8s_node_names = kubernetes.get_object_names(k8s_nodes)
 
-    def find_match(glob):
-        matcher = re.compile(glob)
-        nodes = []
-        for node in k8s_node_names:
-            match = matcher.match(node)
-            if match:
-                nodes.append(node)
-        return nodes
+    service_to_node = _get_service_to_node_mapping(k8s_node_names, nodes,
+                                                   roles)
 
-    roles_to_node = {}
-    for node in sorted(nodes.keys()):
-        matched_nodes = find_match(node)
-        for role in nodes[node]["roles"]:
-            roles_to_node.setdefault(role, [])
-            roles_to_node[role].extend(matched_nodes)
-    service_to_node = {}
-    for role in sorted(roles.keys()):
-        if role in roles_to_node:
-            for svc in roles[role]:
-                service_to_node.setdefault(svc, [])
-                service_to_node[svc].extend(roles_to_node[role])
-        else:
-            LOG.warning("Role '%s' defined, but unused", role)
-
-    replicas = replicas.copy()
-    for svc, svc_hosts in six.iteritems(service_to_node):
-        svc_replicas = replicas.pop(svc, None)
-
-        if svc_replicas is None:
-            continue
-
-        svc_hosts_count = len(svc_hosts)
-        if svc_replicas > svc_hosts_count:
-            LOG.error("Requested %s replicas for %s while only %s hosts able "
-                      "to run that service (%s)", svc_replicas, svc,
-                      svc_hosts_count, ", ".join(svc_hosts))
-            raise RuntimeError("Replicas doesn't match available hosts.")
-
-    if replicas:
-        LOG.error("Replicas defined for unspecified service(s): %s",
-                  ", ".join(replicas.keys()))
-        raise RuntimeError("Replicas defined for unspecified service(s)")
+    _validate_replicas(replicas, service_to_node)
 
     return service_to_node
 
