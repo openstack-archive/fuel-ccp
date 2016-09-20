@@ -36,8 +36,19 @@ create() {
     EXTIP="`ifconfig $IFACE | grep -Po 'addr:\d+\.\d+\.\d+\.\d+' | awk -F':' '{print $NF}'`"
     VNCP="`kubectl get svc nova-novncproxy -o yaml | awk '/nodePort/ {print $NF}'`"
 
+    # create private network
     openstack network create --provider-network-type vxlan --provider-segment 77 testnetwork
-    openstack subnet create --subnet-range 192.168.1.0/24 --gateway 192.168.1.1 --network testnetwork testsubnetwork
+    openstack subnet create --subnet-range 192.168.1.0/24 --gateway 192.168.1.2 --network testnetwork testsubnetwork
+
+    # create external network
+    neutron net-create --provider:physical_network=physnet1 --provider:network_type=flat --shared --router:external=true ext-net
+    neutron subnet-create ext-net --name ext-subnet --allocation-pool start=10.90.2.10,end=10.90.2.100 --disable-dhcp --gateway 10.90.2.1 10.90.2.0/24
+
+    # add networks to router
+    openstack router create router
+    neutron router-interface-add router testsubnetwork
+    neutron router-gateway-set router ext-net
+
     openstack flavor create --ram 512 --disk 0 --vcpus 1 tiny
     curl -o /tmp/cirros.img http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img && \
     openstack image create --disk-format qcow2 --public --file /tmp/cirros.img cirros
