@@ -61,7 +61,14 @@ def get_global_parameters(*config_groups):
         else:
             cfg[group].update(config_group._items())
 
+    if 'configs' in cfg:
+        cfg['configs']['namespace'] = CONF.kubernetes.namespace
+
     return cfg
+
+
+def address(service):
+    return '%s.%s' % (service, CONF.kubernetes.namespace)
 
 
 def get_deploy_components_info(rendering_context=None):
@@ -79,7 +86,8 @@ def get_deploy_components_info(rendering_context=None):
             if service_file.endswith('.yaml'):
                 LOG.debug("Rendering service definition: %s", service_file)
                 content = jinja_utils.jinja_render(
-                    os.path.join(service_dir, service_file), rendering_context
+                    os.path.join(service_dir, service_file), rendering_context,
+                    functions=[address]
                 )
                 LOG.debug("Parse service definition: %s", service_file)
                 service_definition = yaml.load(content)
