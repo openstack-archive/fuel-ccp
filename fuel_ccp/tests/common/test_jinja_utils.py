@@ -22,9 +22,11 @@ class TestJinjaUtils(base.TestCase):
             "maintainer": "some maintainer",
             "duck": {"egg": "needle"}
         }
-        content = jinja_utils.jinja_render(self.filename, context)
+        content = jinja_utils.jinja_render(self.filename, context,
+                                           functions=[utils.address])
         self.assertEqual(
-            "debian\njessie\nsome maintainer\nneedle\nneedle", content)
+            "debian\njessie\nsome maintainer\nneedle\nneedle\nkeystone.ccp",
+            content)
 
         context = {
             "base_distro": "debian"
@@ -40,14 +42,17 @@ class TestJinjaUtils(base.TestCase):
             "duck": {"egg": "needle"}
         }
         content = jinja_utils.jinja_render(
-            self.filename, context, ignore_undefined=True)
+            self.filename, context, functions=[utils.address],
+            ignore_undefined=True)
         self.assertEqual(
-            "debian\njessie\nsome maintainer\nneedle\nneedle", content)
+            "debian\njessie\nsome maintainer\nneedle\nneedle\nkeystone.ccp",
+            content)
 
         context = {
             "base_distro": "debian"
         }
         content = jinja_utils.jinja_render(
-            self.filename, context, ignore_undefined=True)
+            self.filename, context, functions=[utils.address],
+            ignore_undefined=True)
         self.assertEqual(
-            "debian\n\n\n\n", content)
+            "debian\n\n\n\n\nkeystone.ccp", content)

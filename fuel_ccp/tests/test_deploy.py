@@ -103,20 +103,21 @@ class TestDeploy(base.TestCase):
         config = {"openstack_project_name": "admin",
                   "openstack_user_name": "admin",
                   "openstack_user_password": "password",
-                  "keystone_public_port": 5000}
+                  "keystone_public_port": 5000,
+                  "namespace": self.namespace}
         rc = ["export OS_PROJECT_DOMAIN_NAME=default",
               "export OS_USER_DOMAIN_NAME=default",
               "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
               "export OS_USERNAME=%s" % config['openstack_user_name'],
               "export OS_PASSWORD=%s" % config['openstack_user_password'],
               "export OS_IDENTITY_API_VERSION=3",
-              "export OS_AUTH_URL=http://keystone.%s.svc.cluster.local:%s/v3" %
-              (namespace, config['keystone_public_port'])]
+              "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
+              config['keystone_public_port']]
 
         with open(openrc_etalon_file, 'w') as openrc_file:
             openrc_file.write("\n".join(rc))
         self.addCleanup(os.remove, openrc_etalon_file)
-        deploy._create_openrc(config, namespace)
+        deploy._create_openrc(config)
         self.addCleanup(os.remove, openrc_test_file)
         result = filecmp.cmp(openrc_etalon_file,
                              openrc_test_file,

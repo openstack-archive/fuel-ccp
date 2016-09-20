@@ -369,27 +369,27 @@ def _make_topology(nodes, roles, replicas):
     return service_to_node
 
 
-def _create_namespace(namespace):
+def _create_namespace(configs):
     if CONF.action.dry_run:
         return
 
-    template = templates.serialize_namespace(namespace)
+    template = templates.serialize_namespace(configs['namespace'])
     kubernetes.process_object(template)
 
 
-def _create_openrc(config, namespace):
+def _create_openrc(config):
     openrc = ["export OS_PROJECT_DOMAIN_NAME=default",
               "export OS_USER_DOMAIN_NAME=default",
               "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
               "export OS_USERNAME=%s" % config['openstack_user_name'],
               "export OS_PASSWORD=%s" % config['openstack_user_password'],
               "export OS_IDENTITY_API_VERSION=3",
-              "export OS_AUTH_URL=http://keystone.%s.svc.cluster.local:%s/v3" %
-              (namespace, config['keystone_public_port'])]
-    with open('openrc-%s' % namespace, 'w') as openrc_file:
+              "export OS_AUTH_URL=http://%s:%s/v3" %
+              (utils.address('keystone'), config['keystone_public_port'])]
+    with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))
     LOG.info("Openrc file for this deployment created at %s/openrc-%s",
-             os.getcwd(), namespace)
+             os.getcwd(), config['namespace'])
 
 
 def deploy_components(components_map, components):
@@ -407,8 +407,7 @@ def deploy_components(components_map, components):
                                         config.get("roles"),
                                         config.get("replicas"))
 
-    namespace = CONF.kubernetes.namespace
-    _create_namespace(namespace)
+    _create_namespace(config['configs'])
 
     _create_globals_configmap(config["configs"])
     start_script_cm = _create_start_script_configmap()
@@ -420,4 +419,4 @@ def deploy_components(components_map, components):
                    config)
 
     if 'keystone' in components:
-        _create_openrc(config['configs'], namespace)
+        _create_openrc(config['configs'])
