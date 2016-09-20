@@ -61,6 +61,9 @@ def get_global_parameters(*config_groups):
         else:
             cfg[group].update(config_group._items())
 
+    if 'configs' in cfg:
+        cfg['configs']['namespace'] = CONF.kubernetes.namespace
+
     return cfg
 
 
