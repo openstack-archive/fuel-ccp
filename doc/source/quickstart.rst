@@ -55,7 +55,17 @@ To install CCP CLI and Python dependencies use:
 
 ::
 
+    apt-get install gcc
     pip install fuel-ccp/
+
+Create a local registry service (optional):
+
+::
+
+    bash tools/registry/deploy-registry.sh
+
+When you deploy a local registry using that script, the registry
+address is 127.0.0.1:31500.
 
 Create CCP CLI configuration file:
 
@@ -71,11 +81,16 @@ Create CCP CLI configuration file:
       skip_empty: True
     EOF
 
+If you're using some other registry, please use its address instead.
+
 Append default topology and edit it, if needed:
 
 ::
 
     cat fuel-ccp/etc/topology-example.yaml >> /etc/ccp/ccp.yaml
+
+For example, you may want to install Stacklight to collect Openstack logs.
+See :doc:`monitoring_and_logging` for details.
 
 Append global CCP configuration:
 
