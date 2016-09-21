@@ -155,3 +155,43 @@ And for Kibana:
 
     $ kubectl get service kibana -o yaml | awk '/nodePort: / {print $NF}'
     31426
+
+Stacklight CLI toolbox
+======================
+
+Additionally, you may want to use a simple ES searcher script shipped with
+the elasticsearch docker image out of box. For example:
+
+::
+
+    $ espod=$(kubectl get pods --namespace ccp --selector=app=elasticsearch \
+    >   --output=jsonpath={.items..metadata.name})
+    $ kubectl exec --namespace ccp $espod -- curl -s 'localhost:9200/_cat/indices'
+
+The gommand gives you a list of ES indices. Next, you can issue a search
+request against a given index, or all of them (defaults):
+
+::
+
+    $ kubectl exec --namespace ccp $espod env ESIND=log-2016.09.21 SIZE=100 -- \
+    >   es_search.sh "*:*"
+
+This matches all events and limits the result output to a 100 log records.
+Or via the docker CLI and using a regex matcher:
+
+::
+
+    $ esip=$(kubectl get pods --namespace ccp --selector=app=elasticsearch \
+    >   --output=jsonpath={.items..status.podIP})
+    $ docker run --rm -e ESIP=$esip 127.0.0.1:31500/ccp/elasticsearch \
+    >   es_search.sh "/.*/"
+
+Note that a search query will be executed for logged messages' payload and
+severity level and other types of indexed fields, like OpenStack request ID:
+
+::
+
+    $ docker run --rm -e ESIP=$esip 127.0.0.1:31500/ccp/elasticsearch \
+    >   es_search.sh "*WARN*"
+
+The default search pattern is a regex ``/error|alert|trace.*|crit.*|fatal/``.
