@@ -55,9 +55,11 @@ To install CCP CLI and Python dependencies use:
 
 ::
 
+    apt-get install gcc
     pip install fuel-ccp/
 
-Create CCP CLI configuration file:
+Create CCP CLI configuration file with a given example
+docker registry address:
 
 ::
 
@@ -103,6 +105,12 @@ Fetch CCP components repos:
 ::
 
     ccp fetch
+
+Create a registry service (optional, depends on the given registry address):
+
+::
+
+    bash tools/registry/deploy-registry.sh
 
 Build CCP components and push them into the Docker Registry:
 
