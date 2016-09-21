@@ -72,6 +72,11 @@ def export_object(object_dict):
             object_dict, default_flow_style=False))
 
 
+def _reload_obj(obj, updated_dict):
+    obj.reload()
+    obj.obj = updated_dict
+
+
 def process_object(object_dict, namespace=None, client=None):
     LOG.debug("Deploying %s: \"%s\"",
               object_dict["kind"], object_dict["metadata"]["name"])
@@ -97,6 +102,9 @@ def process_object(object_dict, namespace=None, client=None):
         LOG.debug('%s "%s" already exists', object_dict['kind'],
                   object_dict['metadata']['name'])
         if object_dict['kind'] in UPDATABLE_OBJECTS:
+            if object_dict['kind'] == 'Service':
+                # Reload object and merge new and old fields
+                _reload_obj(obj, object_dict)
             obj.update()
             LOG.debug('%s "%s" has been updated', object_dict['kind'],
                       object_dict['metadata']['name'])

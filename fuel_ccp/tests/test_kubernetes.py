@@ -62,8 +62,9 @@ class TestKubernetesObjects(testscenarios.WithScenarios, base.TestCase):
         ('DaemonSet', {'kind': 'DaemonSet', 'update': False}),
         ('Job', {'kind': 'Job', 'update': False}),
         ('Namespace', {'kind': 'Namespace', 'update': False}),
-        ('Service', {'kind': 'Service', 'update': True})
+        ('Service', {'kind': 'Service', 'update': True, 'reload': True})
     )
+    reload = False
 
     def setUp(self):
         super(TestKubernetesObjects, self).setUp()
@@ -90,5 +91,7 @@ class TestKubernetesObjects(testscenarios.WithScenarios, base.TestCase):
         m_class.mock.assert_called_once_with(mock.ANY, obj_dict)
         m_obj.exists.assert_called_once_with()
         m_obj.create.assert_not_called()
+        if self.reload:
+            m_obj.reload.assert_called_once_with()
         if self.update:
             m_obj.update.assert_called_once_with()
