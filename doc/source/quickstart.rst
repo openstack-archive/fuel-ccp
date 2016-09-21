@@ -55,6 +55,7 @@ To install CCP CLI and Python dependencies use:
 
 ::
 
+    apt-get install gcc
     pip install fuel-ccp/
 
 Create CCP CLI configuration file:
