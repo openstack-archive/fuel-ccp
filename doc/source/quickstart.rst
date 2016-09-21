@@ -55,14 +55,13 @@ To install CCP CLI and Python dependencies use:
 
 ::
 
-    pip install fuel-ccp/
+    sudo ip install ./fuel-ccp
 
 Create CCP CLI configuration file:
 
 ::
 
-    mkdir /etc/ccp
-    cat > /etc/ccp/ccp.yaml << EOF
+    cat > ~HOME/.ccp.yaml << EOF
     builder:
       push: True
     registry:
@@ -71,17 +70,11 @@ Create CCP CLI configuration file:
       skip_empty: True
     EOF
 
-Append default topology and edit it, if needed:
-
-::
-
-    cat fuel-ccp/etc/topology-example.yaml >> /etc/ccp/ccp.yaml
-
 Append global CCP configuration:
 
 ::
 
-    cat >> /etc/ccp/ccp.yaml << EOF
+    cat >> $HOME/.ccp.yaml << EOF
     configs:
         private_interface: eth0
         public_interface: eth1
@@ -98,17 +91,32 @@ your environment may be different.
 - ``neutron_external_interface`` - should point to eth without ip addr (it
   actually might be non-existing interface, CCP will create it).
 
-Fetch CCP components repos:
+Append default topology and edit it, if needed:
+
+::
+
+    cat fuel-ccp/etc/topology-example.yaml >> $HOME/.ccp/ccp.yaml
+
+Fetch CCP components repos (it's optional step, as ccp will fetch automatically
+if needed):
 
 ::
 
     ccp fetch
 
-Build CCP components and push them into the Docker Registry:
+Build CCP components and push them into the Docker Registry (make sure you
+have registry deployed and available in Kubernetes cluster as well as
+configured in .ccp.yaml in registry/address option):
 
 ::
 
     ccp build
+
+If you want to build only specific components use:
+
+::
+
+    ccp build -c COMPONENT_NAME1 COMPONENT_NAME2
 
 Deploy OpenStack:
 
@@ -140,6 +148,9 @@ You could set context for all kubectl commands to use this namespace:
     kubectl config set-context ccp --namespace ccp
     kubectl config use-context ccp
 
+You can change K8s namespace to be used for CCP deployment in .ccp.yaml
+config file using the kubernetes/namespace option.
+
 Get all running pods:
 
 ::
@@ -158,15 +169,14 @@ Get all running jobs:
 Deploying test OpenStack environment
 ------------------------------------
 
-Install openstack-client:
+Install OpenStack client to access deployed cluster through CLI:
 
 ::
 
     pip install python-openstackclient
 
 openrc file for current deployment was created in the current working
-directory.
-To use it run:
+directory. You need to source it to have OpenStack connection data available:
 
 ::
 
@@ -180,7 +190,7 @@ Run test environment deploy script:
     bash fuel-ccp/tools/deploy-test-vms.sh -a create -n NUMBER_OF_VMS
 
 This script will create flavor, upload cirrios image to glance, create network
-and subnet and launch bunch of cirrios based VMs.
+and subnet and launch bunch of CirrOS based VMs.
 
 
 Accessing horizon and nova-vnc
