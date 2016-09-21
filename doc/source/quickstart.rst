@@ -55,6 +55,7 @@ To install CCP CLI and Python dependencies use:
 
 ::
 
+    apt-get install gcc
     pip install fuel-ccp/
 
 Create CCP CLI configuration file:
@@ -103,6 +104,51 @@ Fetch CCP components repos:
 ::
 
     ccp fetch
+
+Create a registry service:
+
+::
+
+    cat > /tmp/r-pod << EOF
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: registry
+      labels:
+        app: registry
+    spec:
+      containers:
+        - name: registry
+          image: registry:2
+          env:
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              hostPort: 5000
+    EOF
+    cat > /tmp/r-service << EOF
+    kind: "Service"
+    apiVersion: "v1"
+    metadata:
+      name: "registry"
+    spec:
+      selector:
+        app: "registry"
+      ports:
+        -
+          protocol: "TCP"
+          port: 5000
+          targetPort: 5000
+          nodePort: 31500
+      type: "NodePort"
+    EOF
+
+Create the pods & services:
+
+::
+
+    kubectl create -f /tmp/r-pod
+    kubectl create -f /tmp/r-service
 
 Build CCP components and push them into the Docker Registry:
 
