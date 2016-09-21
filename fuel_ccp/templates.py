@@ -114,7 +114,7 @@ def serialize_daemon_container_spec(container):
     cont_spec["securityContext"] = {"privileged":
                                     container.get("privileged", False)}
     if container.get('env'):
-        cont_spec['env'] = container['env']
+        cont_spec['env'].extend(container['env'])
     return cont_spec
 
 
