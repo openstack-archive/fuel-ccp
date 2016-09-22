@@ -36,7 +36,9 @@ There are three config locations, which the CCP CLI uses:
 #. ``Global defaults`` - fuel_ccp/resources/defaults.yaml in ``fuel-ccp`` repo.
 #. ``Component defaults`` - service/files/defaults.yaml in each component repo.
 #. ``Global config`` - Optional. Set path to this config via
-   "--deploy-config /path" CCP CLI arg.
+   "--config-file /path" CCP CLI arg. Otherwise ``fuel-ccp`` will try to find
+   config in next locations: ~.ccp.yaml, ~/.ccp/ccp.yaml, /etc/ccp.yaml,
+   /etc/ccp/ccp.yaml
 
 Before deployment, CCP will merge all these files into one dict, using the
 order above, so "component defaults" will override "global defaults" and
