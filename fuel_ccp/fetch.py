@@ -17,7 +17,7 @@ FETCH_TIMEOUT = 2 ** 16  # in seconds
 def fetch_repository(repository_name):
     dest_dir = os.path.join(CONF.repositories.path, repository_name)
     if os.path.isdir(dest_dir):
-        LOG.info('%s was already cloned, skipping', repository_name)
+        LOG.debug('%s was already cloned, skipping', repository_name)
         return
     git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
     if git_url is None:
