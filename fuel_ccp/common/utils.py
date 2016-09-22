@@ -39,7 +39,11 @@ def get_global_parameters(*config_groups):
 
     # And finaly we add cluster-wide globals conf, if provided.
     if CONF.deploy_config:
-        paths.append(CONF.deploy_config)
+        if os.path.isfile(CONF.deploy_config):
+            paths.append(CONF.deploy_config)
+        else:
+            raise RuntimeError("Wrong deploy config path: %s. "
+                               "File was not found.", CONF.deploy_config)
 
     for path in paths:
         if os.path.isfile(path):

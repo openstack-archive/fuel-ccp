@@ -115,3 +115,11 @@ class TestUtils(base.TestCase):
                           utils.get_deploy_components_info)
 
         get_global_parameters_mock.assert_called_once_with("configs")
+
+    def test_get_global_parameters_wrong_default_config(self):
+        # we shouldn't have exception now
+        utils.get_global_parameters()
+
+        # but here we should have exception
+        self.conf.deploy_config = "wrong_path"
+        self.assertRaises(RuntimeError, utils.get_global_parameters)
