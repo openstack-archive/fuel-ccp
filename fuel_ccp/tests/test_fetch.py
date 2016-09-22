@@ -13,7 +13,7 @@ class TestFetch(testscenarios.WithScenarios, base.TestCase):
         ("default", {
             "option": None,
             "value": None,
-            "url": "https://review.openstack.org:443/openstack/%s"}),
+            "url": "https://git.openstack.org:443/openstack/%s"}),
         ("hostname", {
             "option": "hostname",
             "value": "host.name",
@@ -21,37 +21,37 @@ class TestFetch(testscenarios.WithScenarios, base.TestCase):
         ('username', {
             "option": "username",
             "value": "someuser",
-            "url": "https://someuser@review.openstack.org:443/openstack/%s",
+            "url": "https://someuser@git.openstack.org:443/openstack/%s",
         }),
         ('port', {
             "option": "port",
             "value": "9999",
-            'url': "https://review.openstack.org:9999/openstack/%s",
+            'url': "https://git.openstack.org:9999/openstack/%s",
         }),
         ('protocol', {
             "option": "protocol",
             "value": "ssh",
-            'url': "ssh://review.openstack.org:443/openstack/%s",
+            'url': "ssh://git.openstack.org:443/openstack/%s",
         }),
         ('protocol', {
             "option": "protocol",
             "value": "http",
-            'url': "http://review.openstack.org:443/openstack/%s",
+            'url': "http://git.openstack.org:443/openstack/%s",
         }),
         ('protocol', {
             "option": "protocol",
             "value": "git",
-            'url': "git://review.openstack.org:443/openstack/%s",
+            'url': "git://git.openstack.org:443/openstack/%s",
         }),
         ('protocol', {
             "option": "protocol",
             "value": "https",
-            'url': "https://review.openstack.org:443/openstack/%s",
+            'url': "https://git.openstack.org:443/openstack/%s",
         }),
         ('project', {
             "option": "project",
             "value": "someproject",
-            'url': "https://review.openstack.org:443/someproject/%s",
+            'url': "https://git.openstack.org:443/someproject/%s",
         })
     ]
     url = None

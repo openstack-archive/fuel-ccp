@@ -29,7 +29,7 @@ DEFAULTS = {
         'clone_concurrency': multiprocessing.cpu_count(),
         'skip_empty': True,
         'path': os.path.expanduser('~/ccp-repos/'),
-        'hostname': 'review.openstack.org',
+        'hostname': 'git.openstack.org',
         'port': 443,
         'protocol': 'https',
         'project': 'openstack',
