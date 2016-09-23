@@ -10,6 +10,12 @@ class AttrDict(object):
     def __init__(self, *args, **kwargs):
         self._dict = dict(*args, **kwargs)
 
+    def get(self, name, default=None):
+        try:
+            return self._dict[name]
+        except KeyError:
+            return default
+
     def __getattr__(self, name):
         try:
             return self._dict[name]
