@@ -8,13 +8,6 @@ from fuel_ccp.tests import base
 class TestJinjaUtils(base.TestCase):
     filename = utils.get_resource_path('tests/common/example.j2')
 
-    def test_str_to_bool(self):
-        self.assertTrue(jinja_utils.str_to_bool('true'))
-        self.assertTrue(jinja_utils.str_to_bool('yes'))
-        self.assertFalse(jinja_utils.str_to_bool('false'))
-        self.assertFalse(jinja_utils.str_to_bool('no'))
-        self.assertFalse(jinja_utils.str_to_bool('some_random_string'))
-
     def test_jinja_render_strict(self):
         context = {
             "base_distro": "debian",
