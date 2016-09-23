@@ -169,6 +169,7 @@ class CCPApp(app.App):
             description='Containerized Control Plane tool',
             version=fuel_ccp.__version__,
             command_manager=commandmanager.CommandManager('ccp.cli'),
+            deferred_help=True,
             **kwargs
         )
         self.config_file = None
