@@ -312,8 +312,9 @@ def _get_config():
         cfg['render']['namespace'] = '%s/%s' % (
             CONF.registry.address, cfg['render']['namespace'])
 
-    global_params = utils.get_global_parameters('versions', 'sources')
+    global_params = utils.get_global_parameters('versions', 'sources', 'configs')
     cfg['render'].update(global_params['versions'])
+    cfg['render'].update(global_params['configs'])
     cfg['sources'] = global_params['sources']
 
     return cfg

@@ -87,6 +87,8 @@ Isolation:
 
 - Used in application definition file service/component_name.yaml.
 
+- Used in Dockerfile.j2
+
 Allowed content:
 
 - Any types of variables allowed.
