@@ -26,6 +26,14 @@ Developer docs
    app_def_guide
    dsl
 
+Design docs
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   design/index
+
 Indices and tables
 ==================
 
