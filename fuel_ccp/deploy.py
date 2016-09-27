@@ -58,11 +58,11 @@ def _get_service_files_hash(service_dir, files, configs):
     return hashlib.sha1(dump).hexdigest()
 
 
-def parse_role(service_dir, role, config):
+def parse_role(service_dir, role, config, topology, configmaps):
     service = role["service"]
     service_name = service["name"]
 
-    if service_name not in config.get("topology", {}):
+    if service_name not in topology:
         LOG.info("Service %s not in topology config, skipping deploy",
                  service_name)
         return
@@ -75,7 +75,7 @@ def parse_role(service_dir, role, config):
 
     workflows = _parse_workflows(service)
     workflow_cm = _create_workflow(workflows, service_name)
-    configmaps = config['configmaps'] + (files_cm, meta_cm, workflow_cm)
+    configmaps = configmaps + (files_cm, meta_cm, workflow_cm)
 
     if CONF.action.dry_run:
         cm_version = 'dry-run'
@@ -92,7 +92,7 @@ def parse_role(service_dir, role, config):
         cont['cm_version'] = cm_version
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
-    affinity = templates.serialize_affinity(service, config["topology"])
+    affinity = templates.serialize_affinity(service, topology)
 
     replicas = config.get("replicas", {}).get(service_name)
     if service.get("daemonset", False):
@@ -403,20 +403,22 @@ def deploy_components(components_map, components):
 
     config = utils.get_global_parameters("configs", "nodes", "roles",
                                          "replicas")
-    config["topology"] = _make_topology(config.get("nodes"),
-                                        config.get("roles"),
-                                        config.get("replicas"))
+    topology = _make_topology(config.get("nodes"),
+                              config.get("roles"),
+                              config.get("replicas"))
 
     _create_namespace(config['configs'])
 
     _create_globals_configmap(config["configs"])
     start_script_cm = _create_start_script_configmap()
-    config['configmaps'] = (start_script_cm,)
+    configmaps = (start_script_cm,)
 
     for component in components:
         parse_role(components_map[component]['service_dir'],
                    components_map[component]['service_content'],
-                   config)
+                   config,
+                   topology=topology,
+                   configmaps=configmaps)
 
     if 'keystone' in components:
         _create_openrc(config['configs'])
