@@ -13,6 +13,7 @@ User docs
    :maxdepth: 1
 
    quickstart
+   design/index
    monitoring_and_logging
 
 Developer docs
