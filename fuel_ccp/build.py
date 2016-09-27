@@ -12,7 +12,6 @@ import docker
 import git
 
 from fuel_ccp.common import jinja_utils
-from fuel_ccp.common import utils
 from fuel_ccp import config
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
@@ -312,9 +311,8 @@ def _get_config():
         cfg['render']['namespace'] = '%s/%s' % (
             CONF.registry.address, cfg['render']['namespace'])
 
-    global_params = utils.get_global_parameters('versions', 'sources')
-    cfg['render'].update(global_params['versions'])
-    cfg['sources'] = global_params['sources']
+    cfg['render'].update(CONF.versions._items())
+    cfg['sources'] = CONF.sources
 
     return cfg
 

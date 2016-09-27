@@ -58,7 +58,7 @@ def _get_service_files_hash(service_dir, files, configs):
     return hashlib.sha1(dump).hexdigest()
 
 
-def parse_role(service_dir, role, config, topology, configmaps):
+def parse_role(service_dir, role, topology, configmaps):
     service = role["service"]
     service_name = service["name"]
 
@@ -81,7 +81,7 @@ def parse_role(service_dir, role, config, topology, configmaps):
         cm_version = 'dry-run'
     else:
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, role.get("files"), config['configs'])
+            configmaps, service_dir, role.get("files"), CONF.configs._dict)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
@@ -94,7 +94,7 @@ def parse_role(service_dir, role, config, topology, configmaps):
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, topology)
 
-    replicas = config.get("replicas", {}).get(service_name)
+    replicas = CONF.replicas.get(service_name)
     if service.get("daemonset", False):
         if replicas is not None:
             LOG.error("Replicas was specified for %s, but it's implemented "
@@ -333,13 +333,13 @@ def _make_topology(nodes, roles, replicas):
         return nodes
 
     roles_to_node = {}
-    for node in sorted(nodes.keys()):
+    for node in sorted(nodes):
         matched_nodes = find_match(node)
         for role in nodes[node]["roles"]:
             roles_to_node.setdefault(role, [])
             roles_to_node[role].extend(matched_nodes)
     service_to_node = {}
-    for role in sorted(roles.keys()):
+    for role in sorted(roles):
         if role in roles_to_node:
             for svc in roles[role]:
                 service_to_node.setdefault(svc, [])
@@ -401,24 +401,19 @@ def deploy_components(components_map, components):
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
-    config = utils.get_global_parameters("configs", "nodes", "roles",
-                                         "replicas")
-    topology = _make_topology(config.get("nodes"),
-                              config.get("roles"),
-                              config.get("replicas"))
+    topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
 
-    _create_namespace(config['configs'])
+    _create_namespace(CONF.configs)
 
-    _create_globals_configmap(config["configs"])
+    _create_globals_configmap(CONF.configs._dict)
     start_script_cm = _create_start_script_configmap()
     configmaps = (start_script_cm,)
 
     for component in components:
         parse_role(components_map[component]['service_dir'],
                    components_map[component]['service_content'],
-                   config,
                    topology=topology,
                    configmaps=configmaps)
 
     if 'keystone' in components:
-        _create_openrc(config['configs'])
+        _create_openrc(CONF.configs)

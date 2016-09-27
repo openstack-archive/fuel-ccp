@@ -45,6 +45,7 @@ class Build(BaseCommand):
             raise RuntimeError('No registry specified, cannot push')
         if CONF.repositories.clone:
             do_fetch()
+        config.load_component_defaults()
         build.build_components(components=parsed_args.components)
 
 
@@ -67,6 +68,7 @@ class Deploy(BaseCommand):
     def take_action(self, parsed_args):
         if CONF.repositories.clone:
             do_fetch()
+        config.load_component_defaults()
         # only these two are being implicitly passed
         CONF.action._update(
             dry_run=parsed_args.dry_run,
@@ -112,6 +114,7 @@ class Validate(BaseCommand):
     def take_action(self, parsed_args):
         if CONF.repositories.clone:
             do_fetch()
+        config.load_component_defaults()
 
         components = parsed_args.components
         if components:
@@ -136,6 +139,7 @@ class Cleanup(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
+        config.load_component_defaults()
         cleanup.cleanup(auth_url=parsed_args.auth_url,
                         skip_os_cleanup=parsed_args.skip_os_cleanup)
 
@@ -153,6 +157,7 @@ class ShowDep(BaseCommand):
     def take_action(self, parsed_args):
         if CONF.repositories.clone:
             do_fetch()
+        config.load_component_defaults()
         dependencies.show_dep(parsed_args.components)
 
 
