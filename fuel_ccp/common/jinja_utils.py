@@ -15,10 +15,6 @@ class SilentUndefined(jinja2.Undefined):
         _fail_with_undefined_error
 
 
-def str_to_bool(text):
-    return text is not None and text.lower() in ['true', 'yes']
-
-
 def jinja_render(path, context, functions=(), ignore_undefined=False):
     kwargs = {}
     if ignore_undefined:
@@ -28,7 +24,6 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)), **kwargs)
-    env.filters['bool'] = str_to_bool
     for func in functions:
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
