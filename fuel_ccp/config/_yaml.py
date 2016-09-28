@@ -115,6 +115,20 @@ def load_with_includes(filename):
     return res
 
 
+class Dumper(yaml.SafeDumper):
+    pass
+
+
+def represent_attr_dict(dumper, data):
+    return dumper.represent_dict(data._dict)
+
+Dumper.add_representer(AttrDict, represent_attr_dict)
+
+
+def dump(obj, stream):
+    yaml.dump(obj, stream, Dumper=Dumper, default_flow_style=False)
+
+
 class UnwrapAttrDict(dict):
     def __init__(self, attr_dict):
         return super(UnwrapAttrDict, self).__init__(attr_dict._dict)
