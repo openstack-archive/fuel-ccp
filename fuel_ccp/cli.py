@@ -161,6 +161,20 @@ class ShowDep(BaseCommand):
         dependencies.show_dep(parsed_args.components)
 
 
+class ConfigDump(BaseCommand):
+    """Dump full current configuration to stdout"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ConfigDump, self).get_parser(*args, **kwargs)
+        return parser
+
+    def take_action(self, parsed_args):
+        if CONF.repositories.clone:
+            do_fetch()
+        config.load_component_defaults()
+        config.dump_yaml(self.app.stdout)
+
+
 def signal_handler(signo, frame):
     sys.exit(-signo)
 
