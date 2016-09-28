@@ -32,7 +32,8 @@ Design docs
 .. toctree::
    :maxdepth: 1
 
-   clusters_on_k8s
+   design/clusters_on_k8s
+   design/ref_arch_1000_nodes
 
 Indices and tables
 ==================
