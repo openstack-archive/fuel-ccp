@@ -33,6 +33,7 @@ Design docs
    :maxdepth: 1
 
    design/clusters_on_k8s
+   design/ref_arch_1000_nodes
 
 Indices and tables
 ==================
