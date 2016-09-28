@@ -45,6 +45,7 @@ Design docs
    :maxdepth: 1
 
    design/ost_compute_on_k8s
+   design/ref_arch_1000_nodes
 
 Indices and tables
 ------------------
