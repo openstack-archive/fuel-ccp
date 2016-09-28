@@ -43,7 +43,16 @@ Deploy CCP
 Install CCP CLI
 ---------------
 
-.. NOTE:: Some commands below may require root permissions
+.. NOTE:: Some commands below may require root permissions and require
+  a few packages to be installed by the provisioning underlay:
+
+  * python-dev
+  * python3-dev
+  * python-netaddr
+  * software-properties-common
+  * python-setuptools
+  * gcc
+
 
 To clone the CCP CLI repo:
 
@@ -56,6 +65,15 @@ To install CCP CLI and Python dependencies use:
 ::
 
     pip install fuel-ccp/
+
+Create a local registry service (optional):
+
+::
+
+    bash fuel-ccp/tools/registry/deploy-registry.sh
+
+When you deploy a local registry using that script, the registry
+address is 127.0.0.1:31500.
 
 Create CCP CLI configuration file:
 
@@ -71,11 +89,17 @@ Create CCP CLI configuration file:
       skip_empty: True
     EOF
 
+If you're using some other registry, please use its address instead.
+
 Append default topology and edit it, if needed:
 
 ::
 
     cat fuel-ccp/etc/topology-example.yaml >> /etc/ccp/ccp.yaml
+
+For example, you may want to install Stacklight to collect Openstack logs.
+See :doc:`monitoring_and_logging` for the deployment of monitoring and
+logging services.
 
 Append global CCP configuration:
 
