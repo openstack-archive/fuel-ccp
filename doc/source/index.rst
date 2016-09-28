@@ -32,7 +32,7 @@ Design docs
 .. toctree::
    :maxdepth: 1
 
-   design/index
+   clusters_on_k8s
 
 Indices and tables
 ==================
