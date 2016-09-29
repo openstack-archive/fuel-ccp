@@ -5,7 +5,7 @@ from fuel_ccp.validation import service as service_validation
 
 def validate(components, types):
     if not types:
-        types = ["service-def"]
+        types = ["service-def", "service-ver"]
 
     for validation_type in set(types):
         if validation_type == "service-def":

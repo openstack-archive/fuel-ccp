@@ -105,12 +105,18 @@ VOLUME_SCHEMA = {
     ]
 }
 
+ADL_VERSION_RE = r"^(0|[1-9][0-9]*).([1-9][0-9]*)$"
+
 SERVICE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "required": ["service"],
 
     "properties": {
+        "version": {
+            "type": "string",
+            "pattern": ADL_VERSION_RE
+        },
         "service": {
             "type": "object",
             "additionalProperties": False,
