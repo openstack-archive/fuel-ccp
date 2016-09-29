@@ -80,3 +80,41 @@ class TestDeployValidation(base.TestCase):
             'deployment: service2',
             deploy_validation.validate_requested_components,
             {'service1'}, COMPONENTS_MAP)
+
+    def test_validation_service_versions_incompatible_minor(self):
+        components_map = {
+            "component1": {
+                "service_content": {
+                    "version": "0.2"
+                }
+            }
+        }
+        self.assertRaises(
+            RuntimeError, deploy_validation.validation_service_versions, "0.1",
+            ["component1"], components_map
+        )
+
+    def test_validation_service_versions_incompatible_major(self):
+        components_map = {
+            "component1": {
+                "service_content": {
+                    "version": "0.1"
+                }
+            }
+        }
+        self.assertRaises(
+            RuntimeError, deploy_validation.validation_service_versions, "1.0",
+            ["component1"], components_map
+        )
+
+    def test_validation_service_versions_compatible(self):
+        components_map = {
+            "component1": {
+                "service_content": {
+                    "version": "0.1"
+                }
+            }
+        }
+        deploy_validation.validation_service_versions(
+            "0.3", ["component1"], components_map
+        )

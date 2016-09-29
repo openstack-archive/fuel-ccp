@@ -19,6 +19,8 @@ LOG = logging.getLogger(__name__)
 
 YAML_FILE_RE = re.compile(r'\.yaml$')
 
+SERVICE_PARSER_VERSION = "0.1"
+
 
 def _expand_files(service, files):
     def _expand(cmd):
@@ -397,6 +399,8 @@ def deploy_components(components_map, components):
         components = set(components_map.keys())
 
     deploy_validation.validate_requested_components(components, components_map)
+    deploy_validation.validation_service_versions(SERVICE_PARSER_VERSION,
+                                                  components, components_map)
 
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
