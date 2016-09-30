@@ -15,6 +15,7 @@ User docs
    quickstart
    monitoring_and_logging
    config
+   deploying_multiple_parallel_environments
 
 Developer docs
 --------------
