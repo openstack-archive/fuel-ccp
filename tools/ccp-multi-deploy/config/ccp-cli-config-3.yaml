@@ -1,0 +1,7 @@
+!include
+- ccp-configs-common.yaml
+- ccp-roles.yaml
+- ccp-topology-3.yaml
+---
+kubernetes:
+  namespace: "ccp-3"
