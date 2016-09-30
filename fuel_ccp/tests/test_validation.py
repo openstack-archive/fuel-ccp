@@ -3,6 +3,7 @@ import mock
 from fuel_ccp.tests import base
 from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
+from fuel_ccp.validation import service as service_validation
 
 
 COMPONENTS_MAP = {
@@ -80,3 +81,26 @@ class TestDeployValidation(base.TestCase):
             'deployment: service2',
             deploy_validation.validate_requested_components,
             {'service1'}, COMPONENTS_MAP)
+
+
+class TestValidationRegex(base.TestCase):
+    def test_ports_re(self):
+        regex = r"^{}(:{})?$".format(
+            service_validation.ALL_PORT_RE, service_validation.HOST_PORT_RE)
+        self.assertRegexpMatches('0', regex)
+        self.assertRegexpMatches('12', regex)
+        self.assertRegexpMatches('123', regex)
+        self.assertRegexpMatches('1234', regex)
+        self.assertRegexpMatches('12345', regex)
+        self.assertRegexpMatches('65535', regex)
+
+        self.assertNotRegexpMatches('65536', regex)
+        self.assertNotRegexpMatches('123456', regex)
+
+        self.assertRegexpMatches('1234:30000', regex)
+        self.assertRegexpMatches('1234:32767', regex)
+
+        self.assertNotRegexpMatches('1234:1000', regex)
+        self.assertNotRegexpMatches('1234:29999', regex)
+        self.assertNotRegexpMatches('1234:32768', regex)
+        self.assertNotRegexpMatches('1234:40000', regex)
