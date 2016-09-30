@@ -1,0 +1,10 @@
+deploy_config: ccp-topology-2.yaml
+builder:
+  push: True
+registry:
+  address: "127.0.0.1:31500"
+kubernetes:
+  namespace: "ccp-2"
+repositories:
+  path: /tmp/ccp-repos
+  skip_empty: True
