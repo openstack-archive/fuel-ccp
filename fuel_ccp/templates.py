@@ -343,6 +343,17 @@ def serialize_affinity(service, topology):
             }
         }
     }
+    if service.get("host-net"):
+        policy["podAntiAffinity"] = {
+            "requiredDuringSchedulingIgnoredDuringExecution": [{
+                "labelSelector": {
+                    "matchLabels": {
+                        "app": service["name"]
+                    }
+                },
+                "topologyKey": "kubernetes.io/hostname"
+            }]
+        }
     return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(
         policy, sort_keys=True)}
 
