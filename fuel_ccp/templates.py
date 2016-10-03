@@ -312,6 +312,7 @@ def serialize_daemonset(name, spec, affinity):
 
 
 def serialize_affinity(service, topology):
+    service_name = topology[service["name"]]
     policy = {
         "nodeAffinity": {
             "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -319,12 +320,23 @@ def serialize_affinity(service, topology):
                     "matchExpressions": [{
                         "key": "kubernetes.io/hostname",
                         "operator": "In",
-                        "values": topology[service["name"]]
+                        "values": service_name
                     }]
                 }]
             }
         }
     }
+    if service.get("host-net"):
+        policy["podAntiAffinity"] = {
+            "requiredDuringSchedulingIgnoredDuringExecution": [{
+                "labelSelector": {
+                    "matchLabels": {
+                        "app": service_name
+                    }
+                },
+                "topologyKey": "kubernetes.io/hostname"
+            }]
+        }
     return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(
         policy, sort_keys=True)}
 
