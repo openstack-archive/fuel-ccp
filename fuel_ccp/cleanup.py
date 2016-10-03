@@ -93,7 +93,7 @@ def _cleanup_network_resources(session):
 
 
 def _cleanup_openstack_environment(configs, auth_url=None):
-    if 'openstack_project_name' not in configs:
+    if 'project_name' not in configs.get('openstack', {}):
         # Ensure that keystone configs are provided. Assume that it is not an
         # OpenStack deployment otherwise
         raise RuntimeError('There are no Keystone configs provided. '
@@ -101,11 +101,12 @@ def _cleanup_openstack_environment(configs, auth_url=None):
                            'is not deployed')
 
     configs['auth_url'] = auth_url or 'http://%s:%s/v3' % (
-        utils.address('keystone'), configs['keystone_public_port'])
+        utils.address('keystone'), configs['keystone']['public_port'])
 
     session = _get_session(
-        configs['auth_url'], configs['openstack_user_name'],
-        configs['openstack_user_password'], configs['openstack_project_name'])
+        configs['auth_url'], configs['openstack']['user_name'],
+        configs['openstack']['user_password'],
+        configs['openstack']['project_name'])
 
     try:
         session.get_project_id()

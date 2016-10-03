@@ -378,14 +378,16 @@ def _create_namespace(configs):
 
 
 def _create_openrc(config):
-    openrc = ["export OS_PROJECT_DOMAIN_NAME=default",
-              "export OS_USER_DOMAIN_NAME=default",
-              "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
-              "export OS_USERNAME=%s" % config['openstack_user_name'],
-              "export OS_PASSWORD=%s" % config['openstack_user_password'],
-              "export OS_IDENTITY_API_VERSION=3",
-              "export OS_AUTH_URL=http://%s:%s/v3" %
-              (utils.address('keystone'), config['keystone_public_port'])]
+    openrc = [
+        "export OS_PROJECT_DOMAIN_NAME=default",
+        "export OS_USER_DOMAIN_NAME=default",
+        "export OS_PROJECT_NAME=%s" % config['openstack']['project_name'],
+        "export OS_USERNAME=%s" % config['openstack']['user_name'],
+        "export OS_PASSWORD=%s" % config['openstack']['user_password'],
+        "export OS_IDENTITY_API_VERSION=3",
+        "export OS_AUTH_URL=http://%s:%s/v3" %
+        (utils.address('keystone'), config['keystone']['public_port']),
+    ]
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))
     LOG.info("Openrc file for this deployment created at %s/openrc-%s",
