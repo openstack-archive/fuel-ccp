@@ -50,15 +50,24 @@ class TestDeploy(base.TestCase):
                 "timeoutSeconds": 1
             },
             "env": [{
-                "name": "CM_VERSION",
-                "value": 1
-            }, {
+                "name": "CCP_NODE_NAME",
+                'valueFrom': {
+                    'fieldRef': {
+                        'fieldPath': 'spec.nodeName'
+                    }
+                }
+            },
+                {
                 "name": "env_foo",
                 "valueFrom": {
                     "valueField": {
                         "valuePath": "metadata.name"
                     }
                 }
+            },
+                {
+                "name": "CM_VERSION",
+                "value": 1
             }],
             "securityContext": {
                 "privileged": False

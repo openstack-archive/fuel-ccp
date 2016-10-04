@@ -87,6 +87,20 @@ def serialize_volume_mounts(container):
     return spec
 
 
+def serialize_env_variables(container):
+    env = [{
+        "name": "CCP_NODE_NAME",
+        "valueFrom": {
+            "fieldRef": {
+                "fieldPath": "spec.nodeName"
+            }
+        }
+    }]
+    if container.get('env'):
+        env.extend(container['env'])
+    return env
+
+
 def serialize_daemon_container_spec(container):
     cont_spec = {
         "name": container["name"],
@@ -99,11 +113,12 @@ def serialize_daemon_container_spec(container):
             },
             "timeoutSeconds": 1
         },
-        "env": [{
-            "name": "CM_VERSION",
-            "value": container['cm_version']
-        }]
+        "env": serialize_env_variables(container)
     }
+    cont_spec['env'].append({
+        "name": "CM_VERSION",
+        "value": container['cm_version']
+    })
     if container.get("probes", {}).get("liveness"):
         cont_spec["livenessProbe"] = {
             "exec": {
@@ -113,8 +128,7 @@ def serialize_daemon_container_spec(container):
         }
     cont_spec["securityContext"] = {"privileged":
                                     container.get("privileged", False)}
-    if container.get('env'):
-        cont_spec['env'].extend(container['env'])
+
     return cont_spec
 
 
@@ -123,7 +137,8 @@ def serialize_job_container_spec(container, job):
         "name": job["name"],
         "image": _get_image_name(container["image"]),
         "command": _get_start_cmd(job["name"]),
-        "volumeMounts": serialize_volume_mounts(container)
+        "volumeMounts": serialize_volume_mounts(container),
+        "env": serialize_env_variables(container)
     }
 
 
