@@ -2,3 +2,7 @@ configs:
     private_interface: eth0
     public_interface: eth1
     k8s_external_ip: 0.0.0.0
+    ceph_key: "Changeme"
+    ceph_fsid: "Changeme"
+    ceph_initial_members: "Changeme"
+    ceph_mon_host: "Changeme"
