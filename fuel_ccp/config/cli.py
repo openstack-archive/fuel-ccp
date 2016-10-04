@@ -1,5 +1,4 @@
 DEFAULTS = {
-    'deploy_config': None,
     'action': {
         'components': None,
         'dry_run': False,
@@ -10,7 +9,6 @@ DEFAULTS = {
 }
 
 SCHEMA = {
-    'deploy_config': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
     'action': {
         'type': 'object',
         'additionalProperties': False,

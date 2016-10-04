@@ -37,10 +37,6 @@ def get_global_parameters(*config_groups):
         paths.append(os.path.join(CONF.repositories.path, component,
                                   "service/files/defaults.yaml"))
 
-    # And finaly we add cluster-wide globals conf, if provided.
-    if CONF.deploy_config:
-        paths.append(CONF.deploy_config)
-
     for path in paths:
         if os.path.isfile(path):
             LOG.debug("Adding parameters from \"%s\"", path)
