@@ -100,19 +100,25 @@ class TestDeploy(base.TestCase):
         namespace = self.namespace
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
         openrc_test_file = 'openrc-%s' % namespace
-        config = {"openstack_project_name": "admin",
-                  "openstack_user_name": "admin",
-                  "openstack_user_password": "password",
-                  "keystone_public_port": 5000,
-                  "namespace": self.namespace}
-        rc = ["export OS_PROJECT_DOMAIN_NAME=default",
-              "export OS_USER_DOMAIN_NAME=default",
-              "export OS_PROJECT_NAME=%s" % config['openstack_project_name'],
-              "export OS_USERNAME=%s" % config['openstack_user_name'],
-              "export OS_PASSWORD=%s" % config['openstack_user_password'],
-              "export OS_IDENTITY_API_VERSION=3",
-              "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
-              config['keystone_public_port']]
+        config = {
+            "openstack": {
+                "project_name": "admin",
+                "user_name": "admin",
+                "user_password": "password",
+            },
+            "keystone": {"public_port": 5000},
+            "namespace": self.namespace,
+        }
+        rc = [
+            "export OS_PROJECT_DOMAIN_NAME=default",
+            "export OS_USER_DOMAIN_NAME=default",
+            "export OS_PROJECT_NAME=%s" % config['openstack']['project_name'],
+            "export OS_USERNAME=%s" % config['openstack']['user_name'],
+            "export OS_PASSWORD=%s" % config['openstack']['user_password'],
+            "export OS_IDENTITY_API_VERSION=3",
+            "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
+            config['keystone']['public_port'],
+        ]
 
         with open(openrc_etalon_file, 'w') as openrc_file:
             openrc_file.write("\n".join(rc))
