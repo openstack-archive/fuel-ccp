@@ -4,10 +4,10 @@
    contain the root `toctree` directive.
 
 Welcome to Fuel-ccp's documentation!
-========================================================
+====================================
 
 User docs
-------------
+---------
 
 .. toctree::
    :maxdepth: 1
@@ -15,6 +15,13 @@ User docs
    quickstart
    monitoring_and_logging
    config
+
+Advanced topics
+---------------
+
+.. toctree::
+   :maxdepth: 1
+
    deploying_multiple_parallel_environments
 
 Developer docs
