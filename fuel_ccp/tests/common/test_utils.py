@@ -5,6 +5,7 @@ from mock import mock
 import yaml
 
 from fuel_ccp.common import utils
+from fuel_ccp import config
 from fuel_ccp.tests import base
 
 
@@ -37,11 +38,11 @@ class TestUtils(base.TestCase):
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
         self.conf.repositories.names = ["component"]
 
+        config.load_component_defaults()
+
         res = (
             utils.get_deploy_components_info()["keystone"]["service_content"]
         )
-
-        get_global_parameters_mock.assert_called_once_with("configs")
 
         with open(os.path.join(base_dir,
                                "service-rendered-example-default.yaml")) as f:
@@ -74,11 +75,11 @@ class TestUtils(base.TestCase):
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
         self.conf.repositories.names = ["component"]
 
+        config.load_component_defaults()
+
         res = utils.get_deploy_components_info(
             rendering_context=custom_params["configs"]
         )["keystone"]["service_content"]
-
-        get_global_parameters_mock.assert_not_called()
 
         with open(os.path.join(base_dir,
                                "service-rendered-example-custom.yaml")) as f:
@@ -111,7 +112,7 @@ class TestUtils(base.TestCase):
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
         self.conf.repositories.names = ["component"]
 
+        config.load_component_defaults()
+
         self.assertRaises(jinja_exceptions.UndefinedError,
                           utils.get_deploy_components_info)
-
-        get_global_parameters_mock.assert_called_once_with("configs")

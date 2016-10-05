@@ -69,7 +69,7 @@ def address(service):
 
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
-        rendering_context = get_global_parameters("configs")["configs"]
+        rendering_context = CONF.configs._dict
     components_map = {}
 
     for component in CONF.repositories.names:

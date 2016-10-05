@@ -58,6 +58,8 @@ def get_config_defaults():
         'verbose_level': 1,
         'log_file': None,
     })
+    for name in ['configs', 'nodes', 'roles', 'sources', 'versions']:
+        defaults[name] = _yaml.AttrDict()
     for module in [cli, builder, images, kubernetes, registry, replicas,
                    repositories]:
         defaults._merge(module.DEFAULTS)
@@ -92,3 +94,15 @@ def validate_config(yconf=None):
         yconf = _REAL_CONF
     schema = get_config_schema()
     jsonschema.validate(_yaml.UnwrapAttrDict(yconf), schema)
+
+
+def load_component_defaults():
+    from fuel_ccp.common import utils
+
+    sections = ['versions', 'sources', 'configs', 'nodes', 'roles', 'replicas']
+    gp = utils.get_global_parameters(*sections)
+    new_config = _yaml.AttrDict()
+    new_config._merge(gp)
+    global _REAL_CONF
+    new_config._merge(_REAL_CONF)
+    _REAL_CONF = new_config
