@@ -20,13 +20,13 @@ on different setup, but it's not officialy supported.
 
 Current tested version of different components are:
 
-=====================   ===========  ===========  =========================
-Component               Min Version  Max Version  Comment
-=====================   ===========  ===========  =========================
-Kubernetes              1.2.4        1.3.5        1.3.0 to 1.3.3 won't work
-Docker                  1.10.0       1.12.0
-Calico-node             0.20.0       0.21.0
-=====================   ===========  ===========  =========================
+===========   ===========  ===========  ======================================
+Component     Min Version  Max Version  Comment
+===========   ===========  ===========  ======================================
+Kubernetes    1.4.0        1.4.x        v1.4.0_coreos.0 from quay.io wont work
+Docker        1.10.0       1.12.0
+Calico-node   0.20.0       0.21.0
+===========   ===========  ===========  ======================================
 
 Additionaly, you will need to have working kube-proxy, kube-dns and docker
 registry.
@@ -53,6 +53,13 @@ Install CCP CLI
   * python-setuptools
   * gcc
 
+
+If you're deploying CCP from non-root user, make sure your user are in the
+``docker`` group. You can add it to it via:
+
+::
+
+  sudo usermod -a -G docker your_user_name
 
 To clone the CCP CLI repo:
 
