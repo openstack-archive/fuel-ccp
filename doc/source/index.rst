@@ -23,6 +23,8 @@ Advanced topics
    :maxdepth: 1
 
    deploying_multiple_parallel_environments
+   ceph
+   ceph_cluster
 
 Developer docs
 --------------
@@ -44,7 +46,7 @@ Design docs
    design/index
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
