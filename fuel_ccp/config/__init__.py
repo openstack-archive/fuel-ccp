@@ -106,3 +106,7 @@ def load_component_defaults():
     global _REAL_CONF
     new_config._merge(_REAL_CONF)
     _REAL_CONF = new_config
+
+
+def dump_yaml(stream):
+    _yaml.dump(_REAL_CONF, stream)

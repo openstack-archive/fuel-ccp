@@ -1,4 +1,5 @@
 import fixtures
+import io
 import mock
 import six
 import testscenarios
@@ -101,3 +102,31 @@ class TestLoadWithIncludes(testscenarios.WithScenarios, base.TestCase):
 
         res = _yaml.load_with_includes('config')
         self.assertEqual(res, self.expected_result)
+
+
+class TestLoadDump(testscenarios.WithScenarios, base.TestCase):
+    scenarios = [
+        ('simple', {'yaml': 'a: b\n', 'parsed': {'a': 'b'}}),
+        ('nested', {
+            'yaml': 'a:\n  b: c\n',
+            'parsed': {'a': {'b': 'c'}},
+        }),
+    ]
+
+    yaml = None
+    parsed = None
+
+    def test_load(self):
+        res = _yaml.load(self.yaml)
+        self.assertIsInstance(res, _yaml.AttrDict)
+        self.assertEqual(self.parsed, res)
+
+    def test_dump(self):
+        obj = _yaml.AttrDict()
+        obj._merge(self.parsed)
+        if str is bytes:
+            stream = io.BytesIO()
+        else:
+            stream = io.StringIO()
+        _yaml.dump(obj, stream)
+        self.assertEqual(self.yaml, stream.getvalue())
