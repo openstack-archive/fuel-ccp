@@ -1,2 +1,1 @@
 # Pin versions of packages that behave badly only for us
-requests===2.10.0
