@@ -1,7 +1,6 @@
 import os
 
 from jinja2 import exceptions as jinja_exceptions
-from mock import mock
 import yaml
 
 from fuel_ccp.common import utils
@@ -11,9 +10,7 @@ from fuel_ccp.tests import base
 
 class TestUtils(base.TestCase):
 
-    @mock.patch("fuel_ccp.common.utils.get_global_parameters")
-    def test_get_deploy_components_info_with_default_context(
-            self, get_global_parameters_mock):
+    def test_get_deploy_components_info_with_default_context(self):
 
         default_params = {
             "configs": {
@@ -31,14 +28,15 @@ class TestUtils(base.TestCase):
             }
         }
 
-        get_global_parameters_mock.return_value = default_params
+        conf = config._yaml.AttrDict()
+        conf._merge(default_params)
+        conf._merge(config._REAL_CONF)
+        config._REAL_CONF = conf
 
         base_dir = os.path.dirname(__file__)
 
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
         self.conf.repositories.names = ["component"]
-
-        config.load_component_defaults()
 
         res = (
             utils.get_deploy_components_info()["keystone"]["service_content"]
@@ -50,9 +48,7 @@ class TestUtils(base.TestCase):
 
         self.assertDictEqual(expected, res)
 
-    @mock.patch("fuel_ccp.common.utils.get_global_parameters")
-    def test_get_deploy_components_info_with_custom_context(
-            self, get_global_parameters_mock):
+    def test_get_deploy_components_info_with_custom_context(self):
 
         custom_params = {
             "configs": {
@@ -70,6 +66,10 @@ class TestUtils(base.TestCase):
             }
         }
 
+        conf = config._yaml.AttrDict()
+        conf._merge(custom_params)
+        conf._merge(config._REAL_CONF)
+        config._REAL_CONF = conf
         base_dir = os.path.dirname(__file__)
 
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
@@ -87,9 +87,7 @@ class TestUtils(base.TestCase):
 
         self.assertDictEqual(expected, res)
 
-    @mock.patch("fuel_ccp.common.utils.get_global_parameters")
-    def test_get_deploy_components_info_with_not_enough_context(
-            self, get_global_parameters_mock):
+    def test_get_deploy_components_info_with_not_enough_context(self):
 
         default_params = {
             "configs": {
@@ -105,7 +103,10 @@ class TestUtils(base.TestCase):
             }
         }
 
-        get_global_parameters_mock.return_value = default_params
+        conf = config._yaml.AttrDict()
+        conf._merge(default_params)
+        conf._merge(config._REAL_CONF)
+        config._REAL_CONF = conf
 
         base_dir = os.path.dirname(__file__)
 

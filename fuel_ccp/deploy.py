@@ -258,9 +258,7 @@ def _push_files_to_workflow(workflow, files):
 
 
 def _create_globals_configmap(config):
-    data = {
-        templates.GLOBAL_CONFIG: json.dumps(config, sort_keys=True)
-    }
+    data = {templates.GLOBAL_CONFIG: config._json(sort_keys=True)}
     cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
     return kubernetes.process_object(cm)
 
@@ -407,7 +405,7 @@ def deploy_components(components_map, components):
 
     _create_namespace(CONF.configs)
 
-    _create_globals_configmap(CONF.configs._dict)
+    _create_globals_configmap(CONF.configs)
     start_script_cm = _create_start_script_configmap()
     configmaps = (start_script_cm,)
 

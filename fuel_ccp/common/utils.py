@@ -24,8 +24,7 @@ def get_resource_path(path):
     return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
 
-def get_global_parameters(*config_groups):
-    cfg = {}
+def get_config_paths():
     components = list(CONF.repositories.names)
     paths = []
     # Order does matter. At first we add global defaults.
@@ -37,30 +36,7 @@ def get_global_parameters(*config_groups):
         paths.append(os.path.join(CONF.repositories.path, component,
                                   "service/files/defaults.yaml"))
 
-    for path in paths:
-        if os.path.isfile(path):
-            LOG.debug("Adding parameters from \"%s\"", path)
-            with open(path, "r") as f:
-                data = yaml.load(f)
-                for group in config_groups:
-                    cfg.setdefault(group, {})
-                    cfg[group].update(data.get(group, {}))
-        else:
-            LOG.debug("\"%s\" not found, skipping", path)
-
-    for group in config_groups:
-        cfg.setdefault(group, {})
-        try:
-            config_group = CONF[group]
-        except KeyError:
-            continue
-        else:
-            cfg[group].update(config_group._items())
-
-    if 'configs' in cfg:
-        cfg['configs']['namespace'] = CONF.kubernetes.namespace
-
-    return cfg
+    return paths
 
 
 def address(service):

@@ -1,4 +1,5 @@
 import collections
+import json
 import os
 
 import six
@@ -66,6 +67,16 @@ class AttrDict(object):
                 if isinstance(other_value, dict):
                     other_value = AttrDict(other_value)
                 self._dict[key] = other_value
+
+    def _json(self, **kwargs):
+        return json.dumps(self, encoder=JSONEncoder, **kwargs)
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if not isinstance(obj, AttrDict):
+            return super(self, JSONEncoder).default(obj)
+        return self.encode(obj._dict)
 
 
 class Loader(yaml.SafeLoader):
