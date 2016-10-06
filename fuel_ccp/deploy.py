@@ -58,7 +58,10 @@ def _get_service_files_hash(service_dir, files, configs):
     return hashlib.sha1(dump).hexdigest()
 
 
-def parse_role(service_dir, role, topology, configmaps):
+def parse_role(component, topology, configmaps):
+    service_dir = component["service"]
+    role = component["service_content"]
+    component_name = component["component_name"]
     service = role["service"]
     service_name = service["name"]
 
@@ -87,8 +90,8 @@ def parse_role(service_dir, role, topology, configmaps):
         daemon_cmd = cont["daemon"]
         daemon_cmd["name"] = cont["name"]
 
-        _create_pre_jobs(service, cont)
-        _create_post_jobs(service, cont)
+        _create_pre_jobs(service, cont, component_name)
+        _create_post_jobs(service, cont, component_name)
         cont['cm_version'] = cm_version
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
@@ -105,11 +108,12 @@ def parse_role(service_dir, role, topology, configmaps):
                                "implemented using Kubernetes DaemonSet")
 
         obj = templates.serialize_daemonset(service_name, cont_spec,
-                                            affinity)
+                                            affinity, component_name)
     else:
         replicas = replicas or 1
         obj = templates.serialize_deployment(service_name, cont_spec,
-                                             affinity, replicas)
+                                             affinity, replicas,
+                                             component_name)
     kubernetes.process_object(obj)
 
     _create_service(service)
@@ -208,22 +212,22 @@ def _is_single_job(job):
     return job.get("type", "local") == "single"
 
 
-def _create_pre_jobs(service, container):
+def _create_pre_jobs(service, container, component_name):
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            _create_job(service, container, job)
+            _create_job(service, container, job, component_name)
 
 
-def _create_post_jobs(service, container):
+def _create_post_jobs(service, container, component_name):
     for job in container.get("post", ()):
         if _is_single_job(job):
-            _create_job(service, container, job)
+            _create_job(service, container, job, component_name)
 
 
-def _create_job(service, container, job):
+def _create_job(service, container, job, component_name):
     cont_spec = templates.serialize_job_container_spec(container, job)
     pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
-    job_spec = templates.serialize_job(job["name"], pod_spec)
+    job_spec = templates.serialize_job(job["name"], pod_spec, component_name)
     kubernetes.process_object(job_spec)
 
 
@@ -410,8 +414,7 @@ def deploy_components(components_map, components):
     configmaps = (start_script_cm,)
 
     for component in components:
-        parse_role(components_map[component]['service_dir'],
-                   components_map[component]['service_content'],
+        parse_role(components_map[component],
                    topology=topology,
                    configmaps=configmaps)
 
