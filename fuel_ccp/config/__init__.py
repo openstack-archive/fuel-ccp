@@ -100,10 +100,20 @@ def load_component_defaults():
     from fuel_ccp.common import utils
 
     sections = ['versions', 'sources', 'configs', 'nodes', 'roles', 'replicas']
-    gp = utils.get_global_parameters(*sections)
-    new_config = _yaml.AttrDict()
-    new_config._merge(gp)
+    new_config = _yaml.AttrDict((k, _yaml.AttrDict()) for k in sections)
+    for path in utils.get_config_paths():
+        if not os.path.exists(path):
+            LOG.debug("\"%s\" not found, skipping", path)
+            continue
+        LOG.debug("Adding parameters from \"%s\"", path)
+        with open(path) as f:
+            data = _yaml.load(f)
+        for section in sections:
+            if section in data:
+                new_config[section]._merge(data[section])
+
     global _REAL_CONF
+    new_config['configs']['namespace'] = _REAL_CONF.kubernetes.namespace
     new_config._merge(_REAL_CONF)
     _REAL_CONF = new_config
 

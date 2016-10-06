@@ -130,3 +130,10 @@ class TestLoadDump(testscenarios.WithScenarios, base.TestCase):
             stream = io.StringIO()
         _yaml.dump(obj, stream)
         self.assertEqual(self.yaml, stream.getvalue())
+
+
+class TestAttrDict(base.TestCase):
+    def test_json(self):
+        source = _yaml.AttrDict({'a': 1, 'b': _yaml.AttrDict({'c': 2})})
+        res = source._json(sort_keys=True)
+        self.assertEqual(res, '{"a": 1, "b": {"c": 2}}')
