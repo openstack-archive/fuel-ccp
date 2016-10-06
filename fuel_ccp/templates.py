@@ -259,14 +259,15 @@ def serialize_volumes(service):
     return vol_spec
 
 
-def serialize_job(name, spec):
+def serialize_job(name, spec, component_name):
     return {
         "apiVersion": "batch/v1",
         "kind": "Job",
         "metadata": {
             "name": name,
             "labels": {
-                "ccp": "true"
+                "ccp": "true",
+                "ccp-component": component_name
             }
         },
         "spec": {
@@ -275,7 +276,7 @@ def serialize_job(name, spec):
     }
 
 
-def serialize_deployment(name, spec, affinity, replicas):
+def serialize_deployment(name, spec, affinity, replicas, component_name):
     return {
         "apiVersion": "extensions/v1beta1",
         "kind": "Deployment",
@@ -294,8 +295,9 @@ def serialize_deployment(name, spec, affinity, replicas):
                 "metadata": {
                     "annotations": affinity,
                     "labels": {
+                        "app": name,
                         "ccp": "true",
-                        "app": name
+                        "ccp-component": component_name
                     }
                 },
                 "spec": spec
@@ -304,7 +306,7 @@ def serialize_deployment(name, spec, affinity, replicas):
     }
 
 
-def serialize_daemonset(name, spec, affinity):
+def serialize_daemonset(name, spec, affinity, component_name):
     return {
         "apiVersion": "extensions/v1beta1",
         "kind": "DaemonSet",
@@ -316,8 +318,9 @@ def serialize_daemonset(name, spec, affinity):
                 "metadata": {
                     "annotations": affinity,
                     "labels": {
+                        "app": name,
                         "ccp": "true",
-                        "app": name
+                        "ccp-component": component_name
                     }
                 },
                 "spec": spec

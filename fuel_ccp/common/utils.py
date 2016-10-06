@@ -54,6 +54,10 @@ def get_deploy_components_info(rendering_context=None):
                                    'service')
         if not os.path.isdir(service_dir):
             continue
+        component_name = component
+        REPO_NAME_PREFIX = "fuel-ccp-"
+        if component_name.startswith(REPO_NAME_PREFIX):
+            component_name = component_name[len(REPO_NAME_PREFIX):]
         for service_file in os.listdir(service_dir):
             if service_file.endswith('.yaml'):
                 LOG.debug("Rendering service definition: %s", service_file)
@@ -65,6 +69,7 @@ def get_deploy_components_info(rendering_context=None):
                 service_definition = yaml.load(content)
                 service_name = service_definition['service']['name']
                 components_map[service_name] = {
+                    'component_name': component_name,
                     'service_dir': service_dir,
                     'service_content': service_definition
                 }
