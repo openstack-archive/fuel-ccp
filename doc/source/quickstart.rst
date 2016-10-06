@@ -46,6 +46,7 @@ Install CCP CLI
 .. NOTE:: Some commands below may require root permissions and require
   a few packages to be installed by the provisioning underlay:
 
+  * python-pip
   * python-dev
   * python3-dev
   * python-netaddr
@@ -53,9 +54,8 @@ Install CCP CLI
   * python-setuptools
   * gcc
 
-
 If you're deploying CCP from non-root user, make sure your user are in the
-``docker`` group. You can add it to it via:
+``docker`` group. You can add your user to docker group via:
 
 ::
 
