@@ -59,7 +59,7 @@ def _get_service_files_hash(service_dir, files, configs):
 
 
 def parse_role(component, topology, configmaps):
-    service_dir = component["service"]
+    service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
     service = role["service"]
