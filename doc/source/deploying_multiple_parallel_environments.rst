@@ -118,7 +118,8 @@ files (1 for CLI configuration and 1 with topology).
     configs:
         private_interface: eth0
         public_interface: eth1
-        neutron_external_interface: eth2
+        neutron:
+          external_interface: eth2
     nodes:
       node[1,2-3,4,5-6,7,8-9]:
         roles:
@@ -185,7 +186,8 @@ files (1 for CLI configuration and 1 with topology).
     configs:
         private_interface: eth0
         public_interface: eth1
-        neutron_external_interface: eth2
+        neutron:
+          external_interface: eth2
     nodes:
       node[1,2-3,4,5-6,7,8-9]:
         roles:
@@ -252,7 +254,8 @@ files (1 for CLI configuration and 1 with topology).
     configs:
         private_interface: eth0
         public_interface: eth1
-        neutron_external_interface: eth2
+        neutron:
+          external_interface: eth2
     nodes:
       node[1,2-3,4,5-6,7,8-9]:
         roles:

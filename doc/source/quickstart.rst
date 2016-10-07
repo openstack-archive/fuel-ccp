@@ -116,7 +116,8 @@ Append global CCP configuration:
     configs:
         private_interface: eth0
         public_interface: eth1
-        neutron_external_interface: eth2
+        neutron:
+          external_interface: eth2
     EOF
 
 Make sure to adjust it to your environment, since the network configuration of
@@ -126,7 +127,7 @@ your environment may be different.
 - ``public_interface`` - should point to eth with public ip address (you can
   use private iface here, if you want to bind all services to internal
   network)
-- ``neutron_external_interface`` - should point to eth without ip addr (it
+- ``neutron.external_interface`` - should point to eth without ip addr (it
   actually might be non-existing interface, CCP will create it).
 
 Fetch CCP components repos:
