@@ -230,7 +230,8 @@ def process_dockerfile(dockerfile, tmp_dir, config, executor, future_list,
                 LOG.error("%s: Build will be skipped due to parent image (%s) "
                           "build failure", child['name'], dockerfile['name'])
                 child['build_result'] = 'Failure'
-                child['push_result'] = 'Failure'
+                if CONF.builder.push:
+                    child['push_result'] = 'Failure'
             else:
                 submit_dockerfile_processing(child, tmp_dir, config, executor,
                                              future_list, ready_images)
