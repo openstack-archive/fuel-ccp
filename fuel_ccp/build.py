@@ -9,6 +9,7 @@ import sys
 import tempfile
 
 import docker
+from docker.utils import kwargs_from_env
 import git
 
 from fuel_ccp.common import jinja_utils
@@ -217,8 +218,7 @@ def process_dockerfile(dockerfile, tmp_dir, config, executor, future_list,
     path = create_rendered_dockerfile(
         dockerfile['path'], dockerfile['name'], tmp_dir, config)
     dockerfile['path'] = path
-    with contextlib.closing(docker.Client(
-            timeout=CONF.registry.timeout)) as dc:
+    with contextlib.closing(docker_client()) as dc:
         build_dockerfile(dc, dockerfile)
         if CONF.builder.push and CONF.registry.address:
             push_dockerfile(dc, dockerfile)
@@ -255,8 +255,7 @@ def match_not_ready_base_dockerfiles(dockerfile, ready_images):
 
 
 def get_ready_image_names():
-    with contextlib.closing(docker.Client(
-            timeout=CONF.registry.timeout)) as dc:
+    with contextlib.closing(docker_client()) as dc:
         ready_images = []
         for image in dc.images():
             if image["RepoTags"]:
@@ -403,3 +402,12 @@ def build_components(components=None):
         shutil.rmtree(tmp_dir)
         if not build_succeeded:
             sys.exit(1)
+
+
+def docker_client():
+    """Return docker client instance, configured with values from both
+    global CONF and from the same (optional) environment variables
+    that command-line docker client respects.
+    """
+    return docker.Client(timeout=CONF.registry.timeout,
+                         **kwargs_from_env(assert_hostname=False))
