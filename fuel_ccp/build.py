@@ -365,9 +365,9 @@ def build_components(components=None):
     dockerfiles = {}
     try:
         match = not bool(components)
-        for repository_name in CONF.repositories.names:
+        for repository_def in CONF.repositories.repos:
             dockerfiles.update(
-                find_dockerfiles(repository_name, match=match))
+                find_dockerfiles(repository_def['name'], match=match))
 
         find_dependencies(dockerfiles)
 

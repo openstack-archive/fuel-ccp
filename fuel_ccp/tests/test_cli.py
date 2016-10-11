@@ -27,7 +27,7 @@ class SafeCCPApp(cli.CCPApp):
         # Debug does magic in cliff, we need it always on
         parser = super(SafeCCPApp, self).build_option_parser(
             description, version, argparse_kwargs)
-        parser.set_defaults(debug=True)
+        parser.set_defaults(debug=True, verbosity_level=2)
         return parser
 
     def get_fuzzy_matches(self, cmd):
@@ -143,7 +143,7 @@ class TestFetch(TestParser):
 
     def test_parser(self):
         self._run_app()
-        self.fetch_mock.assert_called_once_with(config.CONF.repositories.names)
+        self.fetch_mock.assert_called_once_with()
 
 
 class TestCleanup(TestParser):

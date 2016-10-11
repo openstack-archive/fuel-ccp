@@ -3,92 +3,45 @@ import os
 import fixtures
 from fuel_ccp import fetch
 from fuel_ccp.tests import base
-import mock
 import testscenarios
 
 
-@mock.patch('git.Repo.clone_from')
 class TestFetch(testscenarios.WithScenarios, base.TestCase):
+    component_def = {'name': 'compname', 'git_url': 'theurl'}
+    update_def = {}
+    expected_clone_call = None
+    dir_exists = False
+
     scenarios = [
-        ("default", {
-            "option": None,
-            "value": None,
-            "url": "https://git.openstack.org:443/openstack/%s"}),
-        ("hostname", {
-            "option": "hostname",
-            "value": "host.name",
-            "url": "https://host.name:443/openstack/%s"}),
-        ('username', {
-            "option": "username",
-            "value": "someuser",
-            "url": "https://someuser@git.openstack.org:443/openstack/%s",
-        }),
-        ('port', {
-            "option": "port",
-            "value": "9999",
-            'url': "https://git.openstack.org:9999/openstack/%s",
-        }),
-        ('protocol', {
-            "option": "protocol",
-            "value": "ssh",
-            'url': "ssh://git.openstack.org:443/openstack/%s",
-        }),
-        ('protocol', {
-            "option": "protocol",
-            "value": "http",
-            'url': "http://git.openstack.org:443/openstack/%s",
-        }),
-        ('protocol', {
-            "option": "protocol",
-            "value": "git",
-            'url': "git://git.openstack.org:443/openstack/%s",
-        }),
-        ('protocol', {
-            "option": "protocol",
-            "value": "https",
-            'url': "https://git.openstack.org:443/openstack/%s",
-        }),
-        ('project', {
-            "option": "project",
-            "value": "someproject",
-            'url': "https://git.openstack.org:443/someproject/%s",
-        })
+        ('exists', {'dir_exists': True}),
     ]
-    url = None
-    option = None
-    value = None
 
     def setUp(self):
         super(TestFetch, self).setUp()
         # Creating temporaty directory for repos
-        tmp_dir = fixtures.TempDir()
-        tmp_dir.setUp()
-        self.tmp_path = tmp_dir.path
+        self.tmp_path = self.useFixture(fixtures.TempDir()).path
         self.conf['repositories']['path'] = self.tmp_path
-        # Create temporary directory for openstack-base to not clone it
-        os.mkdir(os.path.join(self.tmp_path, 'ms-openstack-base'))
+        fixture = fixtures.MockPatch('git.Repo.clone_from')
+        self.mock_clone = self.useFixture(fixture).mock
 
-    def test_fetch_default_repositories(self, m_clone):
-        if self.option is not None:
-            self.conf['repositories'][self.option] = self.value
-        self.conf['repositories']['path'] = self.tmp_path
-        components = ['fuel-ccp-debian-base',
-                      'fuel-ccp-entrypoint',
-                      'fuel-ccp-etcd',
-                      'fuel-ccp-glance',
-                      'fuel-ccp-horizon',
-                      'fuel-ccp-keystone',
-                      'fuel-ccp-mariadb',
-                      'fuel-ccp-memcached',
-                      'fuel-ccp-neutron',
-                      'fuel-ccp-nova',
-                      'fuel-ccp-rabbitmq',
-                      'fuel-ccp-stacklight']
-        expected_calls = [
-            mock.call(
-                self.url % (component),
-                os.path.join(self.tmp_path, component))
-            for component in components]
-        for component, expected_call in zip(components, expected_calls):
-            fetch.fetch_repository(component)
-            self.assertIn(expected_call, m_clone.call_args_list)
+    def test_fetch_repository(self):
+        component_def = self.component_def.copy()
+        component_def.update(self.update_def)
+
+        fixture = fixtures.MockPatch('os.path.isdir')
+        isdir_mock = self.useFixture(fixture).mock
+        isdir_mock.return_value = self.dir_exists
+
+        fetch.fetch_repository(component_def)
+
+        git_path = os.path.join(self.tmp_path, component_def['name'])
+        isdir_mock.assert_called_once_with(git_path)
+        if self.expected_clone_call:
+            git_ref = component_def.get('git_ref')
+            if git_ref:
+                self.mock_clone.assert_called_once_with(
+                    'theurl', git_path, branch=git_ref)
+            else:
+                self.mock_clone.assert_called_once_with('theurl', git_path)
+        else:
+            self.mock_clone.assert_not_called()

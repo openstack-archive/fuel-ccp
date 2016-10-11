@@ -14,7 +14,7 @@ User docs
 
    quickstart
    monitoring_and_logging
-   config
+   config/index
 
 Advanced topics
 ---------------

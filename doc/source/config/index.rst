@@ -72,3 +72,12 @@ override values from include in following documents::
   - override_basic_value
   ---
   override_value: from_include
+
+Configuration file sections
+===========================
+
+Here you can find description of configuration parameters in these sections:
+
+.. toctree::
+
+  repositories

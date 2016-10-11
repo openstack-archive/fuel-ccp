@@ -29,12 +29,10 @@ DEFAULTS = {
         'clone_concurrency': multiprocessing.cpu_count(),
         'skip_empty': True,
         'path': os.path.expanduser('~/ccp-repos/'),
-        'hostname': 'git.openstack.org',
-        'port': 443,
-        'protocol': 'https',
-        'project': 'openstack',
-        'username': None,
-        'names': DEFAULT_REPOS,
+        'repos': [{
+            'name': name,
+            'git_url': 'https://git.openstack.org/openstack/{}'.format(name),
+        } for name in DEFAULT_REPOS],
     },
 }
 
@@ -47,18 +45,19 @@ SCHEMA = {
             'clone_concurrency': {'type': 'integer'},
             'skip_empty': {'type': 'boolean'},
             'path': {'type': 'string'},
-            'hostname': {'type': 'string'},
-            'port': {'type': 'integer'},
-            'protocol': {'type': 'string'},
-            'project': {'type': 'string'},
-            'username': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
-            'names': {'type': 'array', 'items': {'type': 'string'}},
+            'repos': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'additionalProperties': False,
+                    'required': ['name', 'git_url'],
+                    'properties': {
+                        'name': {'type': 'string'},
+                        'git_url': {'type': 'string'},
+                        'git_ref': {'type': 'string'},
+                    },
+                },
+            },
         },
     },
 }
-
-for repo in DEFAULT_REPOS:
-    conf_name = repo.replace('-', '_')
-    SCHEMA['repositories']['properties'][conf_name] = \
-        {'anyOf': [{'type': 'string'}, {'type': 'null'}]}
-    DEFAULTS['repositories'][conf_name] = None

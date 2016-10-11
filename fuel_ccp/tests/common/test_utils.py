@@ -36,7 +36,7 @@ class TestUtils(base.TestCase):
         base_dir = os.path.dirname(__file__)
 
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
-        self.conf.repositories.names = ["component"]
+        self.conf.repositories.repos = [{"name": "component"}]
 
         res = (
             utils.get_deploy_components_info()["keystone"]["service_content"]
@@ -73,7 +73,7 @@ class TestUtils(base.TestCase):
         base_dir = os.path.dirname(__file__)
 
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
-        self.conf.repositories.names = ["component"]
+        self.conf.repositories.repos = [{"name": "component"}]
 
         config.load_component_defaults()
 
@@ -111,7 +111,7 @@ class TestUtils(base.TestCase):
         base_dir = os.path.dirname(__file__)
 
         self.conf.repositories.path = os.path.join(base_dir, "test_repo_dir")
-        self.conf.repositories.names = ["component"]
+        self.conf.repositories.repos = [{"name": "component"}]
 
         config.load_component_defaults()
 
