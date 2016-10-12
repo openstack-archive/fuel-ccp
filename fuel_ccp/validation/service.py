@@ -105,6 +105,22 @@ VOLUME_SCHEMA = {
     ]
 }
 
+PROBE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["path", "type"],
+
+    "properties": {
+        "type": {
+            "enum": ["exec", "httpGet"]
+        },
+        "port": {
+            "type": "integer"
+        },
+        "path": NOT_EMPTY_STRING_SCHEMA
+    }
+}
+
 SERVICE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -165,7 +181,7 @@ SERVICE_SCHEMA = {
 
                                 "properties": {
                                     "readiness": NOT_EMPTY_STRING_SCHEMA,
-                                    "liveness": NOT_EMPTY_STRING_SCHEMA
+                                    "liveness": PROBE_SCHEMA
                                 }
                             },
                             "volumes": {
