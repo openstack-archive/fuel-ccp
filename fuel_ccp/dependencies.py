@@ -61,11 +61,16 @@ def get_deps_map(components_map=None):
     return deps_map
 
 
+def _prepare_deps(deps):
+    return [dep.partition(":")[0] for dep in deps]
+
+
 def _parse_service_deps(service_map):
     """Parses service map and finds dependencies of daemons."""
     dependencies = set()
     for container in service_map['service']['containers']:
-        dependencies.update(container['daemon'].get('dependencies', []))
+        cont_deps = container['daemon'].get('dependencies', [])
+        dependencies.update(_prepare_deps(cont_deps))
         for pre in container.get('pre', []):
             if pre.get('type') == 'single':
                 dependencies.update([pre['name']])
