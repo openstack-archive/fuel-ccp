@@ -101,6 +101,26 @@ def serialize_env_variables(container):
     return env
 
 
+def serialize_liveness_probe(liveness):
+    cont_spec = {}
+    if liveness.get("type") == "httpGet":
+        cont_spec["livenessProbe"] = {
+            "httpGet": {
+                "path": liveness["path"],
+                "port": liveness["port"]
+            },
+            "timeoutSeconds": 1
+        }
+    elif liveness.get("type") == "exec":
+        cont_spec["livenessProbe"] = {
+            "exec": {
+                "command": [liveness["path"]]
+            },
+            "timeoutSeconds": 1
+        }
+    return cont_spec
+
+
 def serialize_daemon_container_spec(container):
     cont_spec = {
         "name": container["name"],
@@ -119,13 +139,10 @@ def serialize_daemon_container_spec(container):
         "name": "CM_VERSION",
         "value": container['cm_version']
     })
-    if container.get("probes", {}).get("liveness"):
-        cont_spec["livenessProbe"] = {
-            "exec": {
-                "command": [container["probes"]["liveness"]]
-            },
-            "timeoutSeconds": 1
-        }
+    liveness = container.get("probes", {}).get("liveness", {})
+    if liveness:
+        liveness_spec = serialize_liveness_probe(liveness)
+        cont_spec.update(liveness_spec)
     cont_spec["securityContext"] = {"privileged":
                                     container.get("privileged", False)}
 
