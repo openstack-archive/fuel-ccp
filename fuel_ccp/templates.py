@@ -119,10 +119,19 @@ def serialize_daemon_container_spec(container):
         "name": "CM_VERSION",
         "value": container['cm_version']
     })
-    if container.get("probes", {}).get("liveness"):
+    liveness = container.get("probes", {}).get("liveness", {})
+    if liveness.get("type") == "http":
+        cont_spec["livenessProbe"] = {
+            "httpGet": {
+                "path": container["probes"]["liveness"]["path"],
+                "port": container["probes"]["liveness"]["port"]
+            },
+            "timeoutSeconds": 1
+        }
+    else:
         cont_spec["livenessProbe"] = {
             "exec": {
-                "command": [container["probes"]["liveness"]]
+                "command": [container["probes"]["liveness"]["path"]]
             },
             "timeoutSeconds": 1
         }
