@@ -105,6 +105,53 @@ VOLUME_SCHEMA = {
     ]
 }
 
+TIMEOUT_SCHEMA = {
+    "type": "integer",
+    "minimum": 1,
+    "maximum": 360
+}
+
+PROBE_SCHEMA_EXEC = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["path", "type"],
+
+    "properties": {
+        "type": "exec",
+        "port": {
+            "type": "integer"
+        },
+        "path": NOT_EMPTY_STRING_SCHEMA,
+        "initialDelay": TIMEOUT_SCHEMA,
+        "timeout": TIMEOUT_SCHEMA
+    }
+}
+
+PROBE_SCHEMA_HTTP = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["path", "type", "port"],
+
+    "properties": {
+        "type": "httpGet",
+        "port": {
+            "type": "integer"
+        },
+        "path": NOT_EMPTY_STRING_SCHEMA,
+        "initialDelay": TIMEOUT_SCHEMA,
+        "timeout": TIMEOUT_SCHEMA
+    }
+}
+
+PROBE_SCHEMA = {
+    "type": "object",
+    "oneOf": [
+        PROBE_SCHEMA_EXEC,
+        PROBE_SCHEMA_HTTP
+    ]
+}
+
+
 SERVICE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -168,7 +215,7 @@ SERVICE_SCHEMA = {
 
                                 "properties": {
                                     "readiness": NOT_EMPTY_STRING_SCHEMA,
-                                    "liveness": NOT_EMPTY_STRING_SCHEMA
+                                    "liveness": PROBE_SCHEMA
                                 }
                             },
                             "volumes": {
