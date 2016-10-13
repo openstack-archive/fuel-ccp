@@ -5,3 +5,6 @@
 ---
 kubernetes:
   namespace: "ccp-3"
+configs:
+  rabbitmq:
+    external_port: 32674

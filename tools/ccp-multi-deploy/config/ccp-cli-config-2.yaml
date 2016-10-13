@@ -5,3 +5,6 @@
 ---
 kubernetes:
   namespace: "ccp-2"
+configs:
+  rabbitmq:
+    external_port: 32673
