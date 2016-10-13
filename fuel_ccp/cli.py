@@ -15,6 +15,7 @@ from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp import dependencies
 from fuel_ccp import deploy
+from fuel_ccp import fernet_utils
 from fuel_ccp import fetch
 from fuel_ccp import validate
 from fuel_ccp.validation import service as validation_service
@@ -83,6 +84,13 @@ class Deploy(BaseCommand):
         validation_service.validate_service_definitions(
             components_map, components)
         deploy.deploy_components(components_map, components)
+
+
+class FernetRotate(BaseCommand):
+    """Rotate fernet keys"""
+
+    def take_action(self, parsed_args):
+        fernet_utils.fernet_rotate()
 
 
 def do_fetch():

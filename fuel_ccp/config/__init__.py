@@ -6,6 +6,7 @@ import os
 from fuel_ccp.config import _yaml
 from fuel_ccp.config import builder
 from fuel_ccp.config import cli
+from fuel_ccp.config import fernet
 from fuel_ccp.config import images
 from fuel_ccp.config import kubernetes
 from fuel_ccp.config import registry
@@ -60,8 +61,8 @@ def get_config_defaults():
     })
     for name in ['configs', 'nodes', 'roles', 'sources', 'versions']:
         defaults[name] = _yaml.AttrDict()
-    for module in [cli, builder, images, kubernetes, registry, replicas,
-                   repositories]:
+    for module in [cli, builder, fernet, images, kubernetes, registry,
+                   replicas, repositories]:
         defaults._merge(module.DEFAULTS)
     return defaults
 
@@ -76,8 +77,8 @@ def get_config_schema():
             'log_file': {'anyOf': [{'type': 'null'}, {'type': 'string'}]},
         },
     }
-    for module in [cli, builder, images, kubernetes, registry, replicas,
-                   repositories]:
+    for module in [cli, builder, fernet, images, kubernetes, registry,
+                   replicas, repositories]:
         schema['properties'].update(module.SCHEMA)
     # Don't validate all options used to be added from oslo.log and oslo.config
     ignore_opts = ['debug', 'verbose', 'log_file']
