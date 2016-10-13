@@ -2,6 +2,7 @@ import json
 
 from fuel_ccp.common import utils
 from fuel_ccp import config
+from fuel_ccp.config import images
 
 
 CONF = config.CONF
@@ -18,7 +19,7 @@ PYTHON_PATH = "/usr/bin/python"
 
 def _get_image_name(image_name):
     image_name = "%s/%s:%s" % (CONF.images.namespace, image_name,
-                               CONF.images.tag)
+                               images.get_tag_for_image(image_name))
     if CONF.registry.address:
         image_name = "%s/%s" % (CONF.registry.address, image_name)
     return image_name
