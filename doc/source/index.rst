@@ -23,6 +23,7 @@ Advanced topics
    :maxdepth: 1
 
    deploying_multiple_parallel_environments
+   using_calico_instead_of_ovs
 
 Developer docs
 --------------
