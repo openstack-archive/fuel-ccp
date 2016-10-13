@@ -1,5 +1,6 @@
 from concurrent import futures
 import contextlib
+import functools
 import json
 import logging
 import os
@@ -13,6 +14,7 @@ import git
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp import config
+from fuel_ccp.config import images
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
 
@@ -92,9 +94,10 @@ def find_dockerfiles(repository_name, match=True):
         else:
             continue
         name = os.path.basename(os.path.dirname(path))
+        tag = images.get_tag_for_image(name)
         dockerfiles[name] = {
             'name': name,
-            'full_name': '%s/%s:%s' % (namespace, name, CONF.images.tag),
+            'full_name': '%s/%s:%s' % (namespace, name, tag),
             'path': path,
             'parent': None,
             'children': [],
@@ -121,7 +124,7 @@ IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
 # This regex is needed for matching not yet rendered images
 NOT_RENDERED_IMAGE_PATTERN = (r"((?P<namespace>[\w:\.\-}{ ]+)/){0,2}"
                               r"(?P<name>[\w_\-}{ ]+)"
-                              r"(:(?P<tag>[\w_\.\-}{ ]+))?")
+                              r"(:(?P<tag>[][()'\"\w_\.\-}{ ]+))?")
 
 DOCKER_FILE_FROM_PATTERN = re.compile(
     r"^\s?FROM\s+{}\s?$".format(NOT_RENDERED_IMAGE_PATTERN), re.MULTILINE
@@ -313,6 +316,9 @@ def _get_config():
             CONF.registry.address, cfg['render']['namespace'])
 
     cfg['render'].update(CONF.versions._items())
+    image_tag = functools.partial(CONF.images.image_tags.get,
+                                  default=CONF.images.tag)
+    cfg['render']['image_tag'] = image_tag
     cfg['sources'] = CONF.sources
 
     return cfg
