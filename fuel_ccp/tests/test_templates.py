@@ -25,7 +25,7 @@ class TestDeploy(base.TestCase):
             "image": "ccp/image_foo:latest",
             "command": [
                 "dumb-init",
-                "python",
+                "/usr/bin/python",
                 "/opt/ccp_start_script/bin/start_script.py",
                 "provision",
                 "name_foo"
@@ -41,7 +41,7 @@ class TestDeploy(base.TestCase):
             "readinessProbe": {
                 "exec": {
                     "command": [
-                        "python",
+                        "/usr/bin/python",
                         "/opt/ccp_start_script/bin/start_script.py",
                         "status",
                         "name_foo"

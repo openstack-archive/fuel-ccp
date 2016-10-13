@@ -13,6 +13,7 @@ META_CONFIG = "meta"
 ROLE_CONFIG = "role"
 
 ENTRYPOINT_PATH = "/opt/ccp_start_script/bin/start_script.py"
+PYTHON_PATH = "/usr/bin/python"
 
 
 def _get_image_name(image_name):
@@ -24,11 +25,11 @@ def _get_image_name(image_name):
 
 
 def _get_start_cmd(role_name):
-    return ["dumb-init", "python", ENTRYPOINT_PATH, "provision", role_name]
+    return ["dumb-init", PYTHON_PATH, ENTRYPOINT_PATH, "provision", role_name]
 
 
 def _get_readiness_cmd(role_name):
-    return ["python", ENTRYPOINT_PATH, "status", role_name]
+    return [PYTHON_PATH, ENTRYPOINT_PATH, "status", role_name]
 
 
 def serialize_namespace(name):
