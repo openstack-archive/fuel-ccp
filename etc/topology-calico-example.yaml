@@ -1,0 +1,33 @@
+nodes:
+  node1:
+    roles:
+      - controller
+      - neutron-agents
+  node[2-3]:
+    roles:
+      - compute
+      - calico
+
+roles:
+  controller:
+    - etcd
+    - glance-api
+    - glance-registry
+    - horizon
+    - keystone
+    - mariadb
+    - memcached
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+    - rabbitmq
+  neutron-agents:
+    - neutron-metadata-agent
+  compute:
+    - nova-compute
+    - nova-libvirt
+  calico:
+    - calico-dhcp-agent
