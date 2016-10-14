@@ -25,7 +25,7 @@ def get_resource_path(path):
 
 
 def get_config_paths():
-    components = list(CONF.repositories.names)
+    components = [d['name'] for d in CONF.repositories.repos]
     paths = []
     # Order does matter. At first we add global defaults.
     for conf_path in ("resources/defaults.yaml", "resources/globals.yaml"):
@@ -48,13 +48,13 @@ def get_deploy_components_info(rendering_context=None):
         rendering_context = CONF.configs._dict
     components_map = {}
 
-    for component in CONF.repositories.names:
+    for component_ref in CONF.repositories.repos:
+        component_name = component_ref['name']
         service_dir = os.path.join(CONF.repositories.path,
-                                   component,
+                                   component_name,
                                    'service')
         if not os.path.isdir(service_dir):
             continue
-        component_name = component
         REPO_NAME_PREFIX = "fuel-ccp-"
         if component_name.startswith(REPO_NAME_PREFIX):
             component_name = component_name[len(REPO_NAME_PREFIX):]

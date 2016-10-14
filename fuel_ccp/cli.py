@@ -86,7 +86,7 @@ class Deploy(BaseCommand):
 
 
 def do_fetch():
-    fetch.fetch_repositories(CONF.repositories.names)
+    fetch.fetch_repositories()
 
 
 class Fetch(BaseCommand):

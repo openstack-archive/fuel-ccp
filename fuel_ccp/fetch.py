@@ -14,28 +14,26 @@ LOG = logging.getLogger(__name__)
 FETCH_TIMEOUT = 2 ** 16  # in seconds
 
 
-def fetch_repository(repository_name):
-    dest_dir = os.path.join(CONF.repositories.path, repository_name)
+def fetch_repository(repository_def):
+    name = repository_def['name']
+    dest_dir = os.path.join(CONF.repositories.path, name)
     if os.path.isdir(dest_dir):
-        LOG.debug('%s was already cloned, skipping', repository_name)
+        LOG.debug('%s was already cloned, skipping', name)
         return
-    git_url = getattr(CONF.repositories, repository_name.replace('-', '_'))
-    if git_url is None:
-        username = CONF.repositories.username
-        if username is None:
-            username = ''
-        else:
-            username = username + '@'
-        fmt = '{0.protocol}://{1}{0.hostname}:{0.port}/{0.project}/{2}'
-        git_url = fmt.format(CONF.repositories, username, repository_name)
-    LOG.debug('Clonning %s from %s', repository_name, git_url)
-    git.Repo.clone_from(git_url, dest_dir)
-    LOG.info('Cloned %s repo', repository_name)
+    git_url = repository_def['git_url']
+    git_ref = repository_def.get('git_ref')
+    if git_ref:
+        kwargs = {'branch': git_ref}
+    else:
+        kwargs = {}
+    LOG.debug('Clonning %s from %s to %s', name, git_url, dest_dir)
+    git.Repo.clone_from(git_url, dest_dir, **kwargs)
+    LOG.info('Cloned %s repo', name)
 
 
-def fetch_repositories(repository_names=None):
-    if repository_names is None:
-        repository_names = CONF.repositories.names
+def fetch_repositories(repository_defs=None):
+    if repository_defs is None:
+        repository_defs = CONF.repositories.repos
 
     LOG.info('Cloning repositories into %s', CONF.repositories.path)
 
@@ -44,9 +42,9 @@ def fetch_repositories(repository_names=None):
             max_workers=CONF.repositories.clone_concurrency) as executor:
         future_list = []
         try:
-            for repository_name in repository_names:
+            for repository_def in repository_defs:
                 future_list.append(executor.submit(
-                    fetch_repository, repository_name
+                    fetch_repository, repository_def
                 ))
 
             for future in future_list:
