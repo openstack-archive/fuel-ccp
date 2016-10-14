@@ -51,6 +51,11 @@ class _Wrapper(object):
 
 CONF = _Wrapper()
 
+CONFIG_MODULES = [
+    builder, cli, images, kubernetes, registry, replicas, repositories,
+    sources,
+]
+
 
 def get_config_defaults():
     defaults = _yaml.AttrDict({
@@ -58,10 +63,9 @@ def get_config_defaults():
         'verbose_level': 1,
         'log_file': None,
     })
-    for name in ['configs', 'nodes', 'roles', 'sources', 'versions']:
+    for name in ['configs', 'nodes', 'roles', 'versions']:
         defaults[name] = _yaml.AttrDict()
-    for module in [cli, builder, images, kubernetes, registry, replicas,
-                   repositories]:
+    for module in CONFIG_MODULES:
         defaults._merge(module.DEFAULTS)
     return defaults
 
@@ -76,15 +80,14 @@ def get_config_schema():
             'log_file': {'anyOf': [{'type': 'null'}, {'type': 'string'}]},
         },
     }
-    for module in [cli, builder, images, kubernetes, registry, replicas,
-                   repositories]:
+    for module in CONFIG_MODULES:
         schema['properties'].update(module.SCHEMA)
     # Don't validate all options used to be added from oslo.log and oslo.config
     ignore_opts = ['debug', 'verbose', 'log_file']
     for name in ignore_opts:
         schema['properties'][name] = {}
     # Also for now don't validate sections that used to be in deploy config
-    for name in ['configs', 'nodes', 'roles', 'sources', 'versions']:
+    for name in ['configs', 'nodes', 'roles', 'versions']:
         schema['properties'][name] = {'type': 'object'}
     return schema
 
