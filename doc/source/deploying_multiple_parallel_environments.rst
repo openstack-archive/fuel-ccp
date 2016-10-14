@@ -46,6 +46,19 @@ What is needed to deploy mutliple CCPs in parallel:
 * CCP topology YAML file for each deployment
 
 
+Quick start
+===========
+
+To quickly deploy 2 parallel OpenStack environments, run these commands
+on your K8s master node:
+
+::
+
+    git clone https://git.openstack.org/openstack/fuel-ccp
+    cd fuel-ccp
+    tox -e multi-deploy -- --number-of-envs 2
+
+
 Sample deployment model
 =======================
 
@@ -92,22 +105,99 @@ Sample CCP configuration
 ========================
 
 Let's now write the deployment model described in previous section into
-specific CCP configuration files. For each of 3 deployments we need 2 config
-files (1 for CLI configuration and 1 with topology).
+specific CCP configuration files. For each of 3 deployments we need 2 separate
+config files (1 for CLI configuration and 1 with topology) + 2 shared config
+files for common configuration options and roles definitions.
 
 ::
 
     cat > ccp-cli-config-1.yaml << EOF
-    deploy_config: ccp-topology-1.yaml
+    !include
+    - ccp-configs-common.yaml
+    - ccp-roles.yaml
+    - ccp-topology-1.yaml
+    ---
+    kubernetes:
+      namespace: "ccp-1"
+    EOF
+
+
+::
+
+    cat > ccp-cli-config-2.yaml << EOF
+    !include
+    - ccp-configs-common.yaml
+    - ccp-roles.yaml
+    - ccp-topology-2.yaml
+    ---
+    kubernetes:
+      namespace: "ccp-2"
+    EOF
+
+
+::
+
+    cat > ccp-cli-config-3.yaml << EOF
+    !include
+    - ccp-configs-common.yaml
+    - ccp-roles.yaml
+    - ccp-topology-3.yaml
+    ---
+    kubernetes:
+      namespace: "ccp-3"
+    EOF
+
+
+::
+
+    cat > ccp-configs-common.yaml << EOF
+    ---
     builder:
       push: True
     registry:
       address: "127.0.0.1:31500"
-    kubernetes:
-      namespace: "ccp-1"
     repositories:
       path: /tmp/ccp-repos
       skip_empty: True
+    configs:
+        private_interface: eth0
+        public_interface: eth1
+        neutron_external_interface: eth2
+    EOF
+
+::
+
+    cat > ccp-roles.yaml << EOF
+    ---
+    roles:
+      controller-net-host:
+        - neutron-dhcp-agent
+        - neutron-l3-agent
+        - neutron-metadata-agent
+      controller-net-bridge:
+        - etcd
+        - glance-api
+        - glance-registry
+        - heat-api
+        - heat-engine
+        - horizon
+        - keystone
+        - mariadb
+        - memcached
+        - neutron-server
+        - nova-api
+        - nova-conductor
+        - nova-consoleauth
+        - nova-novncproxy
+        - nova-scheduler
+        - rabbitmq
+      compute:
+        - nova-compute
+        - nova-libvirt
+      openvswitch:
+        - neutron-openvswitch-agent
+        - openvswitch-db
+        - openvswitch-vswitchdvv
     EOF
 
 
@@ -115,11 +205,6 @@ files (1 for CLI configuration and 1 with topology).
 
     cat > ccp-topology-1.yaml << EOF
     ---
-    configs:
-        private_interface: eth0
-        public_interface: eth1
-        neutron:
-          external_interface: eth2
     nodes:
       node[1,2-3,4,5-6,7,8-9]:
         roles:
@@ -132,50 +217,6 @@ files (1 for CLI configuration and 1 with topology).
         roles:
           - openvswitch
           - compute
-    roles:
-      controller-net-host:
-        - neutron-dhcp-agent
-        - neutron-l3-agent
-        - neutron-metadata-agent
-      controller-net-bridge:
-        - etcd
-        - glance-api
-        - glance-registry
-        - heat-api
-        - heat-engine
-        - horizon
-        - keystone
-        - mariadb
-        - memcached
-        - neutron-server
-        - nova-api
-        - nova-conductor
-        - nova-consoleauth
-        - nova-novncproxy
-        - nova-scheduler
-        - rabbitmq
-      compute:
-        - nova-compute
-        - nova-libvirt
-      openvswitch:
-        - neutron-openvswitch-agent
-        - openvswitch-db
-        - openvswitch-vswitchd
-    EOF
-
-::
-
-    cat > ccp-cli-config-2.yaml << EOF
-    deploy_config: ccp-topology-2.yaml
-    builder:
-      push: True
-    registry:
-      address: "127.0.0.1:31500"
-    kubernetes:
-      namespace: "ccp-2"
-    repositories:
-      path: /tmp/ccp-repos
-      skip_empty: True
     EOF
 
 
@@ -183,11 +224,6 @@ files (1 for CLI configuration and 1 with topology).
 
     cat > ccp-topology-2.yaml << EOF
     ---
-    configs:
-        private_interface: eth0
-        public_interface: eth1
-        neutron:
-          external_interface: eth2
     nodes:
       node[1,2-3,4,5-6,7,8-9]:
         roles:
@@ -200,50 +236,6 @@ files (1 for CLI configuration and 1 with topology).
         roles:
           - openvswitch
           - compute
-    roles:
-      controller-net-host:
-        - neutron-dhcp-agent
-        - neutron-l3-agent
-        - neutron-metadata-agent
-      controller-net-bridge:
-        - etcd
-        - glance-api
-        - glance-registry
-        - heat-api
-        - heat-engine
-        - horizon
-        - keystone
-        - mariadb
-        - memcached
-        - neutron-server
-        - nova-api
-        - nova-conductor
-        - nova-consoleauth
-        - nova-novncproxy
-        - nova-scheduler
-        - rabbitmq
-      compute:
-        - nova-compute
-        - nova-libvirt
-      openvswitch:
-        - neutron-openvswitch-agent
-        - openvswitch-db
-        - openvswitch-vswitchd
-    EOF
-
-::
-
-    cat > ccp-cli-config-3.yaml << EOF
-    deploy_config: ccp-topology-2.yaml
-    builder:
-      push: True
-    registry:
-      address: "127.0.0.1:31500"
-    kubernetes:
-      namespace: "ccp-3"
-    repositories:
-      path: /tmp/ccp-repos
-      skip_empty: True
     EOF
 
 
@@ -251,11 +243,6 @@ files (1 for CLI configuration and 1 with topology).
 
     cat > ccp-topology-3.yaml << EOF
     ---
-    configs:
-        private_interface: eth0
-        public_interface: eth1
-        neutron:
-          external_interface: eth2
     nodes:
       node[1,2-3,4,5-6,7,8-9]:
         roles:
@@ -268,36 +255,8 @@ files (1 for CLI configuration and 1 with topology).
         roles:
           - openvswitch
           - compute
-    roles:
-      controller-net-host:
-        - neutron-dhcp-agent
-        - neutron-l3-agent
-        - neutron-metadata-agent
-      controller-net-bridge:
-        - etcd
-        - glance-api
-        - glance-registry
-        - heat-api
-        - heat-engine
-        - horizon
-        - keystone
-        - mariadb
-        - memcached
-        - neutron-server
-        - nova-api
-        - nova-conductor
-        - nova-consoleauth
-        - nova-novncproxy
-        - nova-scheduler
-        - rabbitmq
-      compute:
-        - nova-compute
-        - nova-libvirt
-      openvswitch:
-        - neutron-openvswitch-agent
-        - openvswitch-db
-        - openvswitch-vswitchd
     EOF
+
 
 
 Since we will use the same Docker OpenStack images for all 3 deployments it is
