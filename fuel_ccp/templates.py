@@ -3,7 +3,6 @@ import json
 from fuel_ccp.common import utils
 from fuel_ccp import config
 
-
 CONF = config.CONF
 
 GLOBAL_CONFIG = "globals"
@@ -372,5 +371,33 @@ def serialize_service(name, ports):
                 "app": name
             },
             "ports": ports_spec
+        }
+    }
+
+
+def serialize_ingress_rule(service, host, port):
+    return {
+        "host": host,
+        "http": {
+            "paths": [{
+                "backend": {
+                    "serviceName": service,
+                    "servicePort": port
+                }
+            }]
+        }
+    }
+
+
+def serialize_ingress(name, rules):
+    return {
+        "apiVersion": "extensions/v1beta1",
+        "kind": "Ingress",
+        "metadata": {
+            "name": name,
+            "ccp": "true"
+        },
+        "spec": {
+            "rules": rules
         }
     }
