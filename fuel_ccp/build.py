@@ -23,36 +23,52 @@ LOG = logging.getLogger(__name__)
 _SHUTDOWN = False
 
 
-def create_rendered_dockerfile(path, name, tmp_path, config):
-    def copy_sources(project_name, cont_dir):
-        tmp_dir = os.path.join(tmp_path, name, project_name)
-
-        git_url = config['sources'].get(project_name, {}).get('git_url')
-        source_dir = config['sources'].get(project_name, {}).get('source_dir')
-
-        if git_url:
-            LOG.info('%s: Cloning repository "%s"', name, git_url)
-            repo = git.Repo.clone_from(git_url, tmp_dir)
-            ref = config['sources'][project_name]['git_ref']
-            LOG.info('%s: Changing reference to "%s"', name, ref)
-            repo.git.checkout(ref)
-            LOG.info('%s: Repository %s has been cloned', name, git_url)
-
-        if source_dir:
-            LOG.info('%s: Using local directory %s', name, source_dir)
-            shutil.copytree(source_dir, tmp_dir)
-
-        return 'COPY %s %s' % (project_name, cont_dir)
-
+def render_dockerfile(path, name, config):
     LOG.info('%s: Rendering dockerfile', name)
+    sources = set()
+
+    def copy_sources(source_name, cont_dir):
+        if source_name not in config['sources']:
+            raise ValueError('No such source: %s' % source_name)
+        sources.add(source_name)
+        return 'COPY %s %s' % (source_name, cont_dir)
+
+    content = jinja_utils.jinja_render(path, config['render'], [copy_sources])
+
+    return content, sources
+
+
+def prepare_source(source_name, name, dest_dir, config):
+    tmp_dir = os.path.join(dest_dir, source_name)
+
+    git_url = config['sources'].get(source_name, {}).get('git_url')
+    source_dir = config['sources'].get(source_name, {}).get('source_dir')
+
+    if git_url:
+        LOG.info('%s: Cloning repository "%s"', name, git_url)
+        repo = git.Repo.clone_from(git_url, tmp_dir)
+        ref = config['sources'][source_name]['git_ref']
+        LOG.info('%s: Changing reference to "%s"', name, ref)
+        repo.git.checkout(ref)
+        LOG.info('%s: Repository %s has been cloned', name, git_url)
+
+    if source_dir:
+        LOG.info('%s: Using local directory %s', name, source_dir)
+        shutil.copytree(source_dir, tmp_dir)
+
+
+def create_rendered_dockerfile(path, name, tmp_path, config):
+    content, sources = render_dockerfile(path, name, config)
+
     src_dir = os.path.dirname(path)
     dest_dir = os.path.join(tmp_path, name)
     os.makedirs(dest_dir)
     dockerfilename = os.path.join(dest_dir, 'Dockerfile')
-    content = jinja_utils.jinja_render(
-        path, config['render'], [copy_sources])
     with open(dockerfilename, 'w') as f:
         f.write(content)
+
+    for source_name in sources:
+        prepare_source(source_name, name, dest_dir, config)
 
     for filename in os.listdir(src_dir):
         if 'Dockerfile' in filename:

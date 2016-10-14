@@ -1,7 +1,10 @@
 import collections
 import io
+import os
 
+import fixtures
 import mock
+import testscenarios
 
 from fuel_ccp import build
 from fuel_ccp.tests import base
@@ -256,3 +259,41 @@ class TestBuild(base.TestCase):
         dockerfiles = self.__create_dockerfile_objects()
         dockerfiles['ms-debian-base']['push_result'] = 'Failure'
         self.assertFalse(build._get_summary(dockerfiles))
+
+
+class TestRenderDockerfile(testscenarios.WithScenarios, base.TestCase):
+    scenarios = [
+        ('empty', {
+            'config': {'render': {}},
+            'source': '',
+            'result': ('', set()),
+        }),
+        ('one_source', {
+            'config': {'render': {}, 'sources': {'one': {}}},
+            'source': '{{ copy_sources("one", "/tmp") }}',
+            'result': ('COPY one /tmp', {'one'}),
+        }),
+        ('wrong_source', {
+            'config': {'render': {}, 'sources': {'one': {}}},
+            'source': '{{ copy_sources("wrong", "/tmp") }}',
+            'exception': Exception('No such source: wrong'),
+        }),
+    ]
+
+    config = None
+    source = None
+    result = None
+    exception = None
+
+    def test_render_dockerfile(self):
+        tmp_dir = self.useFixture(fixtures.TempDir()).path
+        fname = os.path.join(tmp_dir, 'Dockerfile.j2')
+        with open(fname, 'w') as f:
+            f.write(self.source)
+        if not self.exception:
+            res = build.render_dockerfile(fname, 'name', self.config)
+            self.assertEqual(res, self.result)
+        else:
+            exc = self.assertRaises(ValueError, build.render_dockerfile,
+                                    fname, 'name', self.config)
+            self.assertEqual(exc.args[0], self.exception.args[0])
