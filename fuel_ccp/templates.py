@@ -2,6 +2,7 @@ import json
 
 from fuel_ccp.common import utils
 from fuel_ccp import config
+from fuel_ccp.config import images
 
 
 CONF = config.CONF
@@ -14,14 +15,6 @@ ROLE_CONFIG = "role"
 
 ENTRYPOINT_PATH = "/opt/ccp_start_script/bin/start_script.py"
 PYTHON_PATH = "/usr/bin/python"
-
-
-def _get_image_name(image_name):
-    image_name = "%s/%s:%s" % (CONF.images.namespace, image_name,
-                               CONF.images.tag)
-    if CONF.registry.address:
-        image_name = "%s/%s" % (CONF.registry.address, image_name)
-    return image_name
 
 
 def _get_start_cmd(role_name):
@@ -105,7 +98,7 @@ def serialize_env_variables(container):
 def serialize_daemon_container_spec(container):
     cont_spec = {
         "name": container["name"],
-        "image": _get_image_name(container["image"]),
+        "image": images.image_spec(container["image"]),
         "command": _get_start_cmd(container["name"]),
         "volumeMounts": serialize_volume_mounts(container),
         "readinessProbe": {
@@ -136,7 +129,7 @@ def serialize_daemon_container_spec(container):
 def serialize_job_container_spec(container, job):
     return {
         "name": job["name"],
-        "image": _get_image_name(container["image"]),
+        "image": images.image_spec(container["image"]),
         "command": _get_start_cmd(job["name"]),
         "volumeMounts": serialize_volume_mounts(container),
         "env": serialize_env_variables(container)
