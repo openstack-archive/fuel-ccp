@@ -57,18 +57,16 @@ def prepare_source(source_name, name, dest_dir, config):
         shutil.copytree(source_dir, tmp_dir)
 
 
-def create_rendered_dockerfile(path, name, tmp_path, config):
-    content, sources = render_dockerfile(path, name, config)
-
-    src_dir = os.path.dirname(path)
-    dest_dir = os.path.join(tmp_path, name)
+def create_rendered_dockerfile(dockerfile, tmp_path, config):
+    src_dir = os.path.dirname(dockerfile['path'])
+    dest_dir = os.path.join(tmp_path, dockerfile['name'])
     os.makedirs(dest_dir)
     dockerfilename = os.path.join(dest_dir, 'Dockerfile')
     with open(dockerfilename, 'w') as f:
-        f.write(content)
+        f.write(dockerfile['content'])
 
-    for source_name in sources:
-        prepare_source(source_name, name, dest_dir, config)
+    for source_name in dockerfile['sources']:
+        prepare_source(source_name, dockerfile['name'], dest_dir, config)
 
     for filename in os.listdir(src_dir):
         if 'Dockerfile' in filename:
@@ -104,7 +102,9 @@ def find_dockerfiles(repository_name, match=True):
             'children': [],
             'match': match,
             'build_result': None,
-            'push_result': None
+            'push_result': None,
+            'content': None,
+            'sources': None,
         }
 
     if len(dockerfiles) == 0:
@@ -116,6 +116,14 @@ def find_dockerfiles(repository_name, match=True):
             sys.exit(1)
 
     return dockerfiles
+
+
+def render_dockerfiles(dockerfiles, config):
+    for dockerfile in dockerfiles.values():
+        content, sources = \
+            render_dockerfile(dockerfile['path'], dockerfile['name'], config)
+        dockerfile['content'] = content
+        dockerfile['sources'] = sources
 
 
 IMAGE_FULL_NAME_RE = r"((?P<namespace>[\w:\.-]+)/){0,2}" \
@@ -218,8 +226,7 @@ def push_dockerfile(dc, dockerfile):
 
 def process_dockerfile(dockerfile, tmp_dir, config, executor, future_list,
                        ready_images):
-    path = create_rendered_dockerfile(
-        dockerfile['path'], dockerfile['name'], tmp_dir, config)
+    path = create_rendered_dockerfile(dockerfile, tmp_dir, config)
     dockerfile['path'] = path
     with contextlib.closing(docker.Client(
             timeout=CONF.registry.timeout)) as dc:
@@ -373,6 +380,7 @@ def build_components(components=None):
             dockerfiles.update(
                 find_dockerfiles(repository_def['name'], match=match))
 
+        render_dockerfiles(dockerfiles, config)
         find_dependencies(dockerfiles)
 
         ready_images = get_ready_image_names()
