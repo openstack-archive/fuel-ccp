@@ -1,3 +1,4 @@
+import io
 import jsonschema
 import six
 
@@ -26,3 +27,13 @@ class TestConfigSchema(base.TestCase):
 
     def test_validate_default_conf(self):
         config.validate_config(config.get_config_defaults())
+
+    def test_dump_load_validate_default(self):
+        conf = config.get_config_defaults()
+        if str is bytes:
+            stream = io.BytesIO()
+        else:
+            stream = io.StringIO()
+        _yaml.dump(conf, stream)
+        new_conf = _yaml.load(stream.getvalue())
+        config.validate_config(new_conf)

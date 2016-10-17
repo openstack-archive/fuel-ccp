@@ -144,8 +144,15 @@ class UnwrapAttrDict(dict):
     def __init__(self, attr_dict):
         return super(UnwrapAttrDict, self).__init__(attr_dict._dict)
 
+    @staticmethod
+    def _unwrap(obj):
+        if isinstance(obj, AttrDict):
+            return UnwrapAttrDict(obj)
+        elif isinstance(obj, list):
+            return list(map(UnwrapAttrDict._unwrap, obj))
+        else:
+            return obj
+
     def __getitem__(self, name):
         res = super(UnwrapAttrDict, self).__getitem__(name)
-        if isinstance(res, AttrDict):
-            res = UnwrapAttrDict(res)
-        return res
+        return self._unwrap(res)
