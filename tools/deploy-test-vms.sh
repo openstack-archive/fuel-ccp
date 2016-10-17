@@ -6,10 +6,11 @@ set -e
 
 usage() {
     cat << EOF
-    Usage: $0 -a (create|destroy) [-n NUBER_OF_VMs] [-i PUBLIC_ETH_IFACE]
+    Usage: $0 -a (create|destroy) [-c] [-n NUBER_OF_VMs] [-i PUBLIC_ETH_IFACE]
 
     -h   Prints this help
     -a   Required action. Choise from "create" and "destroy"
+    -c   Calico networking insted of OVS
     -n   Number of VMs to spawn. (optional)
     -i   Public eth iface. (optional)
 EOF
@@ -26,6 +27,7 @@ do
     fi
 done
 
+
 create() {
     if [ -z "$NUMBER" ]; then
         NUMBER=2
@@ -33,10 +35,20 @@ create() {
     if [ -z "$IFACE" ]; then
         IFACE="eth1"
     fi
+    # Check if iface is exist
+    if ! ip a show up | fgrep -q $IFACE ; then
+        echo "Cant find $IFACE in the list of working interfaces"
+        usage
+        exit 1
+    fi
     EXTIP="`ifconfig $IFACE | grep -Po 'addr:\d+\.\d+\.\d+\.\d+' | awk -F':' '{print $NF}'`"
     VNCP="`kubectl get svc nova-novncproxy -o yaml | awk '/nodePort/ {print $NF}'`"
 
-    openstack network create --provider-network-type vxlan --provider-segment 77 testnetwork
+    if [ "$CALICO" == "True" ]; then
+        openstack network create --provider-network-type local testnetwork
+    else
+        openstack network create --provider-network-type vxlan --provider-segment 77 testnetwork
+    fi
     openstack subnet create --subnet-range 192.168.1.0/24 --gateway 192.168.1.1 --network testnetwork testsubnetwork
     openstack flavor create --ram 512 --disk 0 --vcpus 1 tiny
     curl -o /tmp/cirros.img http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img && \
@@ -45,7 +57,7 @@ create() {
     NETID="$(openstack network list | awk '/testnetwork/ {print $2}')"
     openstack server create --flavor tiny --image cirros --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
     openstack server list
-    nova get-vnc-console  test_vm-1 novnc | sed "s/nova-novncproxy:6080/${EXTIP}:${VNCP}/"
+    nova get-vnc-console  test_vm-1 novnc | sed "s/nova-novncproxy\..*:6080/${EXTIP}:${VNCP}/"
 }
 
 destroy() {
@@ -61,10 +73,13 @@ destroy() {
     openstack image delete cirros
 }
 
-while getopts ":a:n:i:h" opt; do
+while getopts ":a:n:i:h:c" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
+            ;;
+        c)
+            CALICO="True"
             ;;
         n)
             NUMBER="$OPTARG"
