@@ -30,18 +30,6 @@ def create_rendered_dockerfile(path, name, tmp_path, config):
         git_url = config['sources'].get(project_name, {}).get('git_url')
         source_dir = config['sources'].get(project_name, {}).get('source_dir')
 
-        if not git_url and not source_dir:
-            LOG.error('%s: Neither git_url nor source_dir specified for '
-                      'project %s (exactly one should be specified)',
-                      name, project_name)
-            sys.exit(1)
-
-        if git_url and source_dir:
-            LOG.error('%s: Both git_url and source_dir specified for '
-                      'project %s (exactly one should be specified)',
-                      name, project_name)
-            sys.exit(1)
-
         if git_url:
             LOG.info('%s: Cloning repository "%s"', name, git_url)
             repo = git.Repo.clone_from(git_url, tmp_dir)
