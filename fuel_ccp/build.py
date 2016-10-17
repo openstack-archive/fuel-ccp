@@ -13,6 +13,7 @@ import git
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp import config
+from fuel_ccp.config import images
 
 BUILD_TIMEOUT = 2 ** 16  # in seconds
 
@@ -26,6 +27,7 @@ _SHUTDOWN = False
 def render_dockerfile(path, name, config):
     LOG.info('%s: Rendering dockerfile', name)
     sources = set()
+    parent = []  # Could've been None if we could use nonlocal
 
     def copy_sources(source_name, cont_dir):
         if source_name not in config['sources']:
@@ -33,9 +35,16 @@ def render_dockerfile(path, name, config):
         sources.add(source_name)
         return 'COPY %s %s' % (source_name, cont_dir)
 
-    content = jinja_utils.jinja_render(path, config['render'], [copy_sources])
+    def image_spec(image_name):
+        if parent:
+            raise RuntimeError('You can use image_spec only in FROM line')
+        parent.append(image_name)
+        return images.image_spec(name, add_address=CONF.builder.push)
 
-    return content, sources
+    content = jinja_utils.jinja_render(path, config['render'],
+                                       [copy_sources, image_spec])
+
+    return content, sources, parent[0] if parent else None
 
 
 def prepare_source(source_name, name, dest_dir, config):
@@ -84,19 +93,16 @@ def find_dockerfiles(repository_name, match=True):
     dockerfiles = {}
     repository_dir = os.path.join(CONF.repositories.path, repository_name)
 
-    namespace = CONF.images.namespace
-    if CONF.builder.push and CONF.registry.address:
-        namespace = '%s/%s' % (CONF.registry.address, namespace)
-
     for root, __, files in os.walk(repository_dir):
         if 'Dockerfile.j2' in files:
             path = os.path.join(root, 'Dockerfile.j2')
         else:
             continue
         name = os.path.basename(os.path.dirname(path))
+        spec = images.image_spec(name, add_address=CONF.builder.push)
         dockerfiles[name] = {
             'name': name,
-            'full_name': '%s/%s:%s' % (namespace, name, CONF.images.tag),
+            'full_name': spec,
             'path': path,
             'parent': None,
             'children': [],
@@ -120,44 +126,24 @@ def find_dockerfiles(repository_name, match=True):
 
 def render_dockerfiles(dockerfiles, config):
     for dockerfile in dockerfiles.values():
-        content, sources = \
+        content, sources, parent = \
             render_dockerfile(dockerfile['path'], dockerfile['name'], config)
         dockerfile['content'] = content
         dockerfile['sources'] = sources
+        dockerfile['parent'] = parent
 
 
 IMAGE_FULL_NAME_RE = r"((?P<namespace>[\w:\.-]+)/){0,2}" \
                      "(?P<name>[\w_-]+)" \
                      "(:(?P<tag>[\w_\.-]+))?"
 IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
-# This regex is needed for matching not yet rendered images
-NOT_RENDERED_IMAGE_PATTERN = (r"((?P<namespace>[\w:\.\-}{ ]+)/){0,2}"
-                              r"(?P<name>[\w_\-}{ ]+)"
-                              r"(:(?P<tag>[\w_\.\-}{ ]+))?")
-
-DOCKER_FILE_FROM_PATTERN = re.compile(
-    r"^\s?FROM\s+{}\s?$".format(NOT_RENDERED_IMAGE_PATTERN), re.MULTILINE
-)
 
 
-def find_dependencies(dockerfiles):
-    for name, dockerfile in dockerfiles.items():
-        with open(dockerfile['path']) as f:
-            content = f.read()
-
-        matcher = DOCKER_FILE_FROM_PATTERN.search(content)
-        if not matcher:
-            raise RuntimeError(
-                "FROM clause was not found in dockerfile for image: " + name
-            )
-
-        parent_ns = matcher.group("namespace")
-        if not parent_ns:
-            continue
-        parent_name = matcher.group("name")
-
-        dockerfile['parent'] = dockerfiles[parent_name]
-        dockerfiles[parent_name]['children'].append(dockerfile)
+def connect_children(dockerfiles):
+    for dockerfile in dockerfiles.values:
+        parent = dockerfile['parent']
+        if parent:
+            dockerfiles[parent]['children'].append(dockerfile)
 
 
 def build_dockerfile(dc, dockerfile):
@@ -381,7 +367,7 @@ def build_components(components=None):
                 find_dockerfiles(repository_def['name'], match=match))
 
         render_dockerfiles(dockerfiles, config)
-        find_dependencies(dockerfiles)
+        connect_children(dockerfiles)
 
         ready_images = get_ready_image_names()
 
