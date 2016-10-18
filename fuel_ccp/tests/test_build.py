@@ -1,5 +1,4 @@
 import collections
-import io
 import os
 
 import fixtures
@@ -51,36 +50,6 @@ class TestBuild(base.TestCase):
                 'push_result': 'Success'
             },)
         ])
-
-    def test_find_dependencies_no_registry(self):
-        m_open = mock.mock_open()
-        m_open.side_effect = [
-            io.StringIO(BASE_DOCKERFILE),
-            io.StringIO(COMPONENT_DOCKERFILE.format(''))
-        ]
-        dockerfiles = self.__create_dockerfile_objects()
-        with mock.patch('fuel_ccp.build.open', m_open, create=True):
-            build.find_dependencies(dockerfiles)
-
-        self.assertListEqual([dockerfiles['ms-mysql']],
-                             dockerfiles['ms-debian-base']['children'])
-        self.assertDictEqual(dockerfiles['ms-debian-base'],
-                             dockerfiles['ms-mysql']['parent'])
-
-    def test_find_dependencies_registry(self):
-        m_open = mock.mock_open()
-        m_open.side_effect = [
-            io.StringIO(BASE_DOCKERFILE),
-            io.StringIO(COMPONENT_DOCKERFILE.format('example.com:8909/'))
-        ]
-        dockerfiles = self.__create_dockerfile_objects()
-        with mock.patch('fuel_ccp.build.open', m_open, create=True):
-            build.find_dependencies(dockerfiles)
-
-        self.assertListEqual([dockerfiles['ms-mysql']],
-                             dockerfiles['ms-debian-base']['children'])
-        self.assertDictEqual(dockerfiles['ms-debian-base'],
-                             dockerfiles['ms-mysql']['parent'])
 
     @mock.patch("docker.Client")
     @mock.patch("fuel_ccp.build.build_dockerfile")
@@ -266,17 +235,22 @@ class TestRenderDockerfile(testscenarios.WithScenarios, base.TestCase):
         ('empty', {
             'config': {'render': {}},
             'source': '',
-            'result': ('', set()),
+            'result': ('', set(), None),
         }),
         ('one_source', {
             'config': {'render': {}, 'sources': {'one': {}}},
             'source': '{{ copy_sources("one", "/tmp") }}',
-            'result': ('COPY one /tmp', {'one'}),
+            'result': ('COPY one /tmp', {'one'}, None),
         }),
         ('wrong_source', {
             'config': {'render': {}, 'sources': {'one': {}}},
             'source': '{{ copy_sources("wrong", "/tmp") }}',
             'exception': Exception('No such source: wrong'),
+        }),
+        ('one_from', {
+            'config': {'render': {}},
+            'source': 'FROM {{ image_spec("one") }}',
+            'result': ('FROM ccp/one:latest', set(), 'one'),
         }),
     ]
 
