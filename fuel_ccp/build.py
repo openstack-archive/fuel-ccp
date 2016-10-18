@@ -25,7 +25,7 @@ _SHUTDOWN = False
 
 
 def render_dockerfile(path, name, config):
-    LOG.info('%s: Rendering dockerfile', name)
+    LOG.debug('%s: Rendering dockerfile', name)
     sources = set()
     parent = []  # Could've been None if we could use nonlocal
 
