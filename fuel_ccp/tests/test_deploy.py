@@ -98,6 +98,7 @@ class TestDeploy(base.TestCase):
 
     def test_create_openrc(self):
         namespace = self.namespace
+        self.conf.configs._merge({'ingress': {'enabled': False}})
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
         openrc_test_file = 'openrc-%s' % namespace
         config = {
@@ -106,7 +107,7 @@ class TestDeploy(base.TestCase):
                 "user_name": "admin",
                 "user_password": "password",
             },
-            "keystone": {"public_port": 5000},
+            "keystone": {"public_port": {'cont': 5000}},
             "namespace": self.namespace,
         }
         rc = [
@@ -117,7 +118,7 @@ class TestDeploy(base.TestCase):
             "export OS_PASSWORD=%s" % config['openstack']['user_password'],
             "export OS_IDENTITY_API_VERSION=3",
             "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
-            config['keystone']['public_port'],
+            config['keystone']['public_port']['cont'],
         ]
 
         with open(openrc_etalon_file, 'w') as openrc_file:
@@ -155,15 +156,15 @@ class TestDeploy(base.TestCase):
             expected_hash, deploy._get_service_files_hash('/tmp', files, {}))
 
 
-class TestDeployCreateService(base.TestCase):
+class TestDeployProcessPorts(base.TestCase):
     def setUp(self):
-        super(TestDeployCreateService, self).setUp()
+        super(TestDeployProcessPorts, self).setUp()
         fixture = self.useFixture(fixtures.MockPatch(
             "fuel_ccp.kubernetes.process_object"))
         self.create_obj = fixture.mock
 
     def test_create_service_without_ports(self):
-        deploy._create_service({"name": "spam"})
+        deploy._process_ports({"name": "spam"})
         self.assertFalse(self.create_obj.called)
 
     def test_create_service(self):
@@ -209,8 +210,57 @@ spec:
   selector:
     app: foo
   type: NodePort"""
-        deploy._create_service(service)
+        deploy._process_ports(service)
         self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
+
+    def test_create_ingress(self):
+        self.conf.configs._merge({'ingress': {'enabled': True,
+                                              'domain': 'test'}})
+
+        service = {
+            "name": "foo",
+            "ports": [
+                {"cont": 1111,
+                 "ingress": "bar"},
+                {"cont": 3333,
+                 "node": 30000,
+                 "ingress": "eggs"}
+            ]
+        }
+
+        ingress_k8s_obj = {
+            'kind': 'Ingress',
+            'spec': {
+                'rules': [{
+                    'host': 'bar.ccp.test',
+                    'http': {
+                        'paths': [{
+                            'backend': {
+                                'serviceName': 'foo',
+                                'servicePort': 1111}
+                        }]
+                    }
+                }, {
+                    'host': 'eggs.ccp.test',
+                    'http': {
+                        'paths': [{
+                            'backend': {
+                                'serviceName': 'foo',
+                                'servicePort': 3333}
+                        }]
+                    }
+                }]
+            },
+            'apiVersion': 'extensions/v1beta1',
+            'metadata': {
+                'name': 'foo',
+                'ccp': 'true'
+            }
+        }
+
+        deploy._process_ports(service)
+        self.assertEqual(2, self.create_obj.call_count)
+        self.assertEqual(ingress_k8s_obj, self.create_obj.call_args[0][0])
 
 
 class TestDeployParseWorkflow(base.TestCase):

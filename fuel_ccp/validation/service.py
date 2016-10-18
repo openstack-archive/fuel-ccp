@@ -175,7 +175,10 @@ SERVICE_SCHEMA = {
                         "required": ["cont"],
                         "properties": {
                             "cont": PORT_SCHEMA,
-                            'node': NODE_PORT_SCHEMA
+                            'node': NODE_PORT_SCHEMA,
+                            "ingress": {
+                                "type": "string"
+                            }
                         }
                     }
                 },
