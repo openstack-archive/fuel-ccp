@@ -20,6 +20,11 @@ def k8s_name(*args):
     return "-".join(tuple(args)).replace("_", "-")
 
 
+def get_ingress_host(ingress_name):
+    return '.'.join((
+        ingress_name, CONF.kubernetes.namespace, CONF.configs.ingress_domain))
+
+
 def get_resource_path(path):
     return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
@@ -39,8 +44,23 @@ def get_config_paths():
     return paths
 
 
-def address(service):
-    return '%s.%s' % (service, CONF.kubernetes.namespace)
+def address(service, port=None, external=False):
+    addr = None
+    if external and port:
+        if CONF.configs.use_ingress:
+            ing_name = CONF.configs[service][port]['ingress']
+            addr = get_ingress_host(ing_name)
+        else:
+            node_port = CONF.configs[service][port]['node']
+            addr = '%s:%s' % (CONF.configs.k8s_external_ip, node_port)
+
+    else:
+        addr = '%s.%s' % (service, CONF.kubernetes.namespace)
+        if port:
+            cont_port = CONF.configs[service][port]['cont']
+            addr = '%s:%s' % (addr, cont_port)
+
+    return addr
 
 
 def get_deploy_components_info(rendering_context=None):
