@@ -130,10 +130,7 @@ SERVICE_SCHEMA = {
                                 "maximum": 65535
                             },
                             {
-                                "type": "string",
-                                "pattern": r"^{}(:{})?$".format(
-                                    ALL_PORT_RE, HOST_PORT_RE
-                                )
+                                "type": "object",
                             }
                         ]
                     }
