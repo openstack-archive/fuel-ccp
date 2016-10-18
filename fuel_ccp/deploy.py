@@ -116,7 +116,7 @@ def parse_role(component, topology, configmaps):
                                              component_name)
     kubernetes.process_object(obj)
 
-    _create_service(service)
+    _process_ports(service)
     LOG.info("Service %s successfuly scheduled", service_name)
 
 
@@ -158,24 +158,34 @@ def _create_workflow(workflow, name):
     return kubernetes.process_object(template)
 
 
-def _create_service(service):
+def _process_ports(service):
     template_ports = service.get("ports")
     if not template_ports:
         return
     ports = []
+    ingress_rules = []
     for port in service["ports"]:
-        source_port, _, node_port = str(port).partition(":")
-        source_port = int(source_port)
-        name_port = str(source_port)
+        source_port = int(port.get('cont'))
+        node_port = port.get('node')
+        port_name = str(source_port)
         if node_port:
-            node_port = int(node_port)
-        if node_port:
-            ports.append({"port": source_port, "name": name_port,
-                          "node-port": node_port})
+            ports.append({"port": source_port, "name": port_name,
+                          "node-port": int(node_port)})
         else:
-            ports.append({"port": source_port, "name": name_port})
-    template = templates.serialize_service(service["name"], ports)
-    kubernetes.process_object(template)
+            ports.append({"port": source_port, "name": port_name})
+
+        if CONF.configs.ingress.enabled and port.get("ingress"):
+            ingress_host = utils.get_ingress_host(port.get("ingress"))
+            if ingress_host:
+                ingress_rules.append(templates.serialize_ingress_rule(
+                    service["name"], ingress_host, source_port))
+    service_template = templates.serialize_service(service["name"], ports)
+    kubernetes.process_object(service_template)
+
+    if ingress_rules:
+        ingress_template = templates.serialize_ingress(
+            service["name"], ingress_rules)
+        kubernetes.process_object(ingress_template)
 
 
 def _create_pre_commands(workflow, container):
@@ -387,8 +397,8 @@ def _create_openrc(config):
         "export OS_USERNAME=%s" % config['openstack']['user_name'],
         "export OS_PASSWORD=%s" % config['openstack']['user_password'],
         "export OS_IDENTITY_API_VERSION=3",
-        "export OS_AUTH_URL=http://%s:%s/v3" %
-        (utils.address('keystone'), config['keystone']['public_port']),
+        "export OS_AUTH_URL=http://%s/v3" %
+        utils.address('keystone', config['keystone']['public_port'], True)
     ]
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))
