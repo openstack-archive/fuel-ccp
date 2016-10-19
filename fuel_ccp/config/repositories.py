@@ -2,6 +2,7 @@ import multiprocessing
 import os
 
 DEFAULT_REPOS = [
+    'fuel-ccp-ceph',
     'fuel-ccp-cinder',
     'fuel-ccp-debian-base',
     'fuel-ccp-entrypoint',
