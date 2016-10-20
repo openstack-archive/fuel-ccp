@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # Simple script, which is going to create network, flavor, download cirros
 # image and launch some VMs. Could be used for test purposes.
@@ -53,6 +53,7 @@ destroy() {
         echo "Destroying $vm..."
         openstack server delete $vm
     done
+    sleep 5
     echo "Destroying testnetwork..."
     openstack network delete testnetwork
     echo "Destroying tiny flavor..."
