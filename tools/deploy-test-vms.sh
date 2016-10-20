@@ -33,7 +33,13 @@ create() {
         NUMBER=2
     fi
     if [ -z "$IFACE" ]; then
-        IFACE="eth1"
+        GUESSED_IFACE=$(ip ro sh | awk '/^default via [0-9]+.[0-9]+.[0-9]+.[0-9]+ dev/ {print $5}')
+        if [[ -z "${GUESSED_IFACE}" ]]; then
+            IFACE="eth1"
+        else
+            IFACE="${GUESSED_IFACE}"
+        fi
+        echo "Assuming the public eth interface is: ${IFACE}"
     fi
     # Check if iface is exist
     if ! ip a show up | fgrep -q $IFACE ; then
