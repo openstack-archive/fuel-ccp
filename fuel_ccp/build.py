@@ -147,6 +147,21 @@ def connect_children(dockerfiles):
             dockerfile['parent'] = dockerfiles[parent]
 
 
+def get_dockerfiles_tree(match=False, config=None):
+    if config is None:
+        config = _get_config()
+
+    dockerfiles = {}
+    for repository_def in CONF.repositories.repos:
+        dockerfiles.update(
+            find_dockerfiles(repository_def['name'], match=match))
+
+    render_dockerfiles(dockerfiles, config)
+    connect_children(dockerfiles)
+
+    return dockerfiles
+
+
 def build_dockerfile(dc, dockerfile):
     LOG.info("%s: Starting image build", dockerfile['name'])
     for line in dc.build(rm=True,
@@ -373,15 +388,8 @@ except AttributeError:
 def build_components(components=None):
     with TemporaryDirectory() as tmp_dir:
         config = _get_config()
-        dockerfiles = {}
-
         match = not bool(components)
-        for repository_def in CONF.repositories.repos:
-            dockerfiles.update(
-                find_dockerfiles(repository_def['name'], match=match))
-
-        render_dockerfiles(dockerfiles, config)
-        connect_children(dockerfiles)
+        dockerfiles = get_dockerfiles_tree(match, config)
 
         ready_images = get_ready_image_names()
 
