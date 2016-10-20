@@ -57,7 +57,10 @@ create() {
     NETID="$(openstack network list | awk '/testnetwork/ {print $2}')"
     openstack server create --flavor tiny --image cirros --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
     openstack server list
-    nova get-vnc-console  test_vm-1 novnc | sed "s/nova-novncproxy\..*:6080/${EXTIP}:${VNCP}/"
+    for vm in $(openstack server  list | awk '/test_vm/ {print $4}'); do
+        echo "Console for $vm:"
+        openstack console url show $vm | sed "s/nova-novncproxy\..*:6080/${EXTIP}:${VNCP}/"
+    done
 }
 
 destroy() {
@@ -73,7 +76,7 @@ destroy() {
     openstack image delete cirros
 }
 
-while getopts ":a:n:i:h:c" opt; do
+while getopts ":a:n:i:hc" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
@@ -93,10 +96,12 @@ while getopts ":a:n:i:h:c" opt; do
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
+            usage
             exit 1
             ;;
         :)
             echo "Option -$OPTARG requires an argument." >&2
+            usage
             exit 1
             ;;
     esac
