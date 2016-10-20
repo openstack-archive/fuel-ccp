@@ -15,6 +15,7 @@ Application definition template
             - internal-port:external-port
         daemonset: true
         host-net: true
+        hostPID: true
         containers:
             - name: container-name
               image: container-image
@@ -90,7 +91,9 @@ Parameters description
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | daemonset     | Create DaemonSet instead of Deployment        | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+
-| host-net      |                                               | false    | boolean          | false   |
+| host-net      | Use the host’s network namespace              | false    | boolean          | false   |
++---------------+-----------------------------------------------+----------+------------------+---------+
+| hostPID       | Use the host’s pid namespace                  | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+
 
 .. _container:

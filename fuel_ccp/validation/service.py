@@ -144,6 +144,9 @@ SERVICE_SCHEMA = {
                 "host-net": {
                     "type": "boolean"
                 },
+                "hostPID": {
+                    "type": "boolean"
+                },
                 "containers": {
                     "type": "array",
                     "minItems": 1,
