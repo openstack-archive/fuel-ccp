@@ -355,13 +355,26 @@ def _get_summary(dockerfiles):
         return False
     return True
 
+try:
+    TemporaryDirectory = tempfile.TemporaryDirectory
+except AttributeError:
+    # This is based on TemporaryDirectory class that appeared in Python 3.2
+    class TemporaryDirectory(object):
+        def __init__(self, **kwargs):
+            self.name = tempfile.mkdtemp(**kwargs)
+
+        def __enter__(self):
+            return self.name
+
+        def __exit__(self, exc_type, exc_value, tb):
+            shutil.rmtree(self.name)
+
 
 def build_components(components=None):
-    tmp_dir = tempfile.mkdtemp()
+    with TemporaryDirectory() as tmp_dir:
+        config = _get_config()
+        dockerfiles = {}
 
-    config = _get_config()
-    dockerfiles = {}
-    try:
         match = not bool(components)
         for repository_def in CONF.repositories.repos:
             dockerfiles.update(
@@ -397,8 +410,7 @@ def build_components(components=None):
                     future.cancel()
                 wait_futures(future_list, skip_errors=True)
                 raise
-    finally:
-        build_succeeded = _get_summary(dockerfiles)
-        shutil.rmtree(tmp_dir)
-        if not build_succeeded:
-            sys.exit(1)
+            finally:
+                build_succeeded = _get_summary(dockerfiles)
+                if not build_succeeded:
+                    sys.exit(1)
