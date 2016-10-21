@@ -55,7 +55,13 @@ Install CCP CLI
   * gcc
 
 If you're deploying CCP from non-root user, make sure your user are in the
-``docker`` group. You can add your user to docker group via:
+``docker`` group. Check if user is added to docker group
+
+::
+
+  id -Gn | grep docker
+
+If not added you can add your user to docker group via:
 
 ::
 
@@ -71,7 +77,7 @@ To install CCP CLI and Python dependencies use:
 
 ::
 
-    pip install fuel-ccp/
+    sudo pip install fuel-ccp/
 
 Create a local registry service (optional):
 
@@ -86,8 +92,7 @@ Create CCP CLI configuration file:
 
 ::
 
-    mkdir /etc/ccp
-    cat > /etc/ccp/ccp.yaml << EOF
+    cat > ~/.ccp.yaml << EOF
     builder:
       push: True
     registry:
@@ -102,7 +107,7 @@ Append default topology and edit it, if needed:
 
 ::
 
-    cat fuel-ccp/etc/topology-example.yaml >> /etc/ccp/ccp.yaml
+    cat fuel-ccp/etc/topology-example.yaml >> ~/.ccp.yaml
 
 For example, you may want to install Stacklight to collect Openstack logs.
 See :doc:`monitoring_and_logging` for the deployment of monitoring and
@@ -112,7 +117,7 @@ Append global CCP configuration:
 
 ::
 
-    cat >> /etc/ccp/ccp.yaml << EOF
+    cat >> ~/.ccp.yaml << EOF
     configs:
         private_interface: eth0
         public_interface: eth1
