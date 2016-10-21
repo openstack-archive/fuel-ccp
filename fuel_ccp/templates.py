@@ -161,9 +161,9 @@ def serialize_daemon_pod_spec(service):
     }
 
     if service.get("host-net"):
-        cont_spec["hostNetwork"] = True
+        cont_spec["hostNetwork"] = service.get("host-net")
     if service.get("hostPID"):
-        cont_spec["hostPID"] = True
+        cont_spec["hostPID"] = service.get("host-net")
     return cont_spec
 
 
