@@ -56,8 +56,7 @@ function display_horizon_access_info {
 function run_openstack_tests {
     source $1
     ./tools/deploy-test-vms.sh -a create
-    # FIXME(mzawadzki): workaround for some minor error during networking destroy (minor b/c it works manually)
-    ./tools/deploy-test-vms.sh -a destroy || true
+    ./tools/deploy-test-vms.sh -a destroy
 }
 
 
