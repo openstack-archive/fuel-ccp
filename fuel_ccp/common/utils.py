@@ -16,10 +16,6 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 
-def k8s_name(*args):
-    return "-".join(tuple(args)).replace("_", "-")
-
-
 def get_resource_path(path):
     return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
