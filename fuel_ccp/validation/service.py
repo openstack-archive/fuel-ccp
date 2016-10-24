@@ -138,8 +138,8 @@ SERVICE_SCHEMA = {
                         ]
                     }
                 },
-                "daemonset": {
-                    "type": "boolean"
+                "kind": {
+                    "enum": ["Deployment", "DaemonSet"]
                 },
                 "host-net": {
                     "type": "boolean"
