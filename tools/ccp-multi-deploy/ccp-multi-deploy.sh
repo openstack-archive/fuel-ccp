@@ -12,9 +12,9 @@ set -e
 # Config (defaults):
 NUMBER_OF_ENVS=1  # Requires 3 K8s nodes per env
 BUILD_IMAGES=true # Set to true if run for the first time
-NAMESPACE_PREFIX="ccp"
 : ${CONFIG_DIR:="tools/ccp-multi-deploy/config"}
-
+: ${VERSION:="master"}
+NAMESPACE_PREFIX="ccp-${VERSION}"
 
 # Functions:
 function usage {
@@ -29,6 +29,8 @@ Options:
 -s, --skip-building-images
         do not build Docker images for OpenStack services
         (rely on existing local registry, default: false)
+-v, --openstack-version=VERSION
+        set openstack version newton or master (default: master)
 EOF
     exit
 }
@@ -43,7 +45,7 @@ function ccp_wait_for_deployment_to_finish {
     kubectl --namespace $1 get jobs
     kubectl --namespace $1 get pods
     echo "openrc file: openrc-$1"
-    cat openrc-$1
+    cat openrc-${1}
     echo "...................................."
 }
 
@@ -61,7 +63,7 @@ function run_openstack_tests {
 
 
 # Parse command line arguments:
-OPTS=`getopt -o 'hsn:' --long help,skip-building-images,number-of-envs: -n 'parse-options' -- ${@}`
+OPTS=`getopt -o 'hsn:v:' --long help,skip-building-images,number-of-envs:,openstack-version: -n 'parse-options' -- ${@}`
 if [ ${?} != 0 ] ; then
     echo "Failed parsing options."
     exit 1
@@ -73,6 +75,7 @@ while true; do
         -h|--help ) usage; shift ;;
         -n|--number-of-envs ) NUMBER_OF_ENVS=${2}; shift; shift ;;
         -s|--skip-building-images ) BUILD_IMAGES=false; shift ;;
+        -v|--openstack-version ) VERSION="${2}"; NAMESPACE_PREFIX="ccp-${2}"; shift; shift ;;
         -- ) shift; break ;;
         * ) break ;;
     esac
@@ -80,7 +83,7 @@ done
 
 
 # Check some basic requirements and exit explicitly if they are not met:
-if [ ! -f "${CONFIG_DIR}/ccp-cli-config-1.yaml" ]; then
+if [ ! -f "${CONFIG_DIR}/ccp-cli-${VERSION}-config-1.yaml" ]; then
     echo "Config file not found, did you set CONFIG_DIR correctly?"
     exit 1
 fi
@@ -93,7 +96,7 @@ fi
 
 
 # Fetch CCP repos
-CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-1.yaml"
+CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-${VERSION}-config-1.yaml"
 ${CCP} fetch
 
 
@@ -109,10 +112,10 @@ fi
 
 # Deploy envs:
 for n in $(seq 1 ${NUMBER_OF_ENVS}); do
-    CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n}.yaml"
+    CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-${VERSION}-config-${n}.yaml"
     ${CCP} deploy
     ccp_wait_for_deployment_to_finish ${NAMESPACE_PREFIX}-${n}
     display_horizon_access_info ${NAMESPACE_PREFIX}-${n}
     run_openstack_tests openrc-${NAMESPACE_PREFIX}-${n}
-    echo "CCP cleanup command: ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n} cleanup"
+    echo "CCP cleanup command: ccp --debug --config-file ${CONFIG_DIR}/ccp-cli-${VERSION}-config-${n} cleanup"
 done

@@ -1,10 +1,11 @@
 !include
 - ccp-configs-common.yaml
+- ccp-config-newton-sources.yaml
 - ccp-roles.yaml
 - ccp-topology-3.yaml
 ---
 kubernetes:
-  namespace: "ccp-3"
+  namespace: "ccp-newton-3"
 configs:
   rabbitmq:
     external_port: 32674
