@@ -35,8 +35,14 @@ def get_config_paths():
     return paths
 
 
-def address(service):
-    return '%s.%s' % (service, CONF.kubernetes.namespace)
+def address(service, multiple=False):
+    addr = '%s.%s' % (service, CONF.kubernetes.namespace)
+    if multiple:
+        replicas = CONF.replicas.get(service)
+        urls = ['%s-%i.%s' % (service, pod_number, addr)
+                for pod_number in range(replicas)]
+        addr = ','.join(urls)
+    return addr
 
 
 def get_deploy_components_info(rendering_context=None):
