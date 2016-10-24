@@ -141,6 +141,9 @@ SERVICE_SCHEMA = {
                 "daemonset": {
                     "type": "boolean"
                 },
+                "petset": {
+                    "type": "boolean"
+                },
                 "host-net": {
                     "type": "boolean"
                 },

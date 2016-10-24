@@ -109,6 +109,10 @@ def parse_role(component, topology, configmaps):
 
         obj = templates.serialize_daemonset(service_name, cont_spec,
                                             affinity, component_name)
+    elif service.get('petset', False):
+        replicas = replicas or 1
+        obj = templates.serialize_petset(service_name, cont_spec,
+                                         affinity, replicas, component_name)
     else:
         replicas = replicas or 1
         obj = templates.serialize_deployment(service_name, cont_spec,
@@ -174,7 +178,8 @@ def _create_service(service):
                           "node-port": node_port})
         else:
             ports.append({"port": source_port, "name": name_port})
-    template = templates.serialize_service(service["name"], ports)
+    template = templates.serialize_service(
+        service["name"], ports, service.get("petset", False))
     kubernetes.process_object(template)
 
 
