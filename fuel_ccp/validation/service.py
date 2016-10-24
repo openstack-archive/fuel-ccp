@@ -141,7 +141,7 @@ SERVICE_SCHEMA = {
                 "kind": {
                     "enum": ["Deployment", "DaemonSet"]
                 },
-                "host-net": {
+                "hostNetwork": {
                     "type": "boolean"
                 },
                 "hostPID": {

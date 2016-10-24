@@ -14,7 +14,7 @@ Application definition template
         kind: DaemonSet
         ports:
             - internal-port:external-port
-        host-net: true
+        hostNetwork: true
         hostPID: true
         containers:
             - name: container-name
@@ -93,7 +93,7 @@ Parameters description
 |               | Only internal or both internal:external ports |          | array            |            |
 |               | can be specified                              |          |                  |            |
 +---------------+-----------------------------------------------+----------+------------------+------------+
-| host-net      | Use the host’s network namespace              | false    | boolean          | false      |
+| hostNetwork   | Use the host’s network namespace              | false    | boolean          | false      |
 +---------------+-----------------------------------------------+----------+------------------+------------+
 | hostPID       | Use the host’s pid namespace                  | false    | boolean          | false      |
 +---------------+-----------------------------------------------+----------+------------------+------------+

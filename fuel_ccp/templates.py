@@ -158,7 +158,7 @@ def serialize_daemon_pod_spec(service):
         "containers": serialize_daemon_containers(service),
         "volumes": serialize_volumes(service),
         "restartPolicy": "Always",
-        "hostNetwork": service.get("host-net", False),
+        "hostNetwork": service.get("hostNetwork", False),
         "hostPID": service.get("hostPID", False)
     }
 
@@ -337,7 +337,7 @@ def serialize_affinity(service, topology):
             }
         }
     }
-    if service.get("host-net"):
+    if service.get("hostNetwork"):
         policy["podAntiAffinity"] = {
             "requiredDuringSchedulingIgnoredDuringExecution": [{
                 "labelSelector": {
