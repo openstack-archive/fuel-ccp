@@ -91,7 +91,7 @@ Parameters description
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | daemonset     | Create DaemonSet instead of Deployment        | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+
-| host-net      | Use the host’s network namespace              | false    | boolean          | false   |
+| hostNetwork   | Use the host’s network namespace              | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+
 | hostPID       | Use the host’s pid namespace                  | false    | boolean          | false   |
 +---------------+-----------------------------------------------+----------+------------------+---------+

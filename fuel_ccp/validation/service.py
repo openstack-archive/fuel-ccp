@@ -141,7 +141,7 @@ SERVICE_SCHEMA = {
                 "daemonset": {
                     "type": "boolean"
                 },
-                "host-net": {
+                "hostNetwork": {
                     "type": "boolean"
                 },
                 "hostPID": {
