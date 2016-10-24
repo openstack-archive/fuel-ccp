@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 import logging
@@ -266,7 +267,9 @@ def _push_files_to_workflow(workflow, files):
     } for filename, f in sorted(files.items())]
 
 
-def _create_globals_configmap(config):
+def _create_globals_configmap():
+    config = CONF.configs
+    config['replicas'] = CONF.replicas
     data = {templates.GLOBAL_CONFIG: config._json(sort_keys=True)}
     cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
     return kubernetes.process_object(cm)
@@ -414,7 +417,7 @@ def deploy_components(components_map, components):
 
     _create_namespace(CONF.configs)
 
-    _create_globals_configmap(CONF.configs)
+    _create_globals_configmap()
     start_script_cm = _create_start_script_configmap()
     configmaps = (start_script_cm,)
 
