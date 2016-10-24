@@ -109,6 +109,10 @@ def parse_role(component, topology, configmaps):
 
         obj = templates.serialize_daemonset(service_name, cont_spec,
                                             affinity, component_name)
+    elif service.get('petset', False):
+        replicas = replicas or 1
+        obj = templates.serialize_petset(service_name, cont_spec,
+                                         affinity, replicas, component_name)
     else:
         replicas = replicas or 1
         obj = templates.serialize_deployment(service_name, cont_spec,
