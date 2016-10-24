@@ -1,5 +1,6 @@
 !include
 - ccp-configs-common.yaml
+- ccp-config-master-sources.yaml
 - ccp-roles.yaml
 - ccp-topology-3.yaml
 ---
