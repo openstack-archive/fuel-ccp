@@ -183,7 +183,7 @@ SERVICE_SCHEMA = {
                     }
                 },
                 "kind": {
-                    "enum": ["Deployment", "DaemonSet"]
+                    "enum": ["Deployment", "DaemonSet", "PetSet"]
                 },
                 "hostNetwork": {
                     "type": "boolean"
