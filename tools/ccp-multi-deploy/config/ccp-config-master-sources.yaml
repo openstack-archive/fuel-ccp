@@ -1,0 +1,37 @@
+sources:
+  openstack/cinder:
+    git_url: https://git.openstack.org/openstack/cinder.git
+    git_ref: master
+  openstack/ironic:
+    git_url: https://git.openstack.org/openstack/ironic.git
+    git_ref: master
+  openstack/murano:
+    git_url: https://git.openstack.org/openstack/murano.git
+    git_ref: master
+  openstack/murano-dashboard:
+    git_url: https://git.openstack.org/openstack/murano-dashboard.git
+    git_ref: master
+  openstack/sahara:
+    git_url: https://git.openstack.org/openstack/sahara.git
+    git_ref: master
+  openstack/sahara-dashboard:
+    git_url: https://git.openstack.org/openstack/sahara-dashboard.git
+    git_ref: master
+  openstack/keystone:
+    git_url: https://git.openstack.org/openstack/keystone.git
+    git_ref: master
+  openstack/horizon:
+    git_url: https://git.openstack.org/openstack/horizon.git
+    git_ref: master
+  openstack/nova:
+    git_url: https://git.openstack.org/openstack/nova.git
+    git_ref: master
+  openstack/neutron:
+    git_url: https://git.openstack.org/openstack/neutron.git
+    git_ref: master
+  openstack/heat:
+    git_url: https://git.openstack.org/openstack/heat.git
+    git_ref: master
+  openstack/glance:
+    git_url: https://git.openstack.org/openstack/glance.git
+    git_ref: master
