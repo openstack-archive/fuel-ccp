@@ -84,7 +84,8 @@ Parameters description
 +---------------+-----------------------------------------------+----------+------------------+------------+
 | kind          | Kind of k8s object to use for containers      | false    | one of:          | Deployment |
 |               | deployment                                    |          | ["Deployment",   |            |
-|               |                                               |          | "Daemonset"]     |            |
+|               |                                               |          | "Daemonset",     |            |
+|               |                                               |          | "PetSet"]        |            |
 +---------------+-----------------------------------------------+----------+------------------+------------+
 | containers    | List of containers under multi-container pod  | true     | container_ array |            |
 +---------------+-----------------------------------------------+----------+------------------+------------+
