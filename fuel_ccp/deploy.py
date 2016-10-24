@@ -98,7 +98,7 @@ def parse_role(component, topology, configmaps):
     affinity = templates.serialize_affinity(service, topology)
 
     replicas = CONF.replicas.get(service_name)
-    if service.get("daemonset", False):
+    if service.get("kind") == 'DaemonSet':
         if replicas is not None:
             LOG.error("Replicas was specified for %s, but it's implemented "
                       "using Kubernetes DaemonSet that will deploy service on "
