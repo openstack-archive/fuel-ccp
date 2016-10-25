@@ -25,6 +25,7 @@ Advanced topics
    deploying_multiple_parallel_environments
    ceph
    ceph_cluster
+   using_calico_instead_of_ovs
 
 Developer docs
 --------------
