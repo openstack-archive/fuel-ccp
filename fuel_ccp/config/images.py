@@ -43,6 +43,9 @@ def image_spec(image_name, add_address=True):
         'namespace': CONF.images.namespace,
         'tag': CONF.images.tag,
     }
+    component_spec = CONF.images.image_specs.get(image_name.split('-')[0])
+    if component_spec:
+        spec.update(component_spec._items())
     image_spec = CONF.images.image_specs.get(image_name)
     if image_spec:
         spec.update(image_spec._items())
