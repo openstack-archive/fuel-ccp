@@ -7,6 +7,7 @@ import sys
 from cliff import app
 from cliff import command
 from cliff import commandmanager
+from cliff import lister
 
 import fuel_ccp
 from fuel_ccp import build
@@ -173,6 +174,26 @@ class ConfigDump(BaseCommand):
             do_fetch()
         config.load_component_defaults()
         config.dump_yaml(self.app.stdout)
+
+
+class GetImages(BaseCommand, lister.Lister):
+    """Get images mathcing list of components"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(GetImages, self).get_parser(*args, **kwargs)
+        parser.add_argument('components',
+                            nargs='*',
+                            help='CCP components to get images for')
+        return parser
+
+    def take_action(self, parsed_args):
+        dockerfiles = build.get_dockerfiles(match=not parsed_args.components)
+        for component in parsed_args.components:
+            build.match_dockerfiles_by_component(dockerfiles, component)
+        return (
+            ('Name',),
+            ((d['name'],) for d in dockerfiles.values() if d['match']),
+        )
 
 
 def signal_handler(signo, frame):

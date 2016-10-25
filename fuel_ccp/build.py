@@ -147,15 +147,19 @@ def connect_children(dockerfiles):
             dockerfile['parent'] = dockerfiles[parent]
 
 
-def get_dockerfiles_tree(match=False, config=None):
-    if config is None:
-        config = _get_config()
-
+def get_dockerfiles(match=False):
     dockerfiles = {}
     for repository_def in CONF.repositories.repos:
         dockerfiles.update(
             find_dockerfiles(repository_def['name'], match=match))
+    return dockerfiles
 
+
+def get_dockerfiles_tree(match=False, config=None):
+    if config is None:
+        config = _get_config()
+
+    dockerfiles = get_dockerfiles(match)
     render_dockerfiles(dockerfiles, config)
     connect_children(dockerfiles)
 
@@ -285,7 +289,7 @@ def get_ready_image_names():
     return ready_images
 
 
-def match_dockerfiles_by_component(dockerfiles, component, ready_images):
+def match_dockerfiles_by_component(dockerfiles, component, ready_images=()):
     pattern = re.compile(re.escape(component))
     matched_dockerfiles = list(filter(pattern.match, dockerfiles.keys()))
     if matched_dockerfiles:
