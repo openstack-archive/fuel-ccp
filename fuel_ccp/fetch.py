@@ -18,17 +18,16 @@ def fetch_repository(repository_def):
     name = repository_def['name']
     dest_dir = os.path.join(CONF.repositories.path, name)
     if os.path.isdir(dest_dir):
-        LOG.debug('%s was already cloned, skipping', name)
+        LOG.debug('%s: Repository is already cloned, skipping', name)
         return
     git_url = repository_def['git_url']
     git_ref = repository_def.get('git_ref')
+    LOG.debug('%s: Cloning repository %s to %s', name, git_url, dest_dir)
+    repo = git.Repo.clone_from(git_url, dest_dir)
     if git_ref:
-        kwargs = {'branch': git_ref}
-    else:
-        kwargs = {}
-    LOG.debug('Clonning %s from %s to %s', name, git_url, dest_dir)
-    git.Repo.clone_from(git_url, dest_dir, **kwargs)
-    LOG.info('Cloned %s repo', name)
+        LOG.debug('%s: Changing reference to "%s"', name, git_ref)
+        repo.git.checkout(git_ref)
+    LOG.info('%s: Repository has been cloned', name)
 
 
 def fetch_repositories(repository_defs=None):
