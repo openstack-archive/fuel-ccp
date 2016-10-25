@@ -157,13 +157,11 @@ def serialize_daemon_pod_spec(service):
     cont_spec = {
         "containers": serialize_daemon_containers(service),
         "volumes": serialize_volumes(service),
-        "restartPolicy": "Always"
+        "restartPolicy": "Always",
+        "hostNetwork": service.get("host-net", False),
+        "hostPID": service.get("hostPID", False)
     }
 
-    if service.get("host-net"):
-        cont_spec["hostNetwork"] = True
-    if service.get("hostPID"):
-        cont_spec["hostPID"] = True
     return cont_spec
 
 
