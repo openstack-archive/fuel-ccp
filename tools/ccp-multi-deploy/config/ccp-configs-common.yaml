@@ -3,6 +3,7 @@ builder:
   push: True
 registry:
   address: "127.0.0.1:31500"
+  timeout: 900
 repositories:
   path: /tmp/ccp-repos
   skip_empty: True

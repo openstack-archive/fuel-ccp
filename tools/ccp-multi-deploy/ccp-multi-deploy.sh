@@ -93,7 +93,7 @@ fi
 
 
 # Fetch CCP repos
-CCP="ccp --debug --config-file ${CONFIG_DIR}/ccp-cli-config-1.yaml"
+CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-1.yaml"
 ${CCP} fetch
 
 
@@ -109,10 +109,10 @@ fi
 
 # Deploy envs:
 for n in $(seq 1 ${NUMBER_OF_ENVS}); do
-    CCP="ccp --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n}.yaml"
+    CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n}.yaml"
     ${CCP} deploy
     ccp_wait_for_deployment_to_finish ${NAMESPACE_PREFIX}-${n}
     display_horizon_access_info ${NAMESPACE_PREFIX}-${n}
     run_openstack_tests openrc-${NAMESPACE_PREFIX}-${n}
-    echo "CCP cleanup command: ccp --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n} cleanup"
+    echo "CCP cleanup command: ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n} cleanup"
 done
