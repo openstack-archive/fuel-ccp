@@ -1,6 +1,7 @@
 import logging
 import time
 
+from glanceclient import client as glance_client
 from keystoneauth1 import exceptions as keystoneauth_exceptions
 from keystoneauth1.identity import v3
 from keystoneauth1 import session as keystone_session
@@ -92,6 +93,14 @@ def _cleanup_network_resources(session):
                          for network in network_list['networks']]))
 
 
+def _cleanup_images(session):
+    LOG.debug("Cleaning up glance images")
+    glance = glance_client.Client("2", session=session)
+    for image in glance.images.list():
+        LOG.debug("Removing glance image %s", image.id)
+        glance.images.delete(image.id)
+
+
 def _cleanup_openstack_environment(configs, auth_url=None):
     if 'project_name' not in configs.get('openstack', {}):
         # Ensure that keystone configs are provided. Assume that it is not an
@@ -118,17 +127,26 @@ def _cleanup_openstack_environment(configs, auth_url=None):
             'Run with --skip-os-cleanup flag if OpenStack '
             'is not deployed', configs['auth_url'])
         raise
+
     try:
         _cleanup_servers(session)
     except keystoneauth_exceptions.EndpointNotFound:
         LOG.info('Nova is not present, skipping instances cleanup')
         pass
+
+    try:
+        _cleanup_images(session)
+    except keystoneauth_exceptions.EndpointNotFound:
+        LOG.info('Glance is not present, skipping images cleanup')
+        pass
+
     try:
         _cleanup_network_resources(session)
     except keystoneauth_exceptions.EndpointNotFound:
         LOG.info('Neutron is not present, skipping network resources '
                  'cleanup')
         pass
+
     LOG.info('OpenStack cleanup has been finished successfully.')
 
 
