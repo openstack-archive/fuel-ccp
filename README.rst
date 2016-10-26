@@ -10,7 +10,7 @@ make building, running and managing production-ready OpenStack containers
 on top of Kubernetes an easy task for operators.
 
 * Free software: Apache license
-* Documentation: http://docs.openstack.org/developer/fuel-ccp
+* Documentation: http://fuel-ccp.readthedocs.io
 * Source: http://git.openstack.org/cgit/openstack/fuel-ccp
 * Bugs: http://bugs.launchpad.net/fuel-ccp
 
