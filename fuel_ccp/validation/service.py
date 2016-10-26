@@ -7,17 +7,6 @@ import jsonschema
 
 LOG = logging.getLogger(__name__)
 
-
-# RegExp for range 0-65535
-ALL_PORT_RE = (
-    r'0*(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]'
-    r'{4}|[1-9][0-9]{1,3}|[0-9])'
-)
-# RegExp for range 30000-32767
-HOST_PORT_RE = (
-    r'(3[0-1][0-9]{3}|32[0-6][0-9]{2}|327[0-5][0-9]|3276[0-7])'
-)
-
 PATH_RE = r'^(/|((/[\w.-]+)+/?))$'
 FILE_PATH_RE = r'^(/|((/[\w.-]+)+))$'
 
@@ -126,6 +115,18 @@ PROBE_SCHEMA_EXEC = {
     }
 }
 
+PORT_SCHEMA = {
+    "type": "integer",
+    "minimum": 1,
+    "maximum": 65535
+}
+
+NODE_PORT_SCHEMA = {
+    "type": "integer",
+    "minimum": 30000,
+    "maximum": 32767
+}
+
 PROBE_SCHEMA_HTTP = {
     "type": "object",
     "additionalProperties": False,
@@ -135,9 +136,7 @@ PROBE_SCHEMA_HTTP = {
         "type": {
             "enum": ["httpGet"]
         },
-        "port": {
-            "type": "integer"
-        },
+        "port": PORT_SCHEMA,
         "path": NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
         "timeout": TIMEOUT_SCHEMA
@@ -171,19 +170,13 @@ SERVICE_SCHEMA = {
                     "minItems": 1,
 
                     "items": {
-                        "oneOf": [
-                            {
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 65535
-                            },
-                            {
-                                "type": "string",
-                                "pattern": r"^{}(:{})?$".format(
-                                    ALL_PORT_RE, HOST_PORT_RE
-                                )
-                            }
-                        ]
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["cont"],
+                        "properties": {
+                            "cont": PORT_SCHEMA,
+                            'node': NODE_PORT_SCHEMA
+                        }
                     }
                 },
                 "kind": {
