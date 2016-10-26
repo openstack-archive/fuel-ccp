@@ -4,7 +4,7 @@ import time
 from keystoneauth1 import exceptions as keystoneauth_exceptions
 from keystoneauth1.identity import v3
 from keystoneauth1 import session as keystone_session
-from neutronclient.v2_0 import client as neutron_client
+from neutronclient.neutron import client as neutron_client
 from novaclient import client as nova_client
 import pykube
 
@@ -68,17 +68,26 @@ def _cleanup_servers(session):
 
 
 def _cleanup_network_resources(session):
-    neutron = neutron_client.Client(session=session)
-    LOG.info('Cleaning up subnets')
-    for subnet in neutron.list_subnets()['subnets']:
-        LOG.info('Removing subnet %s (%s)', subnet['name'], subnet['id'])
-        neutron.delete_subnet(subnet['id'])
-    subnet_list = _wait_until_empty(10, 'subnets', neutron.list_subnets)
-    if subnet_list:
-        raise RuntimeError(
-            'Some subnets were not removed: %s'
-            % ', '.join(['%s (%s)' % (subnet['name'], subnet['id'])
-                         for subnet in subnet_list['subnets']]))
+    neutron = neutron_client.Client("2.0", session=session)
+
+    LOG.debug("Cleaning up floatingips")
+    for fip in neutron.list_floatingips()["floatingips"]:
+        LOG.debug("Removing floatingip %s", fip["id"])
+        neutron.delete_floatingip(fip["id"])
+
+    LOG.debug("Cleaning up routers")
+    for router in neutron.list_routers()["routers"]:
+        LOG.debug("Removing router %s", router["id")
+        neutron.remove_gateway_router(router["id"])
+        for port in neutron.list_ports(device_id=router["id"])["ports"]:
+            neutron.remove_interface_router(router["id"],
+                                            {"port_id": port["id"]})
+        neutron.delete_router(router["id"])
+
+    LOG.debug("Cleaning up ports")
+    for port in neutron.list_ports()["ports"]:
+        LOG.debug("Removing port %s", port["id"])
+        neutron.delete_port(port["id"])
 
     LOG.info('Cleaning up networks')
     for network in neutron.list_networks()['networks']:
