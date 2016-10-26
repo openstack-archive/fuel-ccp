@@ -1,6 +1,5 @@
 import json
 
-from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp.config import images
 
@@ -359,7 +358,7 @@ def serialize_service(name, ports):
         spec_entry = {"protocol": "TCP",
                       "port": port["port"],
                       "targetPort": port["port"],
-                      "name": utils.k8s_name(port["name"])}
+                      "name": port["name"]}
         if port.get("node-port"):
             spec_entry.update({"nodePort": port["node-port"]})
         ports_spec.append(spec_entry)
