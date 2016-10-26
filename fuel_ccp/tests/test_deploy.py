@@ -177,7 +177,8 @@ class TestDeployCreateService(base.TestCase):
                 "8888:6666",
                 "7788:6666",
                 "7777:9900"
-            ]
+            ],
+            "sessionAffinity": "clientIP"
         }
         service_k8s_obj = """
 apiVersion: v1
@@ -222,6 +223,7 @@ spec:
     targetPort: 7777
   selector:
     app: foo
+  sessionAffinity: clientIP
   type: NodePort"""
         deploy._create_service(service)
         self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))

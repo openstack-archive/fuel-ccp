@@ -371,7 +371,8 @@ def serialize_affinity(service, topology):
         policy, sort_keys=True)}
 
 
-def serialize_service(name, ports):
+def serialize_service(service, ports):
+    name = service["name"]
     ports_spec = []
     for port in ports:
         spec_entry = {"protocol": "TCP",
@@ -381,7 +382,7 @@ def serialize_service(name, ports):
         if port.get("node-port"):
             spec_entry.update({"nodePort": port["node-port"]})
         ports_spec.append(spec_entry)
-    return {
+    service_metadata = {
         "apiVersion": "v1",
         "kind": "Service",
         "metadata": {
@@ -389,7 +390,9 @@ def serialize_service(name, ports):
             "labels": {
                 "ccp": "true"
             }
-        },
+        }
+    }
+    service_spec = {
         "spec": {
             "type": "NodePort",
             "selector": {
@@ -398,3 +401,8 @@ def serialize_service(name, ports):
             "ports": ports_spec
         }
     }
+    service_spec["spec"]["sessionAffinity"] = service.get(
+            "sessionAffinity", None)
+    spec = service_metadata.copy()
+    spec.update(service_spec)
+    return spec
