@@ -37,27 +37,15 @@ class TestCleanup(base.TestCase):
             cleanup._wait_for_namespace_delete, k8s_api)
 
     @mock.patch('time.sleep')
-    @mock.patch('neutronclient.v2_0.client.Client')
+    @mock.patch('neutronclient.neutron.client.Client')
     def test_cleanup_network_resources(self, m_client, m_sleep):
-        # subnets were not removed
         neutron = mock.Mock()
-        neutron.list_subnets.return_value = {
-            'subnets': [{'id': 1, 'name': 'subnet1'}]}
-        m_client.return_value = neutron
-        self.assertRaisesRegexp(
-            RuntimeError, "Some subnets were not removed: subnet1 \(1\)",
-            cleanup._cleanup_network_resources, mock.Mock())
-
-        # subnets were removed but networks were not
-        neutron.list_subnets.return_value = {'subnets': []}
-        neutron.list_networks.return_value = {
-            'networks': [{'id': 1, 'name': 'net1'}]}
-        self.assertRaisesRegexp(
-            RuntimeError, "Some networks were not removed: net1 \(1\)",
-            cleanup._cleanup_network_resources, mock.Mock())
-
         # subnets and networks were removed
-        neutron.list_networks.return_value = {'networks': []}
+        neutron.list_floatingips.return_value = {"floatingips": []}
+        neutron.list_routers.return_value = {"routers": []}
+        neutron.list_ports.return_value = {"ports": []}
+        neutron.list_networks.return_value = {"networks": []}
+        m_client.return_value = neutron
         cleanup._cleanup_network_resources(mock.Mock())
 
     @mock.patch('time.sleep')
