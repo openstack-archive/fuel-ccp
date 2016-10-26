@@ -17,7 +17,13 @@ class TestDeploy(base.TestCase):
                         "valuePath": "metadata.name"
                     }
                 }
-            }]
+            }],
+            "probes": {
+                "liveness": {
+                    "command": "true",
+                    "type": "exec"
+                }
+            }
         }
         container_spec = templates.serialize_daemon_container_spec(container)
         expected = {
@@ -49,6 +55,13 @@ class TestDeploy(base.TestCase):
                 },
                 "timeoutSeconds": 1
             },
+            "livenessProbe": {
+                "exec": {
+                    "command": ['true']
+                },
+                "timeoutSeconds": 1,
+                "initialDelaySeconds": 10
+            },
             "env": [{
                 "name": "CCP_NODE_NAME",
                 'valueFrom': {
@@ -74,3 +87,37 @@ class TestDeploy(base.TestCase):
             }
         }
         self.assertDictEqual(expected, container_spec)
+
+    def test_serialize_liveness_probe_exec(self):
+        probe_definition = {"type": "exec", "command": "true"}
+        expected = {
+            "livenessProbe": {
+                "exec": {
+                    "command": ["true"]
+                },
+                "timeoutSeconds": 1,
+                "initialDelaySeconds": 10
+            }
+        }
+        probe_spec = templates.serialize_liveness_probe(probe_definition)
+        self.assertDictEqual(expected, probe_spec)
+
+    def test_serialize_liveness_probe_http(self):
+        probe_definition = {
+            "type": "httpGet",
+            "path": "_status",
+            "port": 8080,
+            "initialDelay": 7
+        }
+        expected = {
+            "livenessProbe": {
+                "httpGet": {
+                    "path": "_status",
+                    "port": 8080
+                },
+                "timeoutSeconds": 1,
+                "initialDelaySeconds": 7
+            }
+        }
+        probe_spec = templates.serialize_liveness_probe(probe_definition)
+        self.assertDictEqual(expected, probe_spec)
