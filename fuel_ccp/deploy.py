@@ -164,18 +164,17 @@ def _create_service(service):
         return
     ports = []
     for port in service["ports"]:
-        source_port, _, node_port = str(port).partition(":")
-        source_port = int(source_port)
-        name_port = str(source_port)
+        source_port = int(port.get('cont'))
+        node_port = port.get('node')
+        port_name = str(source_port)
         if node_port:
-            node_port = int(node_port)
-        if node_port:
-            ports.append({"port": source_port, "name": name_port,
-                          "node-port": node_port})
+            ports.append({"port": source_port, "name": port_name,
+                          "node-port": int(node_port)})
         else:
-            ports.append({"port": source_port, "name": name_port})
-    template = templates.serialize_service(service["name"], ports)
-    kubernetes.process_object(template)
+            ports.append({"port": source_port, "name": port_name})
+
+    service_template = templates.serialize_service(service["name"], ports)
+    kubernetes.process_object(service_template)
 
 
 def _create_pre_commands(workflow, container):
