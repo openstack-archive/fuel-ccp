@@ -54,9 +54,9 @@ function display_horizon_access_info {
 }
 
 function run_openstack_tests {
-    source $1
-    ./tools/deploy-test-vms.sh -a create
-    ./tools/deploy-test-vms.sh -a destroy
+    source openrc-$1
+    ./tools/deploy-test-vms.sh -k $1 -a create
+    ./tools/deploy-test-vms.sh -k $1 -a destroy
 }
 
 
@@ -113,6 +113,6 @@ for n in $(seq 1 ${NUMBER_OF_ENVS}); do
     ${CCP} deploy
     ccp_wait_for_deployment_to_finish ${NAMESPACE_PREFIX}-${n}
     display_horizon_access_info ${NAMESPACE_PREFIX}-${n}
-    run_openstack_tests openrc-${NAMESPACE_PREFIX}-${n}
+    run_openstack_tests ${NAMESPACE_PREFIX}-${n}
     echo "CCP cleanup command: ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-config-${n} cleanup"
 done
