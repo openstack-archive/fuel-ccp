@@ -11,8 +11,9 @@ usage() {
     -h   Prints this help
     -a   Required action. Choise from "create" and "destroy"
     -c   Calico networking insted of OVS
-    -n   Number of VMs to spawn. (optional)
-    -i   Public eth iface. (optional)
+    -n   Number of VMs to spawn (optional)
+    -i   Public eth iface (optional)
+    -k   Kubernetes namespace (optional)
 EOF
 }
 
@@ -48,7 +49,8 @@ create() {
         exit 1
     fi
     EXTIP="`ifconfig $IFACE | grep -Po 'addr:\d+\.\d+\.\d+\.\d+' | awk -F':' '{print $NF}'`"
-    VNCP="`kubectl get svc nova-novncproxy -o yaml | awk '/nodePort/ {print $NF}'`"
+    [ -n "${K8S_NAMESPACE}" ] && KUBECTL_OPTION="--namespace ${K8S_NAMESPACE}"
+    VNCP="`kubectl ${KUBECTL_OPTION} get svc nova-novncproxy -o yaml | awk '/nodePort/ {print $NF}'`"
 
     if [ "$CALICO" == "True" ]; then
         openstack network create --provider-network-type local testnetwork
@@ -82,7 +84,7 @@ destroy() {
     openstack image delete cirros
 }
 
-while getopts ":a:n:i:hc" opt; do
+while getopts ":a:n:i:k:hc" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
@@ -95,6 +97,9 @@ while getopts ":a:n:i:hc" opt; do
             ;;
         i)
             IFACE="$OPTARG"
+            ;;
+        i)
+            K8S_NAMESPACE="$OPTARG"
             ;;
         h)
             usage
