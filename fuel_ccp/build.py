@@ -341,6 +341,7 @@ def _get_config():
             CONF.registry.address, cfg['render']['namespace'])
 
     cfg['render'].update(CONF.versions._items())
+    cfg['render']['url'] = CONF.url
     cfg['sources'] = CONF.sources
 
     return cfg
