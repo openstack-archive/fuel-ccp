@@ -174,7 +174,7 @@ def _create_service(service):
                           "node-port": node_port})
         else:
             ports.append({"port": source_port, "name": name_port})
-    template = templates.serialize_service(service["name"], ports)
+    template = templates.serialize_service(service, ports)
     kubernetes.process_object(template)
 
 
