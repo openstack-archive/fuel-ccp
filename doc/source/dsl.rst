@@ -5,7 +5,7 @@ Application definition language
 There is a description of current syntax of application definition framework.
 
 Application definition template
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. sourcecode:: yaml
 
@@ -71,11 +71,12 @@ Application definition template
 
 
 Parameters description
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. _service:
 
-**service**
+service
+-------
 
 +---------------+-----------------------------------------------+----------+------------------+------------+
 | Name          | Description                                   | Required | Schema           | Default    |
@@ -100,7 +101,8 @@ Parameters description
 
 .. _container:
 
-**container**
+container
+---------
 
 +---------+--------------------------------------------+----------+------------------+---------+
 | Name    | Description                                | Required | Schema           | Default |
@@ -136,7 +138,8 @@ Parameters description
 
 .. _volume:
 
-**volume**
+volume
+------
 
 +------------+-------------------------------------------+----------+-----------------------+---------+
 | Name       | Description                               | Required | Schema                | Default |
@@ -156,7 +159,8 @@ Parameters description
 
 .. _command:
 
-**command**
+command
+-------
 
 +--------------+--------------------------------------------+----------+----------------------+---------+
 | Name         | Description                                | Required | Schema               | Default |
@@ -188,7 +192,8 @@ Parameters description
 
 .. _files:
 
-**files**
+files
+-----
 
 +------------------------------+-------------+----------+-------------+---------+
 | Name                         | Description | Required | Schema      | Default |
@@ -199,7 +204,8 @@ Parameters description
 
 .. _file:
 
-**file**
+file
+----
 
 +---------+------------------------------------------------+----------+--------+---------+
 | Name    | Description                                    | Required | Schema | Default |
