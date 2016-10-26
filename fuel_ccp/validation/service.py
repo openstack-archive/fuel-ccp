@@ -117,7 +117,9 @@ PROBE_SCHEMA_EXEC = {
     "required": ["command", "type"],
 
     "properties": {
-        "type": "exec",
+        "type": {
+            "enum": ["exec"]
+        },
         "command": NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
         "timeout": TIMEOUT_SCHEMA
@@ -130,7 +132,9 @@ PROBE_SCHEMA_HTTP = {
     "required": ["path", "type", "port"],
 
     "properties": {
-        "type": "httpGet",
+        "type": {
+            "enum": ["httpGet"]
+        },
         "port": {
             "type": "integer"
         },
