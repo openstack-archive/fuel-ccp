@@ -106,7 +106,7 @@ class TestDeploy(base.TestCase):
                 "user_name": "admin",
                 "user_password": "password",
             },
-            "keystone": {"public_port": 5000},
+            "keystone": {"public_port": {"cont": 5000}},
             "namespace": self.namespace,
         }
         rc = [
@@ -117,7 +117,7 @@ class TestDeploy(base.TestCase):
             "export OS_PASSWORD=%s" % config['openstack']['user_password'],
             "export OS_IDENTITY_API_VERSION=3",
             "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
-            config['keystone']['public_port'],
+            config['keystone']['public_port']['cont'],
         ]
 
         with open(openrc_etalon_file, 'w') as openrc_file:
