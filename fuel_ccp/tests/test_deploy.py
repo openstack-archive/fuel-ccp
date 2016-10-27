@@ -167,16 +167,16 @@ class TestDeployCreateService(base.TestCase):
         self.assertFalse(self.create_obj.called)
 
     def test_create_service(self):
+        self.conf.configs._merge({'ingress': {'enabled': False}})
         service = {
             "name": "foo",
             "ports": [
-                1234,
-                "1122:3344",
-                "5566",
-                "9999",
-                "8888:6666",
-                "7788:6666",
-                "7777:9900"
+                {"cont": 1111},
+                {"cont": "2222"},
+                {"cont": 3333,
+                 "node": 30000},
+                {"cont": "4444",
+                 "node": "33333"}
             ]
         }
         service_k8s_obj = """
@@ -188,38 +188,24 @@ metadata:
   name: foo
 spec:
   ports:
-  - name: "1234"
-    port: 1234
+  - name: "1111"
+    port: 1111
     protocol: TCP
-    targetPort: 1234
-  - name: "1122"
-    nodePort: 3344
-    port: 1122
+    targetPort: 1111
+  - name: "2222"
+    port: 2222
     protocol: TCP
-    targetPort: 1122
-  - name: "5566"
-    port: 5566
+    targetPort: 2222
+  - name: "3333"
+    nodePort: 30000
+    port: 3333
     protocol: TCP
-    targetPort: 5566
-  - name: "9999"
-    port: 9999
+    targetPort: 3333
+  - name: "4444"
+    nodePort: 33333
+    port: 4444
     protocol: TCP
-    targetPort: 9999
-  - name: "8888"
-    nodePort: 6666
-    port: 8888
-    protocol: TCP
-    targetPort: 8888
-  - name: "7788"
-    nodePort: 6666
-    port: 7788
-    protocol: TCP
-    targetPort: 7788
-  - name: "7777"
-    nodePort: 9900
-    port: 7777
-    protocol: TCP
-    targetPort: 7777
+    targetPort: 4444
   selector:
     app: foo
   type: NodePort"""
