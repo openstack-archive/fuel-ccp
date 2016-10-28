@@ -1,0 +1,8 @@
+!include
+- ccp-configs-common.yaml
+- ccp-config-master-sources.yaml
+- ccp-roles.yaml
+- ccp-topology-1.yaml
+---
+kubernetes:
+  namespace: "ccp-master-1"
