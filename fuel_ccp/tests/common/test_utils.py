@@ -1,6 +1,7 @@
 import os
 
 from jinja2 import exceptions as jinja_exceptions
+import testscenarios
 import yaml
 
 from fuel_ccp.common import utils
@@ -117,3 +118,41 @@ class TestUtils(base.TestCase):
 
         self.assertRaises(jinja_exceptions.UndefinedError,
                           utils.get_deploy_components_info)
+
+    def test_get_ingress_host(self):
+        self.conf.configs._merge({'ingress': {'domain': 'test'}})
+        self.assertEqual('service.ccp.test', utils.get_ingress_host('service'))
+
+
+class TestAddress(testscenarios.WithScenarios, base.TestCase):
+    scenarios = (
+        ('internal_without_port', {'address': 'service.ccp'}),
+        ('internal_with_port', {'address': 'service.ccp:1234',
+                                'port': {'cont': 1234}}),
+        ('external_with_nodeport',
+         {'address': '1.1.1.1:30000', 'external': True, 'ingress': False,
+          'port': {'cont': 1234, 'ingress': 'test', 'node': 30000}}),
+        ('external_without_ingress_and_nodeport',
+         {'address': 'service.ccp:1234', 'external': True, 'ingress': False,
+          'port': {'cont': 1234, 'ingress': 'test'}}),
+        ('external_with_ingress_enabled',
+         {'address': 'test.ccp.external', 'external': True, 'ingress': True,
+          'port': {'cont': 1234, 'ingress': 'test'}}),
+        ('external_with_ingress_not_provided',
+         {'address': '1.1.1.1:30000', 'external': True, 'ingress': True,
+          'port': {'cont': 1234, 'node': 30000}}),
+        ('external_with_ingress_and_nodeport_not_provided',
+         {'address': 'service.ccp:1234', 'external': True, 'ingress': True,
+          'port': {'cont': 1234}}),
+    )
+
+    port = None
+    external = None
+    ingress = False
+
+    def test_address(self):
+        self.conf.configs._merge({'ingress': {'enabled': self.ingress,
+                                              'domain': 'external'},
+                                  'k8s_external_ip': '1.1.1.1'})
+        self.assertEqual(self.address,
+                         utils.address('service', self.port, self.external))
