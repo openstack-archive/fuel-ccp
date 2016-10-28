@@ -40,7 +40,7 @@ def get_config_paths():
     return paths
 
 
-def address(service, port=None, external=False):
+def address(service, port=None, external=False, multiple=False):
     addr = None
     if external:
         if not port:
@@ -54,7 +54,10 @@ def address(service, port=None, external=False):
         addr = '%s.%s' % (service, CONF.kubernetes.namespace)
         if port:
             addr = '%s:%s' % (addr, port['cont'])
-
+        if multiple:
+            replicas = CONF.replicas.get(service, 1)
+            addr = ['%s-%i.%s' % (service, pod_number, addr)
+                    for pod_number in range(replicas)]
     return addr
 
 
