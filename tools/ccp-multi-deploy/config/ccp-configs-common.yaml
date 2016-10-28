@@ -7,6 +7,33 @@ registry:
 repositories:
   path: /tmp/ccp-repos
   skip_empty: True
+  repos:
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-debian-base
+      name: debian-base
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-entrypoint
+      name: entrypoint
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-etcd
+      name: etcd
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-glance
+      name: glance
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-heat
+      name: heat
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-horizon
+      name: horizon
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-keystone
+      name: keystone
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-mariadb
+      name: mariadb
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-memcached
+      name: memcached
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-neutron
+      name: neutron
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-nova
+      name: nova
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-openstack-base
+      name: openstack-base
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-rabbitmq
+      name: rabbitmq
 configs:
     private_interface: eth0
     public_interface: eth1
