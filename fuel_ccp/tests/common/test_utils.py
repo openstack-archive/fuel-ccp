@@ -144,15 +144,25 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
         ('external_with_ingress_and_nodeport_not_provided',
          {'address': 'service.ccp:1234', 'external': True, 'ingress': True,
           'port': {'cont': 1234}}),
+        ('multiple_without_port',
+         {'address': ['service-0.service.ccp', 'service-1.service.ccp'],
+          'multiple': True}),
+        ('multiple_with_port',
+         {'address': ['service-0.service.ccp:1234',
+                      'service-1.service.ccp:1234'],
+          'port': {'cont': 1234}, 'multiple': True}),
     )
 
     port = None
     external = None
     ingress = False
+    multiple = False
 
     def test_address(self):
+        self.conf.replicas = {'service': 2}
         self.conf.configs._merge({'ingress': {'enabled': self.ingress,
                                               'domain': 'external'},
                                   'k8s_external_ip': '1.1.1.1'})
         self.assertEqual(self.address,
-                         utils.address('service', self.port, self.external))
+                         utils.address('service', self.port, self.external,
+                                       self.multiple))
