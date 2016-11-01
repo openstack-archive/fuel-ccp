@@ -46,6 +46,9 @@ class AttrDict(object):
     def __repr__(self):
         return 'AttrDict({})'.format(self._dict)
 
+    def __len__(self):
+        return len(self._dict)
+
     def __iter__(self):
         return iter(self._dict)
 
