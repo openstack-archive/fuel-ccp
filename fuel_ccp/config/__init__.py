@@ -64,7 +64,7 @@ def get_config_defaults():
         'verbose_level': 1,
         'log_file': None,
     })
-    for name in ['configs', 'nodes', 'roles', 'versions']:
+    for name in ['configs', 'nodes', 'roles', 'versions', 'replicas']:
         defaults[name] = _yaml.AttrDict()
     for module in CONFIG_MODULES:
         defaults._merge(module.DEFAULTS)
