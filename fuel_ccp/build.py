@@ -41,8 +41,23 @@ def render_dockerfile(path, name, config):
         parent.append(image_name)
         return images.image_spec(image_name, add_address=CONF.builder.push)
 
+    def render(fname):
+        dirname = os.path.dirname(path)
+        fpath = os.path.join(dirname, fname)
+        if fname.endswith('.j2'):
+            oname = fname[:-3]
+        else:
+            oname = fname + '.rendered'
+        opath = os.path.join(dirname, oname)
+        content = jinja_utils.jinja_render(fpath, config['render'],
+                                           [copy_sources, image_spec, render])
+        with open(opath, 'wb') as f:
+            f.write(content.encode('utf-8'))
+
+        return oname
+
     content = jinja_utils.jinja_render(path, config['render'],
-                                       [copy_sources, image_spec])
+                                       [copy_sources, image_spec, render])
 
     return content, sources, parent[0] if parent else None
 
