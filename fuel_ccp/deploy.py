@@ -237,7 +237,8 @@ def _create_post_jobs(service, container, component_name):
 def _create_job(service, container, job, component_name):
     cont_spec = templates.serialize_job_container_spec(container, job)
     pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
-    job_spec = templates.serialize_job(job["name"], pod_spec, component_name)
+    job_spec = templates.serialize_job(job["name"], pod_spec, component_name,
+                                       service["name"])
     kubernetes.process_object(job_spec)
 
 

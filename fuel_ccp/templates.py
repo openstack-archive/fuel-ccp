@@ -270,13 +270,14 @@ def serialize_volumes(service):
     return vol_spec
 
 
-def serialize_job(name, spec, component_name):
+def serialize_job(name, spec, component_name, app_name):
     return {
         "apiVersion": "batch/v1",
         "kind": "Job",
         "metadata": {
             "name": name,
             "labels": {
+                "app": app_name,
                 "ccp": "true",
                 "ccp-component": component_name
             }
