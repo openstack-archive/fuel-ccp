@@ -122,7 +122,12 @@ Append global CCP configuration:
         private_interface: eth0
         public_interface: eth1
         neutron:
-          external_interface: eth2
+          physnets:
+            - name: "physnet1"
+              bridge_name: "br-ex"
+              interface: "ens8"
+              flat: true
+              vlan_range: "1001-1030"
     EOF
 
 Make sure to adjust it to your environment, since the network configuration of
@@ -132,8 +137,9 @@ your environment may be different.
 - ``public_interface`` - should point to eth with public ip address (you can
   use private iface here, if you want to bind all services to internal
   network)
-- ``neutron.external_interface`` - should point to eth without ip addr (it
-  actually might be non-existing interface, CCP will create it).
+- ``neutron.physnets`` - should contain description of Neutron physical
+  networks. ``interface`` should point to eth without ip addr.
+  ``vlan_range`` may be false if vlan segmentation is not allowed.
 
 Fetch CCP components repos:
 
