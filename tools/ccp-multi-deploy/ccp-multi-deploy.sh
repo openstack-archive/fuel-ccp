@@ -109,6 +109,13 @@ if [ "${BUILD_IMAGES}" = "true" ]; then
     ${CCP} build
 fi
 
+# add k8s_address to config
+default_iface=$(ip ro sh | awk '/^default via [0-9]+.[0-9]+.[0-9]+.[0-9]+ dev/ {print $5}')
+ext_ipaddr=$(ip addr show $default_iface | awk '/inet / {print substr($2, 1, length($2)-3)}')
+cat >${CONFIG_DIR}/ccp-hw-config.yaml << EOF
+configs:
+    k8s_external_ip: "$ext_ipaddr"
+EOF
 
 # Deploy envs:
 for n in $(seq 1 ${NUMBER_OF_ENVS}); do
