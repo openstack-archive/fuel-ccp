@@ -50,9 +50,8 @@ function ccp_wait_for_deployment_to_finish {
 }
 
 function display_horizon_access_info {
-    HORIZON_NODEPORT=`kubectl --namespace $1 get service horizon -o yaml | awk '/nodePort: / {print $NF}'`
-    echo "Hint - to access horizon from your workstation please run:"
-    echo "ssh USER@LAB_HOST_IP -L 18080:127.0.0.1:18080 ssh -L8080:NODE1_IP:${HORIZON_NODEPORT} vagrant@NODE1_IP"
+    HORIZON_EXT_ADDRESS=$({$CCP} status horizon -f value -c links)
+    echo "Hint - to access horizon from your workstation please use the following address $HORIZON_EXT_ADDRESS"
 }
 
 function run_openstack_tests {
