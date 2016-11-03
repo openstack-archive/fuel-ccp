@@ -94,6 +94,13 @@ if [ `kubectl get nodes | grep node | wc -l` -lt $(($NUMBER_OF_ENVS * 3)) ]; the
     exit 1
 fi
 
+# add k8s_address to config
+default_iface=$(ip ro sh | awk '/^default via [0-9]+.[0-9]+.[0-9]+.[0-9]+ dev/ {print $5}')
+ext_ipaddr=$(ip addr show $default_iface | awk '/inet / {print substr($2, 1, length($2)-3)}')
+cat >${CONFIG_DIR}/ccp-hw-config.yaml << EOF
+configs:
+    k8s_external_ip: "$ext_ipaddr"
+EOF
 
 # Fetch CCP repos
 CCP="ccp --verbose --debug --config-file ${CONFIG_DIR}/ccp-cli-${VERSION}-config-1.yaml"
@@ -108,7 +115,6 @@ if [ "${BUILD_IMAGES}" = "true" ]; then
     ./tools/registry/deploy-registry.sh -n default
     ${CCP} build
 fi
-
 
 # Deploy envs:
 for n in $(seq 1 ${NUMBER_OF_ENVS}); do

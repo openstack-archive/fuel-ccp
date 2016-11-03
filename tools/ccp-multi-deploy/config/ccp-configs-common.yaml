@@ -1,3 +1,6 @@
+!include
+- ccp-hw-config.yaml
+
 ---
 builder:
   push: True
