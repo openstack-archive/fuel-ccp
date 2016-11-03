@@ -109,6 +109,10 @@ def parse_role(component, topology, configmaps):
 
         obj = templates.serialize_daemonset(service_name, cont_spec,
                                             affinity, component_name)
+    elif service.get("kind") == "PetSet":
+        replicas = replicas or 1
+        obj = templates.serialize_petset(service_name, cont_spec,
+                                         affinity, replicas, component_name)
     else:
         replicas = replicas or 1
         obj = templates.serialize_deployment(service_name, cont_spec,
@@ -179,7 +183,8 @@ def _process_ports(service):
             if ingress_host:
                 ingress_rules.append(templates.serialize_ingress_rule(
                     service["name"], ingress_host, source_port))
-    service_template = templates.serialize_service(service["name"], ports)
+    service_template = templates.serialize_service(
+        service["name"], ports, service.get("kind") == "PetSet")
     kubernetes.process_object(service_template)
 
     if ingress_rules:

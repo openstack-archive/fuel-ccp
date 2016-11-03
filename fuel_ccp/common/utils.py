@@ -95,6 +95,9 @@ def get_deployed_components():
     """Returns set of deployed components."""
     deployed_daemonsets = kubernetes.list_cluster_daemonsets()
     deployed_deployments = kubernetes.list_cluster_deployments()
+    deployed_petsets = kubernetes.list_cluster_petsets()
     deployed_components = set(kubernetes.get_object_names(
-        itertools.chain(deployed_daemonsets, deployed_deployments)))
+        itertools.chain(deployed_daemonsets, deployed_deployments,
+                        deployed_petsets))
+    )
     return deployed_components

@@ -161,6 +161,13 @@ def list_cluster_services():
         selector="ccp=true")
 
 
+def list_cluster_petsets():
+    client = get_client()
+    return pykube.PetSet.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true")
+
+
 def get_object_names(items):
     names = []
     for item in items:

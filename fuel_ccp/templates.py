@@ -341,6 +341,36 @@ def serialize_daemonset(name, spec, affinity, component_name):
     }
 
 
+def serialize_petset(name, spec, affinity, replicas, component_name):
+    annotations = {
+        "pod.alpha.kubernetes.io/initialized": "true"
+    }
+    annotations.update(affinity)
+
+    return {
+        "apiVersion": "apps/v1alpha1",
+        "kind": "PetSet",
+        "metadata": {
+            "name": name
+        },
+        "spec": {
+            "serviceName": name,
+            "replicas": replicas,
+            "template": {
+                "metadata": {
+                    "annotations": annotations,
+                    "labels": {
+                        "ccp": "true",
+                        "app": name,
+                        "ccp-component": component_name
+                    }
+                },
+                "spec": spec
+            }
+        }
+    }
+
+
 def serialize_affinity(service, topology):
     policy = {
         "nodeAffinity": {
@@ -371,17 +401,19 @@ def serialize_affinity(service, topology):
         policy, sort_keys=True)}
 
 
-def serialize_service(name, ports):
+def serialize_service(name, ports, headless=False):
     ports_spec = []
     for port in ports:
-        spec_entry = {"protocol": "TCP",
-                      "port": port["port"],
-                      "targetPort": port["port"],
+        spec_entry = {"port": port["port"],
                       "name": port["name"]}
-        if port.get("node-port"):
-            spec_entry.update({"nodePort": port["node-port"]})
+        if not headless:
+            spec_entry.update({"protocol": "TCP",
+                               "targetPort": port["port"]})
+            if port.get("node-port"):
+                spec_entry.update({"nodePort": port["node-port"]})
         ports_spec.append(spec_entry)
-    return {
+
+    obj = {
         "apiVersion": "v1",
         "kind": "Service",
         "metadata": {
@@ -391,13 +423,19 @@ def serialize_service(name, ports):
             }
         },
         "spec": {
-            "type": "NodePort",
             "selector": {
                 "app": name
             },
             "ports": ports_spec
         }
     }
+
+    if not headless:
+        obj["spec"]["type"] = "NodePort"
+    else:
+        obj["spec"]["clusterIP"] = "None"
+
+    return obj
 
 
 def serialize_ingress_rule(service, host, port):
