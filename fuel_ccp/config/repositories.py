@@ -21,7 +21,6 @@ DEFAULT_REPOS = [
     'fuel-ccp-rabbitmq',
     'fuel-ccp-sahara',
     'fuel-ccp-searchlight',
-    'fuel-ccp-stacklight',
 ]
 
 DEFAULTS = {
