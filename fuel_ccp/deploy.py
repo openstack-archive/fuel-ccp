@@ -322,18 +322,7 @@ def _create_meta_configmap(service):
     return kubernetes.process_object(template)
 
 
-def _make_topology(nodes, roles, replicas):
-    failed = False
-    # TODO(sreshetniak): move it to validation
-    if not nodes:
-        LOG.error("Nodes section is not specified in configs")
-        failed = True
-    if not roles:
-        LOG.error("Roles section is not specified in configs")
-        failed = True
-    if failed:
-        raise RuntimeError("Failed to create topology for services")
-
+def _make_topology(nodes, roles, replicas=None):
     # Replicas are optional, 1 replica will deployed by default
     replicas = replicas or dict()
 
@@ -413,9 +402,10 @@ def _create_openrc(config):
 
 
 def deploy_components(components_map, components):
-    if not components:
-        components = set(components_map.keys())
 
+    components = components or set(components_map.keys())
+
+    deploy_validation.validate_required_config_sections()
     deploy_validation.validate_requested_components(components, components_map)
 
     if CONF.action.export_dir:

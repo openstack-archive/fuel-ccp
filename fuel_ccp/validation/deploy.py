@@ -1,5 +1,10 @@
 from fuel_ccp.common import utils
 from fuel_ccp import dependencies
+from fuel_ccp.validation import base as validation_base
+
+validate_required_config_sections = validation_base.require_config_sections(
+    ['nodes', 'roles']
+)
 
 
 def validate_requested_components(components, components_map):

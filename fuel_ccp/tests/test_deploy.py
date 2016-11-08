@@ -379,14 +379,6 @@ class TestDeployMakeTopology(base.TestCase):
             ]
         }
 
-    def test_make_empty_topology(self):
-        self.assertRaises(RuntimeError,
-                          deploy._make_topology, None, None, None)
-        self.assertRaises(RuntimeError,
-                          deploy._make_topology, None, {"spam": "eggs"}, None)
-        self.assertRaises(RuntimeError,
-                          deploy._make_topology, {"spam": "eggs"}, None, None)
-
     def test_make_topology_without_replicas(self):
         nodes = {
             "node1": {

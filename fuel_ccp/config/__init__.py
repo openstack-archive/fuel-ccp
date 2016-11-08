@@ -8,9 +8,11 @@ from fuel_ccp.config import builder
 from fuel_ccp.config import cli
 from fuel_ccp.config import images
 from fuel_ccp.config import kubernetes
+from fuel_ccp.config import nodes
 from fuel_ccp.config import registry
 from fuel_ccp.config import replicas
 from fuel_ccp.config import repositories
+from fuel_ccp.config import roles
 from fuel_ccp.config import sources
 from fuel_ccp.config import url
 
@@ -54,8 +56,8 @@ class _Wrapper(object):
 CONF = _Wrapper()
 
 CONFIG_MODULES = [
-    builder, cli, images, kubernetes, registry, replicas, repositories,
-    sources, url,
+    builder, cli, images, kubernetes, registry, replicas, repositories, roles,
+    sources, url, nodes
 ]
 
 
@@ -89,7 +91,7 @@ def get_config_schema():
     for name in ignore_opts:
         schema['properties'][name] = {}
     # Also for now don't validate sections that used to be in deploy config
-    for name in ['configs', 'nodes', 'roles', 'versions']:
+    for name in ['configs', 'versions']:
         schema['properties'][name] = {'type': 'object'}
     return schema
 
