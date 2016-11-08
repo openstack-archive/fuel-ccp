@@ -205,6 +205,26 @@ class ShowStatus(lister.Lister):
             return status.show_long_status(parsed_args.components)
 
 
+class ImagesList(BaseCommand, lister.Lister):
+    """Get images mathcing list of components"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ImagesList, self).get_parser(*args, **kwargs)
+        parser.add_argument('components',
+                            nargs='*',
+                            help='CCP components to get images for')
+        return parser
+
+    def take_action(self, parsed_args):
+        dockerfiles = build.get_dockerfiles(match=not parsed_args.components)
+        for component in parsed_args.components:
+            build.match_dockerfiles_by_component(dockerfiles, component)
+        return (
+            ('Name',),
+            ((d['name'],) for d in dockerfiles.values() if d['match']),
+        )
+
+
 def signal_handler(signo, frame):
     sys.exit(-signo)
 
