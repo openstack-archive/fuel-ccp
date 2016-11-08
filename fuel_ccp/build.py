@@ -56,8 +56,12 @@ def render_dockerfile(path, name, config):
 
         return oname
 
+    def test():
+        return ""
+
     content = jinja_utils.jinja_render(path, config['render'],
-                                       [copy_sources, image_spec, render])
+                                       [copy_sources, image_spec, render,
+                                        test])
 
     return content, sources, parent[0] if parent else None
 
