@@ -4,6 +4,7 @@ DEFAULTS = {
         'tag': 'latest',
         'base_distro': 'debian',
         'base_tag': 'jessie',
+        'base_images': ['base'],
         'maintainer': 'MOS Microservices <mos-microservices@mirantis.com>',
         'image_specs': {},
     },
@@ -18,6 +19,7 @@ SCHEMA = {
             'tag': {'type': 'string'},
             'base_distro': {'type': 'string'},
             'base_tag': {'type': 'string'},
+            'base_images': {'type': 'array', 'items': {'type': 'string'}},
             'maintainer': {'type': 'string'},
             'image_specs': {
                 'type': 'object',
