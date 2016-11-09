@@ -1,7 +1,7 @@
 import os
 
 import jinja2
-
+from urlparse import urlparse
 
 class SilentUndefined(jinja2.Undefined):
     def _fail_with_undefined_error(self, *args, **kwargs):
@@ -14,6 +14,11 @@ class SilentUndefined(jinja2.Undefined):
         __float__ = __complex__ = __pow__ = __rpow__ = \
         _fail_with_undefined_error
 
+def get_baseurl(path):
+    parsed_uri = urlparse(path)
+    domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+    return domain
+
 
 def jinja_render(path, context, functions=(), ignore_undefined=False):
     kwargs = {}
@@ -24,6 +29,7 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)), **kwargs)
+    env.filters['baseurl'] = get_baseurl
     for func in functions:
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
