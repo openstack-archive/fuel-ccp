@@ -1,4 +1,5 @@
 import hashlib
+import itertools
 import json
 import logging
 import os
@@ -90,8 +91,8 @@ def parse_role(component, topology, configmaps):
         daemon_cmd = cont["daemon"]
         daemon_cmd["name"] = cont["name"]
 
-        _create_pre_jobs(service, cont, component_name)
-        _create_post_jobs(service, cont, component_name)
+        yield _create_pre_jobs(service, cont, component_name)
+        yield _create_post_jobs(service, cont, component_name)
         cont['cm_version'] = cm_version
 
     cont_spec = templates.serialize_daemon_pod_spec(service)
@@ -118,9 +119,9 @@ def parse_role(component, topology, configmaps):
         obj = templates.serialize_deployment(service_name, cont_spec,
                                              affinity, replicas,
                                              component_name)
-    kubernetes.process_object(obj)
+    yield [obj]
 
-    _process_ports(service)
+    yield _process_ports(service)
     LOG.info("Service %s successfuly scheduled", service_name)
 
 
@@ -185,12 +186,12 @@ def _process_ports(service):
                     service["name"], ingress_host, source_port))
     service_template = templates.serialize_service(
         service["name"], ports, service.get("kind") == "PetSet")
-    kubernetes.process_object(service_template)
+    yield service_template
 
     if ingress_rules:
         ingress_template = templates.serialize_ingress(
             service["name"], ingress_rules)
-        kubernetes.process_object(ingress_template)
+        yield ingress_template
 
 
 def _create_pre_commands(workflow, container):
@@ -230,21 +231,21 @@ def _is_single_job(job):
 def _create_pre_jobs(service, container, component_name):
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            _create_job(service, container, job, component_name)
+            yield _get_job(service, container, job, component_name)
 
 
 def _create_post_jobs(service, container, component_name):
     for job in container.get("post", ()):
         if _is_single_job(job):
-            _create_job(service, container, job, component_name)
+            yield _get_job(service, container, job, component_name)
 
 
-def _create_job(service, container, job, component_name):
+def _get_job(service, container, job, component_name):
     cont_spec = templates.serialize_job_container_spec(container, job)
     pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec)
     job_spec = templates.serialize_job(job["name"], pod_spec, component_name,
                                        service["name"])
-    kubernetes.process_object(job_spec)
+    return job_spec
 
 
 def _create_command(workflow, cmd):
@@ -430,9 +431,12 @@ def deploy_components(components_map, components):
     configmaps = (start_script_cm,)
 
     for component in components:
-        parse_role(components_map[component],
-                   topology=topology,
-                   configmaps=configmaps)
+        objects_gen = parse_role(components_map[component],
+                                 topology=topology,
+                                 configmaps=configmaps)
+        objects = list(itertools.chain.from_iterable(objects_gen))
+        for obj in objects:
+            kubernetes.process_object(obj)
 
     if 'keystone' in components:
         _create_openrc(CONF.configs)
