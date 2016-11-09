@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: traefik
+  name: traefik
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      volumes:
+      - name: ssl
+        secret:
+          secretName: traefik-cert
+      - name: config
+        configMap:
+          name: traefik-conf
+      containers:
+      - image: traefik:latest
+        name: traefik
+        volumeMounts:
+        - mountPath: "/ssl"
+          name: "ssl"
+        - mountPath: "/config"
+          name: "config"
+        args:
+        - --configfile=/config/traefik.toml
+        - --kubernetes
+        - --logLevel=DEBUG
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+spec:
+  externalIPs:
+    - EXTERNAL_IP
+  ports:
+    - name: http
+      port: HTTP_PORT
+    - name: https
+      port: HTTPS_PORT
+  selector:
+    app: traefik
