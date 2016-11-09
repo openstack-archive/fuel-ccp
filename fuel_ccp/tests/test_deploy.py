@@ -210,8 +210,8 @@ spec:
   selector:
     app: foo
   type: NodePort"""
-        deploy._process_ports(service)
-        self.create_obj.assert_called_once_with(yaml.load(service_k8s_obj))
+        objects = list(deploy._process_ports(service))
+        self.assertEqual([yaml.load(service_k8s_obj)], objects)
 
     def test_create_ingress(self):
         self.conf.configs._merge({'ingress': {'enabled': True,
@@ -258,9 +258,9 @@ spec:
             }
         }
 
-        deploy._process_ports(service)
-        self.assertEqual(2, self.create_obj.call_count)
-        self.assertEqual(ingress_k8s_obj, self.create_obj.call_args[0][0])
+        objects = list(deploy._process_ports(service))
+        self.assertEqual(2, len(objects))
+        self.assertEqual(ingress_k8s_obj, objects[1])
 
 
 class TestDeployParseWorkflow(base.TestCase):
