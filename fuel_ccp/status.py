@@ -15,6 +15,8 @@ class State(object):
         self.name = name
         self.total = total or 0
         self.running = running or 0
+        self.job_completed = 0
+        self.job_total = 0
         self.urls = urls or []
 
     def __repr__(self):
@@ -34,7 +36,8 @@ class State(object):
 
     @property
     def ready(self):
-        return self.total == self.running
+        return (self.total == self.running
+                and self.job_total == self.job_completed)
 
 
 def _get_pods_status(service, svc_map):
@@ -70,19 +73,32 @@ def get_pod_states(components=None):
         if not components or ds.name in components:
             states.append(_get_pods_status(ds.name, svc_map))
 
+    job_states = {}
+    for job in kubernetes.list_cluster_jobs():
+        service = job.obj["metadata"]["labels"].get("app")
+        job_states.setdefault(service, {"completed": 0, "total": 0})
+        job_states[service]["total"] += job.obj["spec"]["completions"]
+        job_states[service]["completed"] += job.obj["status"].get("succeeded",
+                                                                  0)
+    for state in states:
+        if state.name in job_states:
+            state.job_total = job_states[state.name]["total"]
+            state.job_completed = job_states[state.name]["completed"]
+
     return states
 
 
 def show_long_status(components=None):
     states = get_pod_states(components)
-    columns = ("service", "pod", "ready", "links")
+    columns = ("service", "pod", "job", "ready", "links")
 
     formatted_states = []
 
     for state in sorted(states):
         formatted_states.append((
             state.name,
-            "/".join((str(state.running), str(state.total))),
+            "%d/%d" % (state.running, state.total),
+            "%d/%d" % (state.job_completed, state.job_total),
             state,
             "\n".join(state.urls)))
 
