@@ -69,9 +69,6 @@ def get_pod_states(components=None):
     for dp in kubernetes.list_cluster_deployments():
         if not components or dp.name in components:
             states.append(_get_pods_status(dp.name, svc_map))
-    for ds in kubernetes.list_cluster_daemonsets():
-        if not components or ds.name in components:
-            states.append(_get_pods_status(ds.name, svc_map))
 
     job_states = {}
     for job in kubernetes.list_cluster_jobs():
