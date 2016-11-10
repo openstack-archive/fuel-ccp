@@ -78,26 +78,30 @@ Parameters description
 service
 -------
 
-+---------------+-----------------------------------------------+----------+------------------+------------+
-| Name          | Description                                   | Required | Schema           | Default    |
-+===============+===============================================+==========+==================+============+
-| name          | Name of the service.                          | true     | string           |            |
-+---------------+-----------------------------------------------+----------+------------------+------------+
-| kind          | Kind of k8s object to use for containers      | false    | one of:          | Deployment |
-|               | deployment                                    |          | ["Deployment",   |            |
-|               |                                               |          | "DaemonSet"]     |            |
-+---------------+-----------------------------------------------+----------+------------------+------------+
-| containers    | List of containers under multi-container pod  | true     | container_ array |            |
-+---------------+-----------------------------------------------+----------+------------------+------------+
-| ports         | k8s Service will be created if specified      | false    | internal-port:   |            |
-|               | (with NodePort type for now)                  |          | external-port    |            |
-|               | Only internal or both internal:external ports |          | array            |            |
-|               | can be specified                              |          |                  |            |
-+---------------+-----------------------------------------------+----------+------------------+------------+
-| hostNetwork   | Use the host’s network namespace              | false    | boolean          | false      |
-+---------------+-----------------------------------------------+----------+------------------+------------+
-| hostPID       | Use the host’s pid namespace                  | false    | boolean          | false      |
-+---------------+-----------------------------------------------+----------+------------------+------------+
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| Name          | Description                                   | Required | Schema           | Default       |
++===============+===============================================+==========+==================+===============+
+| name          | Name of the service.                          | true     | string           |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| kind          | Kind of k8s object to use for containers      | false    | one of:          | Deployment    |
+|               | deployment                                    |          | ["Deployment",   |               |
+|               |                                               |          | "DaemonSet"]     |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| containers    | List of containers under multi-container pod  | true     | container_ array |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| ports         | k8s Service will be created if specified      | false    | internal-port:   |               |
+|               | (with NodePort type for now)                  |          | external-port    |               |
+|               | Only internal or both internal:external ports |          | array            |               |
+|               | can be specified                              |          |                  |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| hostNetwork   | Use the host’s network namespace              | false    | boolean          | false         |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| hostPID       | Use the host’s pid namespace                  | false    | boolean          | false         |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| strategy      | The strategy that should be used to replace   | false    | one of:          | RollingUpdate |
+|               | old Pods by new ones                          |          | ["RollingUpdate",|               |
+|               |                                               |          | "Recreate"]      |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
 
 .. _container:
 

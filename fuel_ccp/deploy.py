@@ -112,8 +112,9 @@ def parse_role(component, topology, configmaps):
     else:
         replicas = replicas or 1
 
-    obj = templates.serialize_deployment(service_name, cont_spec,
-                                         affinity, replicas, component_name)
+    obj = templates.serialize_deployment(service_name, cont_spec, affinity,
+                                         replicas, component_name,
+                                         service.get('strategy'))
     kubernetes.process_object(obj)
 
     _process_ports(service)
