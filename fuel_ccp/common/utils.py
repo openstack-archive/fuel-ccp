@@ -58,6 +58,26 @@ def address(service, port=None, external=False):
     return addr
 
 
+def get_repositories_exports(repos_names=None):
+    """Load shared templates from ./export dirs of the repositories. """
+    exports = dict()
+    repos_names = repos_names or [d['name'] for d in CONF.repositories.repos]
+    for repo in repos_names:
+        exports_dir = os.path.join(CONF.repositories.path, repo, 'exports')
+        if os.path.exists(exports_dir):
+            for export in os.listdir(exports_dir):
+                path = os.path.join(exports_dir, export)
+                LOG.debug('Found shared macros template %s', path)
+                if export in exports:
+                    raise RuntimeError(
+                        'Macros templates filename conflict: %s was previously'
+                        'detected. Make sure that each macros template appears'
+                        'only once across all repositories' % path)
+                with open(path) as f:
+                    exports[export] = f.read()
+    return exports
+
+
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
         rendering_context = CONF.configs._dict
