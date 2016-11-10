@@ -4,15 +4,19 @@ import jinja2
 
 
 class SilentUndefined(jinja2.Undefined):
+
     def _fail_with_undefined_error(self, *args, **kwargs):
         return ''
 
+    def _new(*args, **kwargs):
+        return SilentUndefined()
+
+    __call__ = __getitem__ = __getattr__ = _new
     __add__ = __radd__ = __mul__ = __rmul__ = __div__ = __rdiv__ = \
         __truediv__ = __rtruediv__ = __floordiv__ = __rfloordiv__ = \
-        __mod__ = __rmod__ = __pos__ = __neg__ = __call__ = \
-        __getitem__ = __lt__ = __le__ = __gt__ = __ge__ = __int__ = \
-        __float__ = __complex__ = __pow__ = __rpow__ = \
-        _fail_with_undefined_error
+        __mod__ = __rmod__ = __pos__ = __neg__ = __lt__ = __le__ = \
+        __gt__ = __ge__ = __int__ = __float__ = __complex__ = __pow__ = \
+        __rpow__ = _fail_with_undefined_error
 
 
 def jinja_render(path, context, functions=(), ignore_undefined=False):
