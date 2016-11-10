@@ -318,36 +318,6 @@ def serialize_deployment(name, spec, affinity, replicas, component_name):
     }
 
 
-def serialize_petset(name, spec, affinity, replicas, component_name):
-    annotations = {
-        "pod.alpha.kubernetes.io/initialized": "true"
-    }
-    annotations.update(affinity)
-
-    return {
-        "apiVersion": "apps/v1alpha1",
-        "kind": "PetSet",
-        "metadata": {
-            "name": name
-        },
-        "spec": {
-            "serviceName": name,
-            "replicas": replicas,
-            "template": {
-                "metadata": {
-                    "annotations": annotations,
-                    "labels": {
-                        "ccp": "true",
-                        "app": name,
-                        "ccp-component": component_name
-                    }
-                },
-                "spec": spec
-            }
-        }
-    }
-
-
 def serialize_affinity(service, topology):
     policy = {
         "nodeAffinity": {
