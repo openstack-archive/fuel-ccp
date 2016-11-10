@@ -42,7 +42,8 @@ class TestDeploy(base.TestCase):
                 {'mountPath': '/etc/ccp/meta', 'name': 'meta'},
                 {'mountPath': '/opt/ccp_start_script/bin',
                  'name': 'start-script'},
-                {'mountPath': '/etc/ccp/files', 'name': 'files'}
+                {'mountPath': '/etc/ccp/files', 'name': 'files'},
+                {'mountPath': '/etc/ccp/macros', 'name': 'macros'}
             ],
             "readinessProbe": {
                 "exec": {
