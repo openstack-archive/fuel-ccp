@@ -1,6 +1,7 @@
 import os
 
 import jinja2
+import re
 
 
 class SilentUndefined(jinja2.Undefined):
@@ -32,3 +33,17 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
     return content
+
+
+def generate_jinja_imports(filenames):
+    """Generate str of jinja imports from list of filenames."""
+    imports = []  # list of j2 imports: "{% import 'msg.j2' as msg %}"
+    for name in filenames:
+        import_as = name.split('.')[0]  # remove file extension
+        if not re.match('[a-zA-Z_][a-zA-Z0-9_]*', import_as):
+            raise RuntimeError('Wrong templates file naming: the %s cannot be'
+                               'imported by jinja with %s name. Please use '
+                               'python compatible naming' % (name, import_as))
+        imports.append(
+            "{% import '" + name + "' as " + import_as + " with context %}")
+    return '\n'.join(imports)
