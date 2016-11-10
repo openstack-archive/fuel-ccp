@@ -318,29 +318,6 @@ def serialize_deployment(name, spec, affinity, replicas, component_name):
     }
 
 
-def serialize_daemonset(name, spec, affinity, component_name):
-    return {
-        "apiVersion": "extensions/v1beta1",
-        "kind": "DaemonSet",
-        "metadata": {
-            "name": name
-        },
-        "spec": {
-            "template": {
-                "metadata": {
-                    "annotations": affinity,
-                    "labels": {
-                        "app": name,
-                        "ccp": "true",
-                        "ccp-component": component_name
-                    }
-                },
-                "spec": spec
-            }
-        }
-    }
-
-
 def serialize_petset(name, spec, affinity, replicas, component_name):
     annotations = {
         "pod.alpha.kubernetes.io/initialized": "true"
@@ -395,6 +372,18 @@ def serialize_affinity(service, topology):
                 },
                 "topologyKey": "kubernetes.io/hostname",
                 "namespaces": []
+            }]
+        }
+    elif service["kind"] == "DaemonSet":
+        policy["podAntiAffinity"] = {
+            "requiredDuringSchedulingIgnoredDuringExecution": [{
+                "labelSelector": {
+                    "matchLabels": {
+                        "app": service["name"]
+                    }
+                },
+                "topologyKey": "kubernetes.io/hostname",
+                "namespaces": [CONF.kubernetes.namespace]
             }]
         }
     return {"scheduler.alpha.kubernetes.io/affinity": json.dumps(
