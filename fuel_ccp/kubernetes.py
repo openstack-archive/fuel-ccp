@@ -77,6 +77,23 @@ def _reload_obj(obj, updated_dict):
     obj.obj = updated_dict
 
 
+def get_pykube_object(object_dict, namespace=None, client=None):
+    if namespace is None:
+        namespace = CONF.kubernetes.namespace
+    if client is None:
+        client = get_client()
+
+    obj_class = getattr(pykube, object_dict["kind"], None)
+    if obj_class is None:
+        raise RuntimeError('"%s" object is not supported, skipping.'
+                           % object_dict['kind'])
+
+    if not object_dict['kind'] == 'Namespace':
+        object_dict['metadata']['namespace'] = namespace
+
+    return obj_class(client, object_dict)
+
+
 def process_object(object_dict, namespace=None, client=None):
     LOG.debug("Deploying %s: \"%s\"",
               object_dict["kind"], object_dict["metadata"]["name"])
@@ -87,17 +104,8 @@ def process_object(object_dict, namespace=None, client=None):
             LOG.info(yaml.dump(object_dict, default_flow_style=False))
             return
 
-        object_dict['metadata']['namespace'] = (
-            namespace or CONF.kubernetes.namespace)
+    obj = get_pykube_object(object_dict, namespace=namespace, client=client)
 
-    obj_class = getattr(pykube, object_dict["kind"], None)
-    if not obj_class:
-        LOG.warning('"%s" object is not supported, skipping.'
-                    % object_dict['kind'])
-        return
-
-    client = client or get_client()
-    obj = obj_class(client, object_dict)
     if obj.exists():
         LOG.debug('%s "%s" already exists', object_dict['kind'],
                   object_dict['metadata']['name'])
