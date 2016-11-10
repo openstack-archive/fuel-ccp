@@ -61,7 +61,7 @@ def _get_service_files_hash(service_dir, files, configs):
     return hashlib.sha1(dump).hexdigest()
 
 
-def parse_role(component, topology, configmaps):
+def parse_role(component, topology, configmaps, macros_imports):
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -76,7 +76,7 @@ def parse_role(component, topology, configmaps):
     _expand_files(service, role.get("files"))
 
     files_cm = _create_files_configmap(
-        service_dir, service_name, role.get("files"))
+        service_dir, service_name, role.get("files"), macros_imports)
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
@@ -297,14 +297,15 @@ def _create_start_script_configmap():
     return kubernetes.process_object(cm)
 
 
-def _create_files_configmap(service_dir, service_name, files):
+def _create_files_configmap(service_dir, service_name, files, macros_imports):
     configmap_name = "%s-%s" % (service_name, templates.FILES_CONFIG)
     data = {}
     if files:
-        for filename, f in files.items():
-            with open(os.path.join(
-                    service_dir, "files", f["content"]), "r") as f:
-                data[filename] = f.read()
+        for filename, desc in files.items():
+            path = os.path.join(service_dir, "files", desc["content"])
+            with open(path) as f:
+                # Implicitly add macros imports to the beginning of the file.
+                data[filename] = '\n'.join([macros_imports, f.read()])
     data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
@@ -319,6 +320,13 @@ def _create_meta_configmap(service):
     }
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
+
+
+def _create_macros_templates_configmap(macros_files):
+    """Create config map of files from fuel-ccp-repo/exports dirs."""
+    serialized = templates.serialize_configmap(templates.MACROS_CONFIG,
+                                               macros_files)
+    return kubernetes.process_object(serialized)
 
 
 def _make_topology(nodes, roles, replicas):
@@ -518,14 +526,20 @@ def deploy_components(components_map, components):
 
     _create_globals_configmap(CONF.configs)
     start_script_cm = _create_start_script_configmap()
-    configmaps = (start_script_cm,)
+
+    # Create cm with macros config templates shared across all repositories.
+    macros_files = utils.get_repositories_exports()
+    macros_imports = jinja_utils.generate_jinja_imports(macros_files.keys())
+    templates_cm = _create_macros_templates_configmap(macros_files)
+    configmaps = (start_script_cm, templates_cm)
+
+    # Cleanup after k8s pushing
+    del macros_files
 
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
-        objects_gen = parse_role(service,
-                                 topology=topology,
-                                 configmaps=configmaps)
+        objects_gen = parse_role(service, topology, configmaps, macros_imports)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
