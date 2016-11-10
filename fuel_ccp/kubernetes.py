@@ -108,9 +108,6 @@ def process_object(object_dict, namespace=None, client=None):
             obj.update()
             LOG.debug('%s "%s" has been updated', object_dict['kind'],
                       object_dict['metadata']['name'])
-        if object_dict['kind'] == 'DaemonSet':
-            LOG.warning('%s will not be updated (DaemonSet objects cannot be '
-                        'updated' % object_dict['metadata']['name'])
     else:
         obj.create()
         LOG.debug('%s "%s" has been created', object_dict['kind'],
