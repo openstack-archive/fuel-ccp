@@ -85,8 +85,7 @@ service
 +---------------+-----------------------------------------------+----------+------------------+------------+
 | kind          | Kind of k8s object to use for containers      | false    | one of:          | Deployment |
 |               | deployment                                    |          | ["Deployment",   |            |
-|               |                                               |          | "Daemonset",     |            |
-|               |                                               |          | "PetSet"]        |            |
+|               |                                               |          | "DaemonSet"]     |            |
 +---------------+-----------------------------------------------+----------+------------------+------------+
 | containers    | List of containers under multi-container pod  | true     | container_ array |            |
 +---------------+-----------------------------------------------+----------+------------------+------------+
