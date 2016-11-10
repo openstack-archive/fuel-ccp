@@ -191,6 +191,9 @@ SERVICE_SCHEMA = {
                 "hostPID": {
                     "type": "boolean"
                 },
+                "strategy": {
+                    "enum": ["RollingUpdate", "Recreate"]
+                },
                 "containers": {
                     "type": "array",
                     "minItems": 1,
