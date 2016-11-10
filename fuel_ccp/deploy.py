@@ -99,16 +99,19 @@ def parse_role(component, topology, configmaps):
 
     replicas = CONF.replicas.get(service_name)
     if service.get("kind") == 'DaemonSet':
+        LOG.warning("Deployment is being used instead of DaemonSet to support "
+                    "updates")
         if replicas is not None:
             LOG.error("Replicas was specified for %s, but it's implemented "
-                      "using Kubernetes DaemonSet that will deploy service on "
+                      "in DaemonSet-like way and will be deployed on "
                       "all matching nodes (section 'nodes' in config file)",
                       service_name)
             raise RuntimeError("Replicas couldn't be specified for services "
                                "implemented using Kubernetes DaemonSet")
-
-        obj = templates.serialize_daemonset(service_name, cont_spec,
-                                            affinity, component_name)
+        replicas = len(set(topology[service_name]))
+        obj = templates.serialize_deployment(service_name, cont_spec,
+                                             affinity, replicas,
+                                             component_name)
     elif service.get("kind") == "PetSet":
         replicas = replicas or 1
         obj = templates.serialize_petset(service_name, cont_spec,
