@@ -225,6 +225,22 @@ class ImagesList(BaseCommand, lister.Lister):
         )
 
 
+class DomainsList(BaseCommand, lister.Lister):
+    """Get Ingress domains that will be used for external access"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(DomainsList, self).get_parser(*args, **kwargs)
+        parser.add_argument('components',
+                            nargs='*',
+                            help='CCP components to get domains for')
+        return parser
+
+    def take_action(self, parsed_args):
+        domains_list = ' '.join(utils.get_ingress_domains(
+            parsed_args.components))
+        self.app.stdout.write(domains_list)
+
+
 def signal_handler(signo, frame):
     sys.exit(-signo)
 
