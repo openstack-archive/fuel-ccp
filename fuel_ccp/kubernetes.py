@@ -1,7 +1,7 @@
 import logging
 import os
 
-import pykube
+import pykube.exceptions
 import yaml
 
 from fuel_ccp import config
@@ -92,6 +92,18 @@ def get_pykube_object(object_dict, namespace=None, client=None):
         object_dict['metadata']['namespace'] = namespace
 
     return obj_class(client, object_dict)
+
+
+def get_pykube_object_if_exists(object_dict, namespace=None, client=None):
+    obj = get_pykube_object(object_dict, namespace=namespace, client=client)
+    try:
+        obj.reload()
+    except pykube.exceptions.HTTPError as ex:
+        # pykube 0.13 doesn't provide simple way to get code, so...
+        if 'not found' in ex.args[0].lower():
+            return None
+        raise
+    return obj
 
 
 def process_object(object_dict, namespace=None, client=None):
