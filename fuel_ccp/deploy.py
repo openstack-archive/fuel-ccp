@@ -4,7 +4,9 @@ import json
 import logging
 import os
 import re
+
 import six
+from six.moves import zip_longest
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
@@ -409,6 +411,30 @@ def _create_openrc(config):
              os.getcwd(), config['namespace'])
 
 
+def check_images_change(objects):
+    for obj in objects:
+        if obj['kind'] not in ('Deployment', 'DaemonSet', 'PetSet'):
+            continue
+        kube_obj = kubernetes.get_pykube_object_if_exists(obj)
+        if kube_obj is None:
+            continue
+        old_obj = kube_obj.obj
+        old_containers = old_obj['spec']['template']['spec']['containers']
+        old_images = [c['image'] for c in old_containers]
+        new_containers = obj['spec']['template']['spec']['containers']
+        new_images = [c['image'] for c in new_containers]
+        for old_image, new_image in zip_longest(old_images, new_images):
+            if old_image != new_image:
+                return old_image, new_image
+    return False
+
+
+def version_diff(from_image, to_image):
+    from_tag = from_image.rpartition(':')[-1]
+    to_tag = to_image.rpartition(':')[-1]
+    return from_tag, to_tag
+
+
 def deploy_components(components_map, components):
     if not components:
         components = set(components_map.keys())
@@ -426,13 +452,42 @@ def deploy_components(components_map, components):
     start_script_cm = _create_start_script_configmap()
     configmaps = (start_script_cm,)
 
-    for component in components:
-        objects_gen = parse_role(components_map[component],
+    upgrading_components = {}
+    for service_name in components:
+        service = components_map[service_name]
+        objects_gen = parse_role(service,
                                  topology=topology,
                                  configmaps=configmaps)
         objects = list(itertools.chain.from_iterable(objects_gen))
-        for obj in objects:
-            kubernetes.process_object(obj)
+        component_name = service['component_name']
+        do_upgrade = component_name in upgrading_components
+        if not do_upgrade:
+            res = check_images_change(objects)
+            do_upgrade = bool(res)
+            if do_upgrade:
+                from_image, to_image = res
+                from_version, to_version = version_diff(from_image, to_image)
+                upgrading_components[component_name] = {
+                    '_meta': {'from': from_version, 'to': to_version},
+                }
+                LOG.info('Upgrade will be triggered for %s'
+                         ' from version %s to version %s because image for %s'
+                         ' changed from %s to %s',
+                         component_name, from_version, to_version,
+                         service_name, from_image, to_image)
+
+        if not do_upgrade:
+            for obj in objects:
+                kubernetes.process_object(obj)
+        else:
+            upgrading_components[component_name][service_name] = objects
+
+    for component_name, component_upg in upgrading_components.items():
+        for service_name, objects in component_upg.items():
+            if service_name == '_meta':
+                continue
+            for obj in objects:
+                kubernetes.process_object(obj)
 
     if 'keystone' in components:
         _create_openrc(CONF.configs)
