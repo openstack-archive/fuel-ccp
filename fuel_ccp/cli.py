@@ -276,6 +276,11 @@ class CCPApp(app.App):
             LOG.debug('Loaded config from file %s', self.config_file)
         else:
             LOG.debug('No config file loaded')
+        if not CONF.debug:
+            for level in CONF.default_log_levels:
+                mod, sep, level_name = level.partition("=")
+                logger = logging.getLogger(mod)
+                logger.setLevel(level_name)
 
 
 def main(argv=None):
