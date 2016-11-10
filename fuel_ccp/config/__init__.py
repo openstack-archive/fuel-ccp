@@ -64,6 +64,14 @@ def get_config_defaults():
         'debug': False,
         'verbose_level': 1,
         'log_file': None,
+        'default_log_levels': [
+            'glanceclient=INFO',
+            'keystoneauth=INFO',
+            'neutronclient=INFO',
+            'novaclient=INFO',
+            'requests=WARN',
+            'stevedore=INFO'
+        ]
     })
     for name in ['configs', 'nodes', 'roles', 'versions']:
         defaults[name] = _yaml.AttrDict()
@@ -80,6 +88,8 @@ def get_config_schema():
             'debug': {'type': 'boolean'},
             'verbose_level': {'type': 'integer'},
             'log_file': {'anyOf': [{'type': 'null'}, {'type': 'string'}]},
+            'default_log_levels': {'type': 'array',
+                                   'items': {'type': 'string'}}
         },
     }
     for module in CONFIG_MODULES:
