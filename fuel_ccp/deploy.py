@@ -399,8 +399,9 @@ def _create_openrc(config):
         "export OS_USERNAME=%s" % config['openstack']['user_name'],
         "export OS_PASSWORD=%s" % config['openstack']['user_password'],
         "export OS_IDENTITY_API_VERSION=3",
-        "export OS_AUTH_URL=http://%s/v3" %
-        utils.address('keystone', config['keystone']['public_port'], True)
+        "export OS_AUTH_URL=%s/v3" %
+        utils.address('keystone', config['keystone']['public_port'], True,
+                      True)
     ]
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))
