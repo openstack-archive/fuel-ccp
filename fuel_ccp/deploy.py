@@ -70,8 +70,7 @@ def process_files(files, service_dir):
             content = os.path.join(service_dir, "files", f["content"])
         f["content"] = content
 
-
-def parse_role(component, topology, configmaps):
+def parse_role(component, topology, configmaps, jinja_imports):
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -82,7 +81,8 @@ def parse_role(component, topology, configmaps):
     _expand_files(service, role.get("files"))
 
     process_files(role.get("files"), service_dir)
-    files_cm = _create_files_configmap(service_name, role.get("files"))
+    files_cm = _create_files_configmap(service_name, role.get("files"),
+                                   jinja_imports)
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
@@ -310,15 +310,15 @@ def _create_start_script_configmap():
     cm = templates.serialize_configmap(templates.SCRIPT_CONFIG, data)
     return kubernetes.process_object(cm)
 
-
-def _create_files_configmap(service_name, files):
+def _create_files_configmap(service_name, files, macros_imports):
     configmap_name = "%s-%s" % (service_name, templates.FILES_CONFIG)
     data = {}
     if files:
         for filename, f in files.items():
             with open(f["content"], "r") as f:
                 data[filename] = f.read()
-    data["placeholder"] = ""
+            data[filename] = ''.join([macros_imports, f.read()])
+        data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
 
@@ -332,6 +332,13 @@ def _create_meta_configmap(service):
     }
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
+
+
+def _create_jinja_templates_configmap(templates_files):
+    """Create config map of files from fuel-ccp-repo/exports dirs."""
+    serialized = templates.serialize_configmap(templates.EXPORTS_CONFIG,
+                                               templates_files)
+    return kubernetes.process_object(serialized)
 
 
 def _make_topology(nodes, roles, replicas):
@@ -443,7 +450,8 @@ def check_images_change(objects):
     return False
 
 
-def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology):
+def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
+                        jinja_imports):
     from_version = upgrade_data['_meta']['from']
     to_version = upgrade_data['_meta']['to']
     component = upgrade_data['_meta']['component']
@@ -457,7 +465,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology):
             step['files'] = {f: files[f] for f in step['files']}
 
     process_files(files, component['service_dir'])
-    _create_files_configmap(prefix, files)
+    _create_files_configmap(prefix, files, jinja_imports)
     container = {
         "name": prefix,
         "pre": [],
@@ -541,14 +549,17 @@ def deploy_components(components_map, components):
     _create_namespace(CONF.configs)
     _create_globals_configmap(CONF.configs)
     start_script_cm = _create_start_script_configmap()
-    configmaps = (start_script_cm,)
+
+    # Create cm with jinja config templates shared across all repositories.
+    templates_files = utils.get_repositories_exports()
+    jinja_imports = jinja_utils.generate_jinja_imports(templates_files.keys())
+    templates_cm = _create_jinja_templates_configmap(templates_files)
+    configmaps = (start_script_cm, templates_cm)
 
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
-        objects_gen = parse_role(service,
-                                 topology=topology,
-                                 configmaps=configmaps)
+        objects_gen = parse_role(service, topology, configmaps, jinja_imports)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
@@ -579,7 +590,7 @@ def deploy_components(components_map, components):
 
     for component_name, component_upg in upgrading_components.items():
         create_upgrade_jobs(component_name, component_upg, configmaps,
-                            topology)
+                            topology, jinja_imports)
 
     if 'keystone' in components:
         _create_openrc(CONF.configs)
