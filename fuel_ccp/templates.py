@@ -11,6 +11,7 @@ SCRIPT_CONFIG = "start-script"
 FILES_CONFIG = "files"
 META_CONFIG = "meta"
 ROLE_CONFIG = "role"
+EXPORTS_CONFIG = "exports"
 
 ENTRYPOINT_PATH = "/opt/ccp_start_script/bin/start_script.py"
 PYTHON_PATH = "/usr/bin/python"
@@ -67,6 +68,10 @@ def serialize_volume_mounts(container, for_job=None):
         {
             "name": SCRIPT_CONFIG,
             "mountPath": "/opt/ccp_start_script/bin"
+        },
+        {
+            "name": EXPORTS_CONFIG,
+            "mountPath": "/etc/ccp/%s" % EXPORTS_CONFIG
         },
         {
             "name": FILES_CONFIG,
@@ -249,10 +254,16 @@ def serialize_volumes(service, for_job=None):
                 "name": "%s-%s" % (service["name"], FILES_CONFIG),
                 "items": file_items
             }
+        },
+        {
+            "name": EXPORTS_CONFIG,
+            "configMap": {
+                "name": EXPORTS_CONFIG,
+            }
         }
     ]
     volume_names = [GLOBAL_CONFIG, META_CONFIG, ROLE_CONFIG, SCRIPT_CONFIG,
-                    FILES_CONFIG]
+                    FILES_CONFIG, EXPORTS_CONFIG]
     for cont in itertools.chain(service["containers"], [for_job]):
         for v in cont.get("volumes", ()):
             if v["name"] in volume_names:
