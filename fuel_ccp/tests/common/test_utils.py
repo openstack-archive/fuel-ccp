@@ -136,23 +136,31 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
          {'address': 'service.ccp:1234', 'external': True, 'ingress': False,
           'port': {'cont': 1234, 'ingress': 'test'}}),
         ('external_with_ingress_enabled',
-         {'address': 'test.ccp.external', 'external': True, 'ingress': True,
-          'port': {'cont': 1234, 'ingress': 'test'}}),
+         {'address': 'test.ccp.external:8443', 'external': True,
+          'ingress': True, 'port': {'cont': 1234, 'ingress': 'test'}}),
         ('external_with_ingress_not_provided',
          {'address': '1.1.1.1:30000', 'external': True, 'ingress': True,
           'port': {'cont': 1234, 'node': 30000}}),
         ('external_with_ingress_and_nodeport_not_provided',
          {'address': 'service.ccp:1234', 'external': True, 'ingress': True,
           'port': {'cont': 1234}}),
+        ('internal_with_scheme', {'address': 'http://service.ccp',
+                                  'with_scheme': True}),
+        ('external_with_ingress_with_scheme',
+         {'address': 'https://test.ccp.external:8443', 'external': True,
+          'ingress': True, 'port': {'cont': 1234, 'ingress': 'test'},
+          'with_scheme': True}),
     )
 
     port = None
     external = None
     ingress = False
+    with_scheme = False
 
     def test_address(self):
         self.conf.configs._merge({'ingress': {'enabled': self.ingress,
-                                              'domain': 'external'},
+                                              'domain': 'external',
+                                              'port': 8443},
                                   'k8s_external_ip': '1.1.1.1'})
-        self.assertEqual(self.address,
-                         utils.address('service', self.port, self.external))
+        self.assertEqual(self.address, utils.address(
+            'service', self.port, self.external, self.with_scheme))
