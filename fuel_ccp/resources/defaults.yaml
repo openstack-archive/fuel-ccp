@@ -6,3 +6,4 @@ configs:
     ingress:
       enabled: False
       domain: external
+      port: 8443
