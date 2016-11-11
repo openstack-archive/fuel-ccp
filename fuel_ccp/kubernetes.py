@@ -151,6 +151,12 @@ def list_cluster_services():
         selector="ccp=true")
 
 
+def list_cluster_ingress():
+    client = get_client()
+    return pykube.Ingress.objects(client).filter(
+        namespace=CONF.kubernetes.namespace)
+
+
 def get_object_names(items):
     names = []
     for item in items:
