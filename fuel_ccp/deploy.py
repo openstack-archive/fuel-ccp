@@ -430,6 +430,47 @@ def check_images_change(objects):
     return False
 
 
+def create_upgrade_jobs(component_name, upgrade_data, configmaps):
+    from_version = upgrade_data['_meta']['from']
+    to_version = upgrade_data['_meta']['to']
+    prefix = 'upgrade-{}-{}-{}'.format(
+        component_name, from_version, to_version)
+
+    LOG.info("Scheduling component %s upgrade", component_name)
+    # _expand_files(service, role.get("files"))
+
+    _create_files_configmap((), prefix, ())
+    container = {
+        "name": prefix,
+        "pre": [],
+        "daemon": {},
+        "image": "base-tools",
+    }
+    service = {
+        "name": prefix,
+        "containers": [container],
+    }
+    _create_meta_configmap(service)
+
+    workflows = {prefix: ""}
+    jobs = service["containers"][0]["pre"]
+    for service_name, service_upgrade_data in upgrade_data.items():
+        if service_name == '_meta':
+            continue
+        wname = "{}-roll-{}".format(prefix, service_name)
+        workflows[wname] = json.dumps({"workflow": {
+            "name": wname,
+            "roll": service_upgrade_data,
+        }}, sort_keys=True)
+        jobs.append({"name": wname, "type": "single"})
+    _create_workflow(workflows, prefix)
+
+    for job_spec in _create_pre_jobs(service, container, component_name):
+        kubernetes.process_object(job_spec)
+
+    LOG.info("Upgrade of component %s successfuly scheduled", component_name)
+
+
 def version_diff(from_image, to_image):
     from_tag = from_image.rpartition(':')[-1]
     to_tag = to_image.rpartition(':')[-1]
@@ -484,11 +525,7 @@ def deploy_components(components_map, components):
             upgrading_components[component_name][service_name] = objects
 
     for component_name, component_upg in upgrading_components.items():
-        for service_name, objects in component_upg.items():
-            if service_name == '_meta':
-                continue
-            for obj in objects:
-                kubernetes.process_object(obj)
+        create_upgrade_jobs(component_name, component_upg, configmaps)
 
     if 'keystone' in components:
         _create_openrc(CONF.configs)
