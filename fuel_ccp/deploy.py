@@ -412,6 +412,40 @@ def _create_openrc(config):
              os.getcwd(), config['namespace'])
 
 
+def _get_containers_names_by_service(service_name, components_map=None):
+    components_map = components_map or utils.get_deploy_components_info()
+    service_map = components_map[service_name]['service_content']['service']
+    names = [cntr['name'] for cntr in service_map['containers']]
+    return names
+
+
+def transform_dependencies(component, components_map):
+    """Replace any service dependency with its containers."""
+
+    content_map = component['service_content']
+    containers = content_map['service']['containers']
+
+    for container in containers:
+        daemon_map = container['daemon']
+
+        # skip if there is no any dependency
+        if 'dependencies' not in daemon_map:
+            continue
+
+        deps = daemon_map['dependencies']
+        real_deps = set()
+        for dep in deps:
+            # check if the dep is a job
+            if dep not in components_map:
+                real_deps.add(dep)
+                continue
+            # otherwise just add the list of containers of a dependent service
+            names = _get_containers_names_by_service(dep, components_map)
+            real_deps = real_deps.union(names)
+
+        daemon_map['dependencies'] = list(real_deps)
+
+
 def deploy_components(components_map, components):
     if not components:
         components = set(components_map.keys())
@@ -430,6 +464,8 @@ def deploy_components(components_map, components):
     configmaps = (start_script_cm,)
 
     for component in components:
+        transform_dependencies(components_map[component],
+                               components_map)
         parse_role(components_map[component],
                    topology=topology,
                    configmaps=configmaps)
