@@ -151,15 +151,28 @@ class TestCleanup(TestParser):
     scenarios = [
         ('empty', {
             'argv': [],
-            'margs': {'auth_url': None, 'skip_os_cleanup': False},
+            'margs': {'auth_url': None, 'skip_os_cleanup': False,
+                      'insecure': False},
         }),
         ('auth_url', {
             'argv': ['--auth-url', 'testurl'],
-            'margs': {'auth_url': 'testurl', 'skip_os_cleanup': False},
+            'margs': {'auth_url': 'testurl', 'skip_os_cleanup': False,
+                      'insecure': False},
         }),
         ('auth_url_cleanup', {
             'argv': ['--auth-url', 'testurl', '--skip-os-cleanup'],
-            'margs': {'auth_url': 'testurl', 'skip_os_cleanup': True},
+            'margs': {'auth_url': 'testurl', 'skip_os_cleanup': True,
+                      'insecure': False},
+        }),
+        ('insecure', {
+            'argv': ['--insecure'],
+            'margs': {'auth_url': None, 'skip_os_cleanup': False,
+                      'insecure': True},
+        }),
+        ('empty', {
+            'argv': ['--ca-cert', '/tmp/ca.crt'],
+            'margs': {'auth_url': None, 'skip_os_cleanup': False,
+                      'insecure': False, 'ca_cert': '/tmp/ca.crt'},
         }),
     ]
 
@@ -169,6 +182,9 @@ class TestCleanup(TestParser):
         fixture = fixtures.MockPatch('fuel_ccp.cleanup.cleanup')
         c_mock = self.useFixture(fixture).mock
         self._run_app()
+        self.margs.pop('insecure')
+        self.margs.pop('ca_cert')
+        self.margs['verify'] = True
         c_mock.assert_called_once_with(**self.margs)
 
 
