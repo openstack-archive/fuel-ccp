@@ -32,7 +32,8 @@ def _wait_until_empty(attempts, resource_path,
 
 
 def _get_session(auth_url, username, password, project_name,
-                 project_domain_name='default', user_domain_name='default'):
+                 project_domain_name='default', user_domain_name='default',
+                 verify=True):
     auth = v3.Password(auth_url=auth_url,
                        username=username,
                        password=password,
@@ -40,7 +41,7 @@ def _get_session(auth_url, username, password, project_name,
                        project_domain_name=project_domain_name,
                        user_domain_name=user_domain_name)
 
-    return keystone_session.Session(auth=auth)
+    return keystone_session.Session(auth=auth, verify=verify)
 
 
 def _cleanup_servers(session):
@@ -110,7 +111,7 @@ def _cleanup_images(session):
         glance.images.delete(image.id)
 
 
-def _cleanup_openstack_environment(configs, auth_url=None):
+def _cleanup_openstack_environment(configs, auth_url=None, verify=True):
     if 'project_name' not in configs.get('openstack', {}):
         # Ensure that keystone configs are provided. Assume that it is not an
         # OpenStack deployment otherwise
@@ -124,7 +125,8 @@ def _cleanup_openstack_environment(configs, auth_url=None):
     session = _get_session(
         configs['auth_url'], configs['openstack']['user_name'],
         configs['openstack']['user_password'],
-        configs['openstack']['project_name'])
+        configs['openstack']['project_name'],
+        verify=verify)
 
     try:
         session.get_project_id()
@@ -185,7 +187,7 @@ def _cleanup_kubernetes_objects():
     LOG.info('Kubernetes objects cleanup has been finished successfully.')
 
 
-def cleanup(auth_url=None, skip_os_cleanup=False):
+def cleanup(auth_url=None, skip_os_cleanup=False, verify=True):
     if not skip_os_cleanup:
-        _cleanup_openstack_environment(CONF.configs, auth_url)
+        _cleanup_openstack_environment(CONF.configs, auth_url, verify)
     _cleanup_kubernetes_objects()
