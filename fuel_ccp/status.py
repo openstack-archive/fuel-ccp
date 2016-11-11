@@ -67,13 +67,22 @@ def get_pod_states(components=None):
         states[app_name]["job_completed"] += (
             job.obj["status"].get("succeeded", 0))
 
-    for svc in kubernetes.list_cluster_services():
-        svc_name = svc.obj["metadata"]["name"]
-        states.setdefault(svc_name, copy.deepcopy(STATE_TEMPLATE))
-        for port in svc.obj["spec"]["ports"]:
-            states[svc_name]["links"].append(EXT_LINK_TEMPLATE.format(
-                ext_ip=ext_ip,
-                port=port["nodePort"]))
+    if CONF.configs.ingress.enabled:
+        url_template = "https://%s"
+        if CONF.configs.ingress.get("port"):
+            url_template += ":%d" % CONF.configs.ingress.port
+        for ing in kubernetes.list_cluster_ingress():
+            states.setdefault(ing.name, copy.deepcopy(STATE_TEMPLATE))
+            for rule in ing.obj['spec']['rules']:
+                states[ing.name]['links'].append(url_template % rule['host'])
+    else:
+        for svc in kubernetes.list_cluster_services():
+            svc_name = svc.obj["metadata"]["name"]
+            states.setdefault(svc_name, copy.deepcopy(STATE_TEMPLATE))
+            for port in svc.obj["spec"]["ports"]:
+                states[svc_name]["links"].append(EXT_LINK_TEMPLATE.format(
+                    ext_ip=ext_ip,
+                    port=port["nodePort"]))
 
     return states
 
