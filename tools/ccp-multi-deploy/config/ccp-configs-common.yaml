@@ -35,6 +35,8 @@ repositories:
       name: fuel-ccp-openstack-base
     - git_url: https://git.openstack.org/openstack/fuel-ccp-rabbitmq
       name: fuel-ccp-rabbitmq
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-ceph
+      name: fuel-ccp-ceph
 configs:
     private_interface: eth0
     public_interface: eth1
