@@ -20,6 +20,18 @@ def get_ingress_host(ingress_name):
         ingress_name, CONF.kubernetes.namespace, CONF.configs.ingress.domain))
 
 
+def get_ingress_domains(components=None):
+    components_map = get_deploy_components_info()
+    components = components or components_map.keys()
+    domains = []
+    for component in components:
+        service = components_map[component]["service_content"]["service"]
+        for port in service.get("ports", []):
+            if port.get("ingress"):
+                domains.append(get_ingress_host(port.get("ingress")))
+    return domains
+
+
 def get_resource_path(path):
     return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
