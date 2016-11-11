@@ -391,7 +391,7 @@ def _create_namespace(configs):
     kubernetes.process_object(template)
 
 
-def _create_openrc(config):
+def _create_openrc(config, external=False):
     openrc = [
         "export OS_PROJECT_DOMAIN_NAME=default",
         "export OS_USER_DOMAIN_NAME=default",
@@ -400,13 +400,21 @@ def _create_openrc(config):
         "export OS_PASSWORD=%s" % config['openstack']['user_password'],
         "export OS_IDENTITY_API_VERSION=3",
         "export OS_AUTH_URL=%s/v3" %
-        utils.address('keystone', config['keystone']['public_port'], True,
+        utils.address('keystone', config['keystone']['public_port'], external,
                       True)
     ]
-    with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
+
+    if external:
+        openrc.append("export OS_INTERFACE=public")
+    else:
+        openrc.append("export OS_INTERFACE=internal")
+
+    openrc_type = 'ext' if external else 'int'
+    with open('openrc-%s-%s' % (
+            config['namespace'], openrc_type), 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))
-    LOG.info("Openrc file for this deployment created at %s/openrc-%s",
-             os.getcwd(), config['namespace'])
+    LOG.info("Openrc file for this deployment created at %s/openrc-%s-%s",
+             os.getcwd(), config['namespace'], openrc_type)
 
 
 def deploy_components(components_map, components):
@@ -432,4 +440,6 @@ def deploy_components(components_map, components):
                    configmaps=configmaps)
 
     if 'keystone' in components:
-        _create_openrc(CONF.configs)
+        _create_openrc(CONF.configs, False)
+        if CONF.configs.ingress.enabled:
+            _create_openrc(CONF.configs, True)

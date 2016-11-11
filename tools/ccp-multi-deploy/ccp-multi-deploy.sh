@@ -44,8 +44,8 @@ function ccp_wait_for_deployment_to_finish {
     echo "Jobs and pods in namespace: $1"
     kubectl --namespace $1 get jobs
     kubectl --namespace $1 get pods
-    echo "openrc file: openrc-$1"
-    cat openrc-${1}
+    echo "openrc file: openrc-$1-int"
+    cat openrc-${1}-int
     echo "...................................."
 }
 
@@ -56,7 +56,7 @@ function display_horizon_access_info {
 }
 
 function run_openstack_tests {
-    source openrc-$1
+    source openrc-$1-int
     ./tools/deploy-test-vms.sh -k $1 -a create
     ./tools/deploy-test-vms.sh -k $1 -a destroy
 }

@@ -100,7 +100,7 @@ class TestDeploy(base.TestCase):
         namespace = self.namespace
         self.conf.configs._merge({'ingress': {'enabled': False}})
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
-        openrc_test_file = 'openrc-%s' % namespace
+        openrc_test_file = 'openrc-%s-int' % namespace
         config = {
             "openstack": {
                 "project_name": "admin",
@@ -119,6 +119,7 @@ class TestDeploy(base.TestCase):
             "export OS_IDENTITY_API_VERSION=3",
             "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
             config['keystone']['public_port']['cont'],
+            "export OS_INTERFACE=internal"
         ]
 
         with open(openrc_etalon_file, 'w') as openrc_file:
