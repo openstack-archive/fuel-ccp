@@ -138,12 +138,19 @@ class Cleanup(BaseCommand):
         parser.add_argument('--skip-os-cleanup',
                             action='store_true',
                             help='Skip cleanup of OpenStack environment')
+        cert = parser.add_mutually_exclusive_group()
+        cert.add_argument('--insecure',
+                          action='store_true',
+                          help='Skip CA certificate verification')
+        cert.add_argument('--ca-cert',
+                          help='Path to CA certificate file')
         return parser
 
     def take_action(self, parsed_args):
         config.load_component_defaults()
         cleanup.cleanup(auth_url=parsed_args.auth_url,
-                        skip_os_cleanup=parsed_args.skip_os_cleanup)
+                        skip_os_cleanup=parsed_args.skip_os_cleanup,
+                        verify=parsed_args.ca_cert or not parsed_args.insecure)
 
 
 class ShowDep(BaseCommand):
