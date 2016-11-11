@@ -2,6 +2,8 @@ import os
 
 import jinja2
 
+from six.moves.urllib import parse as urlparse
+
 
 class SilentUndefined(jinja2.Undefined):
 
@@ -19,6 +21,10 @@ class SilentUndefined(jinja2.Undefined):
         __rpow__ = _fail_with_undefined_error
 
 
+def get_host(path):
+    return urlparse.urlsplit(path).netloc
+
+
 def jinja_render(path, context, functions=(), ignore_undefined=False):
     kwargs = {}
     if ignore_undefined:
@@ -28,6 +34,7 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)), **kwargs)
+    env.filters['host'] = get_host
     for func in functions:
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
