@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import copy
 import logging
+import sys
 
 from fuel_ccp import config
 from fuel_ccp import kubernetes
@@ -18,6 +19,21 @@ STATE_TEMPLATE = {
     "job_completed": 0,
     "links": []
 }
+COLORS = {
+    "green": "\033[92m%s\033[39m",
+    "yellow": "\033[93m%s\033[39m"
+}
+
+
+def colorized(color, s):
+    if sys.stdout.isatty():
+        return COLORS[color] % s
+    else:
+        return s
+
+
+ST_OK = colorized("green", "ok")
+ST_WIP = colorized("yellow", "wip")
 
 
 def is_app_ready(state):
@@ -26,7 +42,7 @@ def is_app_ready(state):
 
 
 def repr_state(state):
-    return "ok" if is_app_ready(state) else "nok"
+    return ST_OK if is_app_ready(state) else ST_WIP
 
 
 def get_pod_states(components=None):
@@ -85,5 +101,5 @@ def show_short_status():
     if not states:
         status = "no cluster"
     else:
-        status = "ok" if all(map(is_app_ready, states.values())) else "nok"
+        status = ST_OK if all(map(is_app_ready, states.values())) else ST_WIP
     return ("status",), ((status,),)
