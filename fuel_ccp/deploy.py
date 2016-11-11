@@ -109,18 +109,11 @@ def parse_role(component, topology, configmaps):
             raise RuntimeError("Replicas couldn't be specified for services "
                                "implemented using Kubernetes DaemonSet")
         replicas = len(set(topology[service_name]))
-        obj = templates.serialize_deployment(service_name, cont_spec,
-                                             affinity, replicas,
-                                             component_name)
-    elif service.get("kind") == "PetSet":
-        replicas = replicas or 1
-        obj = templates.serialize_petset(service_name, cont_spec,
-                                         affinity, replicas, component_name)
     else:
         replicas = replicas or 1
-        obj = templates.serialize_deployment(service_name, cont_spec,
-                                             affinity, replicas,
-                                             component_name)
+
+    obj = templates.serialize_deployment(service_name, cont_spec,
+                                         affinity, replicas, component_name)
     kubernetes.process_object(obj)
 
     _process_ports(service)
@@ -186,8 +179,7 @@ def _process_ports(service):
             if ingress_host:
                 ingress_rules.append(templates.serialize_ingress_rule(
                     service["name"], ingress_host, source_port))
-    service_template = templates.serialize_service(
-        service["name"], ports, service.get("kind") == "PetSet")
+    service_template = templates.serialize_service(service["name"], ports)
     kubernetes.process_object(service_template)
 
     if ingress_rules:
