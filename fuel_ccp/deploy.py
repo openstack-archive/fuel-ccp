@@ -433,18 +433,23 @@ def check_images_change(objects):
 def create_upgrade_jobs(component_name, upgrade_data, configmaps):
     from_version = upgrade_data['_meta']['from']
     to_version = upgrade_data['_meta']['to']
-    prefix = 'upgrade-{}-{}-{}'.format(
-        component_name, from_version, to_version)
+    component = upgrade_data['_meta']['component']
+    upgrade_def = component['upgrades']['default']['upgrade']
+    files = component['upgrades']['default'].get('files')
+    prefix = '{}-{}-{}'.format(upgrade_def['name'], from_version, to_version)
 
     LOG.info("Scheduling component %s upgrade", component_name)
-    # _expand_files(service, role.get("files"))
+    for step in upgrade_def['steps']:
+        if step.get('files'):
+            step['files'] = {f: files[f] for f in step['files']}
 
-    _create_files_configmap((), prefix, ())
+    _create_files_configmap(
+        component['service_dir'], prefix, files)
     container = {
         "name": prefix,
         "pre": [],
         "daemon": {},
-        "image": "base-tools",
+        "image": upgrade_def['image'],
     }
     service = {
         "name": prefix,
@@ -453,16 +458,37 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps):
     _create_meta_configmap(service)
 
     workflows = {prefix: ""}
-    jobs = service["containers"][0]["pre"]
-    for service_name, service_upgrade_data in upgrade_data.items():
-        if service_name == '_meta':
-            continue
-        wname = "{}-roll-{}".format(prefix, service_name)
-        workflows[wname] = json.dumps({"workflow": {
-            "name": wname,
-            "roll": service_upgrade_data,
-        }}, sort_keys=True)
-        jobs.append({"name": wname, "type": "single"})
+    jobs = container["pre"]
+    last_deps = []
+
+    for step in upgrade_def['steps']:
+        step_type = step.get('type', 'single')
+        job_name = "{}-{}".format(prefix, step['name'])
+        job = {"name": job_name, "type": "single"}
+        if step.get('files'):
+            job['files'] = step['files']
+        jobs.append(job)
+        workflow = {
+            'name': job_name,
+            'dependencies': last_deps,
+        }
+        last_deps = [job_name]
+        if step_type == 'single':
+            workflow['job'] = job = {}
+            _fill_cmd(job, step)
+            _push_files_to_workflow(workflow, step.get('files'))
+        elif step_type == 'rolling-upgrade':
+            services = step.get('services')
+            if services is None:
+                services = [s for s in upgrade_data if s != '_meta']
+            workflow['roll'] = roll = []
+            for service_name in services:
+                roll.extend(upgrade_data[service_name])
+        else:
+            raise RuntimeError("Unsupported upgrade step type: %s" % step_type)
+        workflows[job_name] = \
+            json.dumps({'workflow': workflow}, sort_keys=True)
+
     _create_workflow(workflows, prefix)
 
     for job_spec in _create_pre_jobs(service, container, component_name):
@@ -503,14 +529,18 @@ def deploy_components(components_map, components):
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
-        if not do_upgrade:
+        if not do_upgrade and service['component']['upgrades']:
             res = check_images_change(objects)
             do_upgrade = bool(res)
             if do_upgrade:
                 from_image, to_image = res
                 from_version, to_version = version_diff(from_image, to_image)
                 upgrading_components[component_name] = {
-                    '_meta': {'from': from_version, 'to': to_version},
+                    '_meta': {
+                        'from': from_version,
+                        'to': to_version,
+                        'component': service['component']
+                    },
                 }
                 LOG.info('Upgrade will be triggered for %s'
                          ' from version %s to version %s because image for %s'

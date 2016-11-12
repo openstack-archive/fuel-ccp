@@ -90,6 +90,24 @@ def get_deploy_components_info(rendering_context=None):
         REPO_NAME_PREFIX = "fuel-ccp-"
         if component_name.startswith(REPO_NAME_PREFIX):
             component_name = component_name[len(REPO_NAME_PREFIX):]
+
+        component = {
+            "name": component_name,
+            "upgrades": {},
+            "service_dir": service_dir,
+        }
+
+        upgrade_dir = os.path.join(service_dir, "upgrade")
+        if os.path.isdir(upgrade_dir):
+            for upgrade_fname in os.listdir(upgrade_dir):
+                if not upgrade_fname.endswith('.yaml'):
+                    continue
+                LOG.debug("Loading upgrade definition: %s", upgrade_fname)
+                with open(os.path.join(upgrade_dir, upgrade_fname)) as f:
+                    upgrade_def = yaml.load(f)
+                key = upgrade_fname[:-len('.yaml')]
+                component['upgrades'][key] = upgrade_def
+
         for service_file in os.listdir(service_dir):
             if service_file.endswith('.yaml'):
                 LOG.debug("Rendering service definition: %s", service_file)
@@ -101,6 +119,7 @@ def get_deploy_components_info(rendering_context=None):
                 service_definition = yaml.load(content)
                 service_name = service_definition['service']['name']
                 components_map[service_name] = {
+                    'component': component,
                     'component_name': component_name,
                     'service_dir': service_dir,
                     'service_content': service_definition
