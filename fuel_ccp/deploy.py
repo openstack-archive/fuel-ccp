@@ -101,6 +101,7 @@ def parse_role(component, topology, configmaps):
     affinity = templates.serialize_affinity(service, topology)
 
     replicas = CONF.replicas.get(service_name)
+    strategy = {'type': service.get('strategy', 'RollingUpdate')}
     if service.get("kind") == 'DaemonSet':
         LOG.warning("Deployment is being used instead of DaemonSet to support "
                     "updates")
@@ -112,10 +113,11 @@ def parse_role(component, topology, configmaps):
             raise RuntimeError("Replicas couldn't be specified for services "
                                "implemented using Kubernetes DaemonSet")
         replicas = len(set(topology[service_name]))
+        if strategy['type'] == 'RollingUpdate':
+            strategy['rollingUpdate'] = {'maxSurge': 0, 'maxUnavailable': 1}
     else:
         replicas = replicas or 1
 
-    strategy = service.get('strategy', 'RollingUpdate')
     obj = templates.serialize_deployment(service_name, cont_spec, affinity,
                                          replicas, component_name, strategy)
     yield [obj]

@@ -290,6 +290,12 @@ def serialize_job(name, spec, component_name, app_name):
 
 def serialize_deployment(name, spec, affinity, replicas, component_name,
                          strategy):
+    if strategy['type'] == 'RollingUpdate':
+        strategy.setdefault("rollingUpdate", {
+            "maxSurge": 1,
+            "maxUnavailable": 0
+        })
+
     deployment = {
         "apiVersion": "extensions/v1beta1",
         "kind": "Deployment",
@@ -298,9 +304,7 @@ def serialize_deployment(name, spec, affinity, replicas, component_name,
         },
         "spec": {
             "replicas": replicas,
-            "strategy": {
-                "type": strategy
-            },
+            "strategy": strategy,
             "template": {
                 "metadata": {
                     "annotations": affinity,
@@ -315,13 +319,6 @@ def serialize_deployment(name, spec, affinity, replicas, component_name,
         }
     }
 
-    if strategy == 'RollingUpdate':
-        deployment['spec']['strategy'].update({
-            "rollingUpdate": {
-                "maxSurge": 1,
-                "maxUnavailable": 0
-            }
-        })
     return deployment
 
 
