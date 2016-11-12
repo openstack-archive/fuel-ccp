@@ -484,6 +484,15 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps):
             workflow['roll'] = roll = []
             for service_name in services:
                 roll.extend(upgrade_data[service_name])
+        elif step_type == 'kill-services':
+            services = step.get('services')
+            if services is None:
+                services = [s for s in upgrade_data if s != '_meta']
+            workflow['kill'] = kill = []
+            for service_name in services:
+                for object_dict in upgrade_data[service_name]:
+                    if object_dict['kind'] == 'Deployment':
+                        kill.append(object_dict)
         else:
             raise RuntimeError("Unsupported upgrade step type: %s" % step_type)
         workflows[job_name] = \
