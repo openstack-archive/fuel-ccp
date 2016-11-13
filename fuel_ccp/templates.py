@@ -193,15 +193,15 @@ def serialize_volumes(service):
                     workflow_items.append(
                         {"key": job["name"], "path": "%s.json" % job["name"]})
 
-    file_items = []
+    files = set()
     for c in service["containers"]:
-        for f_name, f_item in sorted(c["daemon"].get("files", {}).items()):
-            file_items.append({"key": f_name, "path": f_name})
+        files.update(c["daemon"].get("files", {}))
         for job_type in ("pre", "post"):
             for job in c.get(job_type, ()):
                 if job.get("type", "local") == "single" and job.get("files"):
-                    for f_name in job["files"].keys():
-                        file_items.append({"key": f_name, "path": f_name})
+                    files.update(job["files"])
+
+    file_items = [{"key": f_name, "path": f_name} for f_name in sorted(files)]
     file_items.append({"key": "placeholder", "path": ".placeholder"})
     vol_spec = [
         {
