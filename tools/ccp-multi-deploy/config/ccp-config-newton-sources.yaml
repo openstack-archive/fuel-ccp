@@ -35,3 +35,6 @@ sources:
   openstack/glance:
     git_url: https://git.openstack.org/openstack/glance.git
     git_ref: stable/newton
+  openstack/requirements:
+    git_url: https://github.com/openstack/requirements.git
+    git_ref: stable/newton
