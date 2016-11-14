@@ -503,6 +503,52 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
+def _get_containers_names(service_name, components_map=None):
+    components_map = components_map or utils.get_deploy_components_info()
+    service_map = components_map[service_name]['service_content']['service']
+    names = [cntr['name'] for cntr in service_map['containers']]
+    return names
+
+
+def transform_dependencies(service, components_map):
+    """Replace any service dependency with its containers."""
+
+    service_content = service['service_content']
+    service_name = service_content['service']['name']
+    service_containers = service_content['service']['containers']
+
+    for container in service_containers:
+        daemon_map = container['daemon']
+        # skip if there is no dependencies
+        if 'dependencies' not in daemon_map:
+            continue
+        dependencies = daemon_map['dependencies']
+        transformed_deps = set()
+        for dep in dependencies:
+            # if the dependency is a job or container then add without changes
+            if dep not in components_map:
+                transformed_deps.add(dep)
+                continue
+            # dependency is a service, transform it to the list of containers
+            deps_containers = _get_containers_names(dep, components_map)
+            # validate cases when 'service_name' == 'container_name'
+            if dep in deps_containers:
+                if len(service_containers) == 1 or dep == service_name:
+                    # here is no difference between 'service' or 'container' as
+                    # dep because there is just one container with same name
+                    # as a service, e.g. 'service: nova; containers: nova.'
+                    transformed_deps.add(dep)
+                else:
+                    raise RuntimeError('Dependencies resolving conflict: '
+                                       'the %s simultaneously defined as '
+                                       'container and service. Please rename '
+                                       'anyone to make dependency clear.')
+            else:
+                transformed_deps = transformed_deps.union(service_containers)
+
+        daemon_map['dependencies'] = list(transformed_deps)
+
+
 def deploy_components(components_map, components):
     if not components:
         components = set(components_map.keys())
@@ -523,6 +569,7 @@ def deploy_components(components_map, components):
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
+        transform_dependencies(service, components_map)
         objects_gen = parse_role(service,
                                  topology=topology,
                                  configmaps=configmaps)
