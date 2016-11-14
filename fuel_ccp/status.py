@@ -49,14 +49,12 @@ def get_pod_states(components=None):
     ext_ip = CONF.configs.get("k8s_external_ip", "")
 
     states = {}
-    for pod in kubernetes.list_cluster_pods():
-        app_name = pod.obj["metadata"]["labels"].get("app")
-        if not app_name:
-            continue
-        states.setdefault(app_name, copy.deepcopy(STATE_TEMPLATE))
-        states[app_name]["pod_total"] += 1
-        if pod.ready:
-            states[app_name]["pod_running"] += 1
+    for dp in kubernetes.list_cluster_deployments():
+        states.setdefault(dp.name, copy.deepcopy(STATE_TEMPLATE))
+        dp_st = dp.obj["status"]
+        states[dp.name]["pod_total"] = dp.obj["status"]["replicas"]
+        states[dp.name]["pod_running"] = min(
+            dp_st.get("availableReplicas", 0), dp_st["updatedReplicas"])
 
     for job in kubernetes.list_cluster_jobs():
         app_name = job.obj["metadata"]["labels"].get("app")
