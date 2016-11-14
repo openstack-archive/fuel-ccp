@@ -36,9 +36,9 @@ EOF
 }
 
 function ccp_wait_for_deployment_to_finish {
-    until kubectl --namespace $1 get jobs | awk '$3 ~ 0 {print}' | wc -l | grep "^0$"; do
-        echo "Waiting for jobs to finish..."
-        sleep 1m
+    until [[ `${CCP} status -s -f value -c status` == "ok" ]]; do
+        echo "Waiting for OpenStack deployment to finish..."
+        sleep 5
     done
     echo "...................................."
     echo "Jobs and pods in namespace: $1"
