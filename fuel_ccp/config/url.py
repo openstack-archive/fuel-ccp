@@ -1,11 +1,5 @@
 SCHEMA = {
-    'url': {
-        'type': 'object',
-        'additionalProperties': {
-            'type': 'string',
-        },
-    }
-}
+    'url': {}
 
 DEFAULTS = {
     'url': {},
