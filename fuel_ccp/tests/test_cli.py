@@ -66,6 +66,8 @@ class TestParser(testscenarios.WithScenarios, TestCase):
         super(TestParser, self).setUp()
         fixture = fixtures.MockPatch('fuel_ccp.fetch.fetch_repositories')
         self.fetch_mock = self.useFixture(fixture).mock
+        self.useFixture(
+            fixtures.MockPatch('fuel_ccp.config.load_component_defaults'))
 
     def _run_app(self):
         exit_code = self.app.run([self.cmd] + self.argv)
@@ -126,6 +128,9 @@ class TestDeploy(TestParser):
         fixture = fixtures.MockPatch(
             'fuel_ccp.validation.service.validate_service_definitions')
         self.useFixture(fixture)
+        self.useFixture(fixtures.MockPatch(
+            'fuel_ccp.common.utils.get_deploy_components_info',
+            return_value={}))
         self.argv += self.add_argv
         self._run_app()
         if self.components is None:
