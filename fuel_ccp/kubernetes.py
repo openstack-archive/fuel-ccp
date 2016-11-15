@@ -10,7 +10,7 @@ CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 
-UPDATABLE_OBJECTS = ('ConfigMap', 'Deployment', 'Service')
+UPDATABLE_OBJECTS = ('ConfigMap', 'Deployment', 'Service', 'Ingress')
 
 
 def get_client(kube_apiserver=None, key_file=None, cert_file=None,
