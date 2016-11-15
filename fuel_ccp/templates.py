@@ -148,6 +148,7 @@ def serialize_job_container_spec(container, job):
     return {
         "name": job["name"],
         "image": images.image_spec(container["image"]),
+	"imagePullPolicy": "Always",
         "command": _get_start_cmd(job["name"]),
         "volumeMounts": serialize_volume_mounts(container),
         "env": serialize_env_variables(container)
