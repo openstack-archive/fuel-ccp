@@ -127,7 +127,7 @@ Append global CCP configuration:
               bridge_name: "br-ex"
               interface: "ens8"
               flat: true
-              vlan_range: "1001-1030"
+              vlan_range: "1001:1030"
     EOF
 
 Make sure to adjust it to your environment, since the network configuration of
