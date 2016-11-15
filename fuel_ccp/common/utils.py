@@ -134,3 +134,15 @@ def get_deployed_components():
         kubernetes.get_object_names(deployed_deployments)
     )
     return deployed_components
+
+
+def merge_configs(source, destination):
+    """Creates a recursive dicts merge."""
+    for key, value in source.items():
+        if isinstance(value, dict):
+            node = destination.setdefault(key, {})
+            merge_configs(value, node)
+        else:
+            destination[key] = value
+
+    return destination

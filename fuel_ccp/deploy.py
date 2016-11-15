@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import itertools
 import json
@@ -86,8 +87,15 @@ def parse_role(component, topology, configmaps):
     if CONF.action.dry_run:
         cm_version = 'dry-run'
     else:
+        configs = CONF.configs._dict
+        # Check if a service-local config context is used to overwrite globals
+        service_local = configs.get('service-local')
+        if service_local and service_name in service_local:
+            configs = copy.deepcopy(configs)
+            local_config = service_local[service_name]
+            utils.merge_configs(local_config, configs)
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, role.get("files"), CONF.configs._dict)
+            configmaps, service_dir, role.get("files"), configs)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
