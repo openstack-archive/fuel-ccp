@@ -312,7 +312,7 @@ def _create_meta_configmap(service):
     configmap_name = "%s-%s" % (service["name"], templates.META_CONFIG)
     data = {
         templates.META_CONFIG: json.dumps(
-            {"service-name": service["name"],
+            {"service_name": service["name"],
              "host-net": service.get("hostNetwork", False)}, sort_keys=True)
     }
     template = templates.serialize_configmap(configmap_name, data)
