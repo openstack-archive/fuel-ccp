@@ -1,0 +1,10 @@
+Code-Review+2: Sergey Lukjanov <slukjanov@mirantis.com>
+Verified+1: Mirantis CCP CI <mirantis-fuel-ccp-ci@mirantis.com>
+Code-Review+2: Yuriy Taraday <yorik.sar@gmail.com>
+Workflow+1: Yuriy Taraday <yorik.sar@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 15 Nov 2016 10:15:11 +0000
+Reviewed-on: https://review.openstack.org/397278
+Project: openstack/fuel-ccp
+Branch: refs/heads/master
