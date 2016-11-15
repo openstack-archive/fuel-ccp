@@ -8,6 +8,7 @@ class TestDeploy(base.TestCase):
         container = {
             "name": "name_foo",
             "image": "image_foo",
+            "imagePullPolicy": "Always",
             "command": "command_foo",
             "cm_version": 1,
             "env": [{
@@ -29,6 +30,7 @@ class TestDeploy(base.TestCase):
         expected = {
             "name": "name_foo",
             "image": "ccp/image_foo:latest",
+            "imagePullPolicy": "Always",
             "command": [
                 "dumb-init",
                 "/usr/bin/python",

@@ -119,6 +119,7 @@ def serialize_daemon_container_spec(container):
     cont_spec = {
         "name": container["name"],
         "image": images.image_spec(container["image"]),
+        "imagePullPolicy": "Always",
         "command": _get_start_cmd(container["name"]),
         "volumeMounts": serialize_volume_mounts(container),
         "readinessProbe": {
