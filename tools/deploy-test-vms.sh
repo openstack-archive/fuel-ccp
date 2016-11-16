@@ -26,6 +26,21 @@ do
     fi
 done
 
+function get_pods {
+    kubectl get pod -n "$K8S_NAMESPACE" --show-all -o template --template="
+        {{ range .items -}}
+            {{ .metadata.name }}
+        {{ end }}"
+}
+
+function get_containers {
+    local pod_name="$1"
+    kubectl get pod -n "$K8S_NAMESPACE" "$pod_name" -o template --template="
+        {{ range .spec.containers }}
+            {{ .name }}
+        {{ end }}"
+}
+
 
 create() {
     if [ -z "${NUMBER}" ]; then
@@ -38,6 +53,14 @@ create() {
     NETID="$(openstack network show int-net -f value -c id)"
     openstack server create --flavor m1.tiny --image cirros --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
     openstack server list
+
+    for pod in $(get_pods); do
+        for cont in $(get_containers "$pod"); do
+            echo "\n\n\n\n\n>>> Logs for $pod $cont"
+            kubectl -n "$K8S_NAMESPACE" logs "$pod" "$cont"
+        done
+    done
+    
     for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Console for $vm:"
         openstack console url show $vm
