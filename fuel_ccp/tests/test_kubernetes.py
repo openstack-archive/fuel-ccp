@@ -62,7 +62,8 @@ class TestKubernetesObjects(testscenarios.WithScenarios, base.TestCase):
         ('DaemonSet', {'kind': 'DaemonSet', 'update': False}),
         ('Job', {'kind': 'Job', 'update': False}),
         ('Namespace', {'kind': 'Namespace', 'update': False}),
-        ('Service', {'kind': 'Service', 'update': True, 'reload': True})
+        ('Service', {'kind': 'Service', 'update': True, 'reload': True}),
+        ('Ingress', {'kind': 'Ingress', 'update': True})
     )
     reload = False
 
