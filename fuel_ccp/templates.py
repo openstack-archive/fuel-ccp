@@ -159,10 +159,11 @@ def serialize_job_container_spec(container, job):
     }
 
 
-def serialize_job_pod_spec(service, job, cont_spec):
+def serialize_job_pod_spec(service, job, cont_spec, affinity):
     return {
         "metadata": {
-            "name": job["name"]
+            "name": job["name"],
+            "annotations": affinity,
         },
         "spec": {
             "containers": [cont_spec],
