@@ -1,3 +1,4 @@
+import itertools
 import json
 
 from fuel_ccp import config
@@ -47,7 +48,9 @@ def serialize_configmap(name, data):
     }
 
 
-def serialize_volume_mounts(container):
+def serialize_volume_mounts(container, for_job=None):
+    if for_job is None:
+        for_job = {}
     spec = [
         {
             "name": GLOBAL_CONFIG,
@@ -70,7 +73,8 @@ def serialize_volume_mounts(container):
             "mountPath": "/etc/ccp/%s" % FILES_CONFIG
         }
     ]
-    for v in container.get("volumes", ()):
+    for v in itertools.chain(container.get("volumes", ()),
+                             for_job.get("volumes", ())):
         spec.append({
             "name": v["name"],
             "mountPath": v.get("mount-path", v["path"]),
@@ -148,7 +152,7 @@ def serialize_job_container_spec(container, job):
         "name": job["name"],
         "image": images.image_spec(container["image"]),
         "command": _get_start_cmd(job["name"]),
-        "volumeMounts": serialize_volume_mounts(container),
+        "volumeMounts": serialize_volume_mounts(container, job),
         "env": serialize_env_variables(container)
     }
 
@@ -160,7 +164,7 @@ def serialize_job_pod_spec(service, job, cont_spec):
         },
         "spec": {
             "containers": [cont_spec],
-            "volumes": serialize_volumes(service),
+            "volumes": serialize_volumes(service, job),
             "restartPolicy": "OnFailure"
         }
     }
@@ -182,7 +186,9 @@ def serialize_daemon_pod_spec(service):
     return cont_spec
 
 
-def serialize_volumes(service):
+def serialize_volumes(service, for_job=None):
+    if for_job is None:
+        for_job = {}
     workflow_items = []
     for cont in service["containers"]:
         workflow_items.append(
@@ -245,7 +251,7 @@ def serialize_volumes(service):
     ]
     volume_names = [GLOBAL_CONFIG, META_CONFIG, ROLE_CONFIG, SCRIPT_CONFIG,
                     FILES_CONFIG]
-    for cont in service["containers"]:
+    for cont in itertools.chain(service["containers"], [for_job]):
         for v in cont.get("volumes", ()):
             if v["name"] in volume_names:
                 # TODO(apavlov): move to validation
