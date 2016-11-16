@@ -69,11 +69,10 @@ def prepare_source(source_name, name, dest_dir, config):
     source_dir = config['sources'].get(source_name, {}).get('source_dir')
 
     if git_url:
-        LOG.info('%s: Cloning repository "%s"', name, git_url)
-        repo = git.Repo.clone_from(git_url, tmp_dir)
         ref = config['sources'][source_name]['git_ref']
-        LOG.info('%s: Changing reference to "%s"', name, ref)
-        repo.git.checkout(ref)
+        LOG.info('%s: Cloning repository "%s, reference %s"', name, git_url,
+                 ref)
+        git.Repo.clone_from(git_url, tmp_dir, branch=ref, depth=1)
         LOG.info('%s: Repository %s has been cloned', name, git_url)
 
     if source_dir:
