@@ -1,4 +1,5 @@
 import copy
+from distutils import version
 import logging
 
 from fuel_ccp.validation import base as validation_base
@@ -9,6 +10,12 @@ LOG = logging.getLogger(__name__)
 
 PATH_RE = r'^(/|((/[\w.-]+)+/?))$'
 FILE_PATH_RE = r'^(/|((/[\w.-]+)+))$'
+
+
+@jsonschema.FormatChecker.cls_checks('valid_version')
+def valid_version(entry):
+    return version.StrictVersion(entry) is not None
+
 
 NOT_EMPTY_STRING_SCHEMA = {
     "type": "string",
@@ -158,6 +165,10 @@ SERVICE_SCHEMA = {
     "required": ["service"],
 
     "properties": {
+        "dsl_version": {
+            "type": "string",
+            "format": "valid_version"
+        },
         "service": {
             "type": "object",
             "additionalProperties": False,
@@ -285,7 +296,8 @@ def validate_service_definitions(components_map, components):
     for component in components:
         try:
             jsonschema.validate(components_map[component]["service_content"],
-                                SERVICE_SCHEMA)
+                                SERVICE_SCHEMA,
+                                format_checker=jsonschema.FormatChecker())
         except jsonschema.ValidationError as e:
             LOG.error("Validation of service definitions for component '%s' "
                       "is not passed: '%s'", component, e.message)
