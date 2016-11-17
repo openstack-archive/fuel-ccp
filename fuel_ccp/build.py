@@ -28,6 +28,7 @@ def render_dockerfile(path, name, config):
     LOG.debug('%s: Rendering dockerfile', name)
     sources = set()
     parent = []  # Could've been None if we could use nonlocal
+    render_files = []
 
     def copy_sources(source_name, cont_dir):
         if source_name not in config['sources']:
@@ -42,24 +43,22 @@ def render_dockerfile(path, name, config):
         return images.image_spec(image_name, add_address=CONF.builder.push)
 
     def render(fname):
-        dirname = os.path.dirname(path)
-        fpath = os.path.join(dirname, fname)
         if fname.endswith('.j2'):
             oname = fname[:-3]
         else:
             oname = fname + '.rendered'
-        opath = os.path.join(dirname, oname)
-        content = jinja_utils.jinja_render(fpath, config['render'],
-                                           [copy_sources, image_spec, render])
-        with open(opath, 'wb') as f:
-            f.write(content.encode('utf-8'))
+
+        render_files.append({
+            'src': fname,
+            'dest': oname
+        })
 
         return oname
 
     content = jinja_utils.jinja_render(path, config['render'],
                                        [copy_sources, image_spec, render])
 
-    return content, sources, parent[0] if parent else None
+    return content, sources, render_files, parent[0] if parent else None
 
 
 def prepare_source(source_name, name, dest_dir, config):
@@ -91,6 +90,13 @@ def create_rendered_dockerfile(dockerfile, tmp_path, config):
 
     for source_name in dockerfile['sources']:
         prepare_source(source_name, dockerfile['name'], dest_dir, config)
+
+    for render_file in dockerfile['render_files']:
+        fpath = os.path.join(src_dir, render_file['src'])
+        opath = os.path.join(dest_dir, render_file['dest'])
+        content = jinja_utils.jinja_render(fpath, config['render'])
+        with open(opath, 'wb') as f:
+            f.write(content.encode('utf-8'))
 
     for filename in os.listdir(src_dir):
         if 'Dockerfile' in filename:
@@ -141,11 +147,12 @@ def find_dockerfiles(repository_name, match=True):
 
 def render_dockerfiles(dockerfiles, config):
     for dockerfile in dockerfiles.values():
-        content, sources, parent = \
+        content, sources, render_files, parent = \
             render_dockerfile(dockerfile['path'], dockerfile['name'], config)
         dockerfile['content'] = content
         dockerfile['sources'] = sources
         dockerfile['parent'] = parent
+        dockerfile['render_files'] = render_files
 
 
 IMAGE_FULL_NAME_RE = r"((?P<namespace>[\w:\.-]+)/){0,2}" \

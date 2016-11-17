@@ -235,12 +235,12 @@ class TestRenderDockerfile(testscenarios.WithScenarios, base.TestCase):
         ('empty', {
             'config': {'render': {}},
             'source': '',
-            'result': ('', set(), None),
+            'result': ('', set(), [], None),
         }),
         ('one_source', {
             'config': {'render': {}, 'sources': {'one': {}}},
             'source': '{{ copy_sources("one", "/tmp") }}',
-            'result': ('COPY one /tmp', {'one'}, None),
+            'result': ('COPY one /tmp', {'one'}, [], None),
         }),
         ('wrong_source', {
             'config': {'render': {}, 'sources': {'one': {}}},
@@ -250,7 +250,7 @@ class TestRenderDockerfile(testscenarios.WithScenarios, base.TestCase):
         ('one_from', {
             'config': {'render': {}},
             'source': 'FROM {{ image_spec("one") }}',
-            'result': ('FROM ccp/one:latest', set(), 'one'),
+            'result': ('FROM ccp/one:latest', set(), [], 'one'),
         }),
     ]
 
