@@ -10,9 +10,7 @@ usage() {
 
     -h   Prints this help
     -a   Required action. Choise from "create" and "destroy"
-    -c   Calico networking insted of OVS
     -n   Number of VMs to spawn (optional)
-    -i   Public eth iface (optional)
     -k   Kubernetes namespace (optional)
 EOF
 }
@@ -30,73 +28,38 @@ done
 
 
 create() {
-    if [ -z "$NUMBER" ]; then
+    if [ -z "${NUMBER}" ]; then
         NUMBER=2
     fi
-    if [ -z "$IFACE" ]; then
-        GUESSED_IFACE=$(ip ro sh | awk '/^default via [0-9]+.[0-9]+.[0-9]+.[0-9]+ dev/ {print $5}')
-        if [[ -z "${GUESSED_IFACE}" ]]; then
-            IFACE="eth1"
-        else
-            IFACE="${GUESSED_IFACE}"
-        fi
-        echo "Assuming the public eth interface is: ${IFACE}"
-    fi
-    # Check if iface is exist
-    if ! ip a show up | fgrep -q $IFACE ; then
-        echo "Cant find $IFACE in the list of working interfaces"
-        usage
-        exit 1
-    fi
-    EXTIP="`ifconfig $IFACE | grep -Po 'addr:\d+\.\d+\.\d+\.\d+' | awk -F':' '{print $NF}'`"
-    [ -n "${K8S_NAMESPACE}" ] && KUBECTL_OPTION="--namespace ${K8S_NAMESPACE}"
-    VNCP="`kubectl ${KUBECTL_OPTION} get svc nova-novncproxy -o yaml | awk '/nodePort/ {print $NF}'`"
 
-    if [ "$CALICO" == "True" ]; then
-        openstack network create --provider-network-type local testnetwork
-    else
-        openstack network create --provider-network-type vxlan --provider-segment 77 testnetwork
-    fi
-    openstack subnet create --subnet-range 192.168.1.0/24 --gateway 192.168.1.1 --network testnetwork testsubnetwork
-    openstack flavor create --ram 512 --disk 0 --vcpus 1 tiny
-    curl -o /tmp/cirros.img http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img && \
+    curl -o /tmp/cirros.img http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
     openstack image create --disk-format qcow2 --public --file /tmp/cirros.img cirros
     rm -f /tmp/cirros.img
-    NETID="$(openstack network list | awk '/testnetwork/ {print $2}')"
-    openstack server create --flavor tiny --image cirros --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
+    NETID="$(openstack network show int-net -f value -c id)"
+    openstack server create --flavor m1.tiny --image cirros --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
     openstack server list
-    for vm in $(openstack server  list | awk '/test_vm/ {print $4}'); do
+    for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Console for $vm:"
-        openstack console url show $vm | sed "s/nova-novncproxy\..*:6080/${EXTIP}:${VNCP}/"
+        openstack console url show $vm
     done
 }
 
 destroy() {
-    for vm in $(openstack server  list | awk '/test_vm/ {print $4}'); do
+    for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Destroying $vm..."
         openstack server delete --wait $vm
     done
-    echo "Destroying testnetwork..."
-    openstack network delete testnetwork
-    echo "Destroying tiny flavor..."
-    openstack flavor delete tiny
     echo "Destroying cirros image..."
     openstack image delete cirros
 }
 
-while getopts ":a:n:i:k:hc" opt; do
+while getopts ":a:n:k:h" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
             ;;
-        c)
-            CALICO="True"
-            ;;
         n)
             NUMBER="$OPTARG"
-            ;;
-        i)
-            IFACE="$OPTARG"
             ;;
         k)
             K8S_NAMESPACE="$OPTARG"
