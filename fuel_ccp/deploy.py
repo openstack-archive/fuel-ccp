@@ -68,10 +68,6 @@ def parse_role(component, topology, configmaps):
     service = role["service"]
     service_name = service["name"]
 
-    if service_name not in topology:
-        LOG.info("Service %s not in topology config, skipping deploy",
-                 service_name)
-        return
     LOG.info("Scheduling service %s deployment", service_name)
     _expand_files(service, role.get("files"))
 
@@ -515,18 +511,16 @@ def version_diff(from_image, to_image):
 
 
 def deploy_components(components_map, components):
-    if not components:
-        components = set(components_map.keys())
+
+    topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
+    components = components or topology.keys()
 
     deploy_validation.validate_requested_components(components, components_map)
 
     if CONF.action.export_dir:
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
-    topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
-
     _create_namespace(CONF.configs)
-
     _create_globals_configmap(CONF.configs)
     start_script_cm = _create_start_script_configmap()
     configmaps = (start_script_cm,)
