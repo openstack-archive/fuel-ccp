@@ -7,6 +7,7 @@ DEFAULT_REPOS = [
     'fuel-ccp-debian-base',
     'fuel-ccp-entrypoint',
     'fuel-ccp-etcd',
+    'fuel-ccp-galera',
     'fuel-ccp-glance',
     'fuel-ccp-heat',
     'fuel-ccp-horizon',
