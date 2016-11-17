@@ -465,6 +465,8 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps):
         job = {"name": job_name, "type": "single"}
         if step.get('files'):
             job['files'] = step['files']
+        if step.get('volumes'):
+            job['volumes'] = step['volumes']
         jobs.append(job)
         workflow = {
             'name': job_name,
