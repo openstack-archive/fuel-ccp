@@ -13,6 +13,8 @@ def validate(components, types):
             component_map = utils.get_deploy_components_info()
             service_validation.validate_service_definitions(component_map,
                                                             components)
+            service_validation.validate_service_versions(component_map,
+                                                         components)
         elif validation_type == "dockerfiles":
             dockerfiles.validate()
         else:

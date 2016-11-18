@@ -131,6 +131,8 @@ class TestDeploy(TestParser):
         self.useFixture(fixtures.MockPatch(
             'fuel_ccp.common.utils.get_deploy_components_info',
             return_value={}))
+        self.useFixture(fixtures.MockPatch(
+            'fuel_ccp.validation.service.validate_service_versions'))
         self.argv += self.add_argv
         self._run_app()
         if self.components is None:
