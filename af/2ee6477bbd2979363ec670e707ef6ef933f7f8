@@ -1,0 +1,9 @@
+Code-Review+2: Sergey Lukjanov <slukjanov@mirantis.com>
+Code-Review+2: Proskurin Kirill <kproskurin@mirantis.com>
+Workflow+1: Proskurin Kirill <kproskurin@mirantis.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 18 Nov 2016 17:19:55 +0000
+Reviewed-on: https://review.openstack.org/399576
+Project: openstack/fuel-ccp
+Branch: refs/heads/master
