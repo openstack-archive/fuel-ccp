@@ -84,6 +84,8 @@ class Deploy(BaseCommand):
 
         validation_service.validate_service_definitions(
             components_map, components)
+        validation_service.validate_service_versions(
+            components_map, components)
         deploy.deploy_components(components_map, components)
 
 

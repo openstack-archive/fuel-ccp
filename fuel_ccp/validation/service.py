@@ -2,6 +2,7 @@ import copy
 from distutils import version
 import logging
 
+import fuel_ccp
 from fuel_ccp.validation import base as validation_base
 import jsonschema
 
@@ -162,7 +163,7 @@ PROBE_SCHEMA = {
 SERVICE_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["service"],
+    "required": ["version", "service"],
 
     "properties": {
         "dsl_version": {
@@ -285,7 +286,7 @@ SERVICE_SCHEMA = {
 }
 
 
-def validate_service_definitions(components_map, components):
+def validate_service_definitions(components_map, components=None):
     if not components:
         components = components_map.keys()
     else:
@@ -309,7 +310,34 @@ def validate_service_definitions(components_map, components):
             "not passed.".format(len(not_passed_components), len(components))
         )
     else:
-        LOG.info(
-            "Validation of service definitions for %s components passed "
-            "successfully!", len(components)
-        )
+        LOG.info("Service definitions validation passed successfully")
+
+
+def validate_service_versions(components_map, components=None):
+    if not components:
+        components = components_map.keys()
+    incompatible_services = []
+    for component in components:
+        service_version = version.StrictVersion(
+            components_map[component]['service_content']['version'])
+        parser_version = version.StrictVersion(fuel_ccp.service_parser_version)
+        if service_version > parser_version:
+            LOG.error('%s: Service version validation failed: service version '
+                      '(%s) greater than parser version (%s)',
+                      component, str(service_version), str(parser_version))
+            incompatible_services.append(component)
+            continue
+
+        service_major_version = service_version.version[0]
+        parser_major_version = parser_version.version[0]
+        if service_major_version != parser_major_version:
+            LOG.error("%s: Service version validation failed: major versions "
+                      "of service (%s) and parser (%s) are not equal",
+                      component, str(service_version), str(parser_version))
+            incompatible_services.append(component)
+
+    if incompatible_services:
+        raise RuntimeError('The following services have incompatible versions:'
+                           ' %s' % ', '.join(incompatible_services))
+    else:
+        LOG.info('Service versions validation passed successfully')
