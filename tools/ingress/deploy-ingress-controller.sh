@@ -72,7 +72,7 @@ if [ -z $TLS_KEY ] || [ -z $TLS_CERT ]; then
     TLS_KEY="tls.key"
     TLS_CERT="tls.crt"
     CLEANUP="True"
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $TLS_KEY -out $TLS_CERT -subj "/CN=*.$DOMAIN"
+    CERT_ALTNAME="DNS:*.$DOMAIN,IP:$EXTERNAL_IP" openssl req -config $workdir/openssl.cnf -x509 -nodes -days 365 -newkey rsa:2048 -keyout $TLS_KEY -out $TLS_CERT -subj "/CN=*.$DOMAIN"
 fi
 
 kube_cmd create secret generic traefik-cert --from-file=$TLS_CERT --from-file=$TLS_KEY
