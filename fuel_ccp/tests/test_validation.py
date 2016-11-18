@@ -1,8 +1,11 @@
+import fixtures
 import mock
 
+import fuel_ccp
 from fuel_ccp.tests import base
 from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
+from fuel_ccp.validation import service as service_validation
 
 
 COMPONENTS_MAP = {
@@ -80,3 +83,48 @@ class TestDeployValidation(base.TestCase):
             'deployment: service2',
             deploy_validation.validate_requested_components,
             {'service1'}, COMPONENTS_MAP)
+
+
+class TestServiceValidation(base.TestCase):
+    def setUp(self):
+        super(TestServiceValidation, self).setUp()
+        self.useFixture(fixtures.MockPatch("fuel_ccp.service_parser_version",
+                                           "0.2.0"))
+
+    def test_validation_service_versions_incompatible(self):
+        components_map = {
+            "test": {
+                "service_content": {
+                    "dsl_version": "0.3.0"
+                }
+            }
+        }
+        self.assertRaises(
+            RuntimeError, service_validation.validate_service_versions,
+            components_map, ['test']
+        )
+
+    def test_validation_service_versions_incompatible_major(self):
+        components_map = {
+            "test": {
+                "service_content": {
+                    "dsl_version": "1.0.0"
+                }
+            }
+        }
+        self.assertRaises(
+            RuntimeError, service_validation.validate_service_versions,
+            components_map, ["test"]
+        )
+
+    def test_validation_service_versions_compatible(self):
+        components_map = {
+            "test": {
+                "service_content": {
+                    "dsl_version": "0.1.0"
+                }
+            }
+        }
+        service_validation.validate_service_versions(
+            components_map, ['test']
+        )
