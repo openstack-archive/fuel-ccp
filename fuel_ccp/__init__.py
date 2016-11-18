@@ -17,3 +17,4 @@ import pbr.version
 
 version_info = pbr.version.VersionInfo("fuel_ccp")
 __version__ = version_info.version_string()
+service_parser_version = "0.1.0"
