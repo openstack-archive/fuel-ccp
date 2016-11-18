@@ -1,8 +1,11 @@
+import fixtures
 import mock
+import testscenarios
 
 from fuel_ccp.tests import base
 from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
+from fuel_ccp.validation import service as service_validation
 
 
 COMPONENTS_MAP = {
@@ -80,3 +83,36 @@ class TestDeployValidation(base.TestCase):
             'deployment: service2',
             deploy_validation.validate_requested_components,
             {'service1'}, COMPONENTS_MAP)
+
+
+class TestServiceValidation(testscenarios.WithScenarios, base.TestCase):
+    scenarios = (
+        ('incompatible', {'version': '0.3.0', 'raises': RuntimeError}),
+        ('incompatible_major', {'version': '1.0.0', 'raises': RuntimeError}),
+        ('compatible', {'version': '0.1.0'}),
+        ('larget_but_compatible', {'version': '0.1.0'})
+    )
+    raises = None
+
+    def setUp(self):
+        super(TestServiceValidation, self).setUp()
+        self.useFixture(fixtures.MockPatch("fuel_ccp.dsl_version",
+                                           "0.2.0"))
+
+    def test_validation(self):
+        components_map = {
+            "test": {
+                "service_content": {
+                    "dsl_version": self.version
+                }
+            }
+        }
+        if self.raises:
+            self.assertRaises(
+                self.raises, service_validation.validate_service_versions,
+                components_map, ['test']
+            )
+        else:
+            service_validation.validate_service_versions(
+                components_map, ['test']
+            )
