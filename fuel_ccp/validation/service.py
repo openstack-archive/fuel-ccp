@@ -214,7 +214,10 @@ SERVICE_SCHEMA = {
                                 "additionalProperties": False,
 
                                 "properties": {
-                                    "readiness": NOT_EMPTY_STRING_SCHEMA,
+                                    "readiness": {"oneOf": [
+                                        NOT_EMPTY_STRING_SCHEMA,
+                                        PROBE_SCHEMA,
+                                    ]},
                                     "liveness": PROBE_SCHEMA
                                 }
                             },
