@@ -84,6 +84,8 @@ class Deploy(BaseCommand):
 
         validation_service.validate_service_definitions(
             components_map, components)
+        validation_service.validate_service_versions(
+            components_map, components)
         deploy.deploy_components(components_map, components)
 
 
@@ -257,9 +259,11 @@ class CCPApp(app.App):
         '%(asctime)s %(levelname)-8s %(name)-15s %(message)s'
 
     def __init__(self, **kwargs):
+        ccp_version = "%s, dsl version %s" % (fuel_ccp.__version__,
+                                              fuel_ccp.dsl_version)
         super(CCPApp, self).__init__(
             description='Containerized Control Plane tool',
-            version=fuel_ccp.__version__,
+            version=ccp_version,
             command_manager=commandmanager.CommandManager('ccp.cli'),
             deferred_help=True,
             **kwargs
