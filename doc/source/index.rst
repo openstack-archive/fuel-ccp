@@ -44,7 +44,7 @@ Design docs
 .. toctree::
    :maxdepth: 1
 
-   design/index
+   design/ost_compute_on_k8s
 
 Indices and tables
 ------------------
