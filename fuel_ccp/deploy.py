@@ -515,7 +515,7 @@ def version_diff(from_image, to_image):
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
-    components = components or topology.keys()
+    components = components or set(topology.keys())
 
     deploy_validation.validate_requested_components(components, components_map)
 
