@@ -12,7 +12,6 @@ function usage {
     echo "  $base_name -k <path to tls key>"
     echo "  $base_name -c <path to tls cert>"
     echo "  $base_name -d <ingress domain (default: ccp.external)>"
-    echo "  $base_name -i <external IP>"
 }
 
 NAMESPACE=" --namespace kube-system"
