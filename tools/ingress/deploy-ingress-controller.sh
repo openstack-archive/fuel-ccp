@@ -17,16 +17,20 @@ function usage {
 
 NAMESPACE=" --namespace kube-system"
 DOMAIN="ccp.external"
+WEBUI_PORT=8088
 HTTP_PORT=80
 HTTPS_PORT=8443
 
-while getopts "p:s:k:c:d:n:i:h" opt; do
+while getopts "p:s:w:k:c:d:n:i:h" opt; do
     case $opt in
         "p" )
             HTTP_PORT="$OPTARG"
             ;;
         "s" )
             HTTPS_PORT="$OPTARG"
+            ;;
+        "w" )
+            WEBUI_PORT="$OPTARG"
             ;;
         "k" )
             TLS_KEY="$OPTARG"
@@ -76,9 +80,9 @@ if [ -z $TLS_KEY ] || [ -z $TLS_CERT ]; then
 fi
 
 kube_cmd create secret generic traefik-cert --from-file=$TLS_CERT --from-file=$TLS_KEY
-sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" $workdir/traefik-conf.yaml | kube_cmd create -f -
+sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" $workdir/traefik-conf.yaml | kube_cmd create -f -
 sleep 1
-sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/EXTERNAL_IP/$EXTERNAL_IP/g" $workdir/controller.yaml | kube_cmd create -f -
+sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" -e "s/EXTERNAL_IP/$EXTERNAL_IP/g" $workdir/controller.yaml | kube_cmd create -f -
 
 if [ -n $CLEANUP ]; then
     rm $TLS_KEY $TLS_CERT
