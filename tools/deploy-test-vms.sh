@@ -6,13 +6,14 @@ set -e
 
 usage() {
     cat << EOF
-    Usage: $0 -a (create|destroy) [-n NUBER_OF_VMs] [-i IMAGE]
+    Usage: $0 -a (create|destroy) [-n NUBER_OF_VMs] [-i IMAGE] [-f]
 
     -h   Prints this help
     -a   Required action. Choise from "create" and "destroy"
     -n   Number of VMs to spawn (optional)
     -k   Kubernetes namespace (optional)
     -i   Image to boot VMs from (optional, will upload Cirros if ommited)
+    -f   Allocate floating IPs and associate with VMs (optional)
 EOF
 }
 
@@ -41,6 +42,12 @@ create() {
     fi
     NETID="$(openstack network show int-net -f value -c id)"
     openstack server create --flavor m1.tiny --image "${IMAGE}" --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
+    if [ -n "${ADD_FLOATING}" ]; then
+        for vm in $(openstack server list -f value -c Name | grep test_vm); do
+            floating_ip="$(openstack floating ip create -f value -c floating_ip_address ext-net)"
+            openstack server add floating ip "$vm" "$floating_ip"
+        done
+    fi
     openstack server list
     for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Console for $vm:"
@@ -57,7 +64,7 @@ destroy() {
     openstack image delete cirros
 }
 
-while getopts ":a:n:k:i:h" opt; do
+while getopts ":a:n:k:i:fh" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
@@ -70,6 +77,9 @@ while getopts ":a:n:k:i:h" opt; do
             ;;
         i)
             IMAGE="$OPTARG"
+            ;;
+        f)
+            ADD_FLOATING="yes"
             ;;
         h)
             usage
