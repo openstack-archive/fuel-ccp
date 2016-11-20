@@ -39,6 +39,8 @@ spec:
   externalIPs:
     - EXTERNAL_IP
   ports:
+    - name: webui
+      port: WEBUI_PORT
     - name: http
       port: HTTP_PORT
     - name: https
