@@ -5,6 +5,11 @@ metadata:
 data:
   traefik.toml: |
     defaultEntryPoints = ["http","https"]
+    [web]
+    address = ":WEBUI_PORT"
+    ReadOnly = true
+    CertFile = "/ssl/tls.crt"
+    KeyFile = "/ssl/tls.key"
     [entryPoints]
       [entryPoints.http]
       address = ":HTTP_PORT"
