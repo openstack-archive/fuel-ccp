@@ -264,15 +264,15 @@ sufficient to build them (and push to local registry) only once:
 
 ::
 
-    ccp deploy --config-file ccp-cli-config-1.yaml build
+    ccp build --config-file ccp-cli-config-1.yaml
 
 We can now deploy CCP as usually:
 
 ::
 
-    ccp deploy --config-file ccp-cli-config-1.yaml deploy
-    ccp deploy --config-file ccp-cli-config-2.yaml deploy
-    ccp deploy --config-file ccp-cli-config-3.yaml deploy
+    ccp deploy --config-file ccp-cli-config-1.yaml
+    ccp deploy --config-file ccp-cli-config-2.yaml
+    ccp deploy --config-file ccp-cli-config-3.yaml
 
 CCP will create 3 K8s namespaces (ccp-1, ccp-2 and ccp-3) and corresponding
 jobs, pods and services in each namespace. Finally, it will create openrc files
@@ -293,4 +293,4 @@ used, e.g. to destroy deployment #2:
 
 ::
 
-    ccp --config-file ccp-cli-config-2.yaml ccp cleanup
+    ccp --namespace ccp-2 cleanup
