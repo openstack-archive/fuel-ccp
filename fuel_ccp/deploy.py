@@ -120,7 +120,8 @@ def parse_role(component, topology, configmaps):
                                "implemented using Kubernetes DaemonSet")
         replicas = len(set(topology[service_name]))
         if strategy['type'] == 'RollingUpdate':
-            strategy['rollingUpdate'] = {'maxSurge': 0, 'maxUnavailable': 1}
+            strategy['rollingUpdate'] = {'maxSurge': 0,
+                                         'maxUnavailable': '50%'}
     else:
         replicas = replicas or 1
 
