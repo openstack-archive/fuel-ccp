@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: k8s-node-evacuator
+  labels:
+    app: k8s-node-evacuator
+spec:
+  hostNetwork: true
+  nodeSelector:
+    app: k8s-node-evacuator
+  containers:
+    - name: k8s-node-evacuator
+      image: 127.0.0.1:31500/k8s-node-evacuator
+      imagePullPolicy: Always
+      env:
+      - name: OS_USER_DOMAIN_NAME
+        value: OS_USER_DOMAIN_NAME_CHANGE_ME
+      - name: OS_PROJECT_NAME
+        value: OS_PROJECT_NAME_CHANGE_ME
+      - name: OS_IDENTITY_API_VERSION
+        value: OS_IDENTITY_API_VERSION_CHANGE_ME
+      - name: OS_PASSWORD
+        value: OS_PASSWORD_CHANGE_ME
+      - name: OS_AUTH_URL
+        value: OS_AUTH_URL_CHANGE_ME
+      - name: OS_USERNAME
+        value: OS_USERNAME_CHANGE_ME
+      - name: OS_PROJECT_DOMAIN_NAME
+        value: OS_PROJECT_DOMAIN_NAME_CHANGE_ME
+      - name: K8S_API_SERVER_URL
+        value: K8S_API_SERVER_URL_CHANGE_ME
