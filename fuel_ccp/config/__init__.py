@@ -131,6 +131,8 @@ def load_component_defaults():
 
     global _REAL_CONF
     new_config['configs']['namespace'] = _REAL_CONF.kubernetes.namespace
+    new_config['configs'][
+        'cluster_domain'] = _REAL_CONF.kubernetes.cluster_domain
     new_config._merge(_REAL_CONF)
     _REAL_CONF = new_config
 
