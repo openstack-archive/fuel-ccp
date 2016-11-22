@@ -65,7 +65,8 @@ def address(service, port=None, external=False, with_scheme=False):
             addr = '%s:%s' % (CONF.configs.k8s_external_ip, port['node'])
 
     if addr is None:
-        addr = '%s.%s' % (service, CONF.kubernetes.namespace)
+        addr = '.'.join((service, CONF.kubernetes.namespace,
+                         CONF.kubernetes.cluster_domain))
         if port:
             addr = '%s:%s' % (addr, port['cont'])
 
