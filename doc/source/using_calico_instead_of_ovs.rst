@@ -156,6 +156,7 @@ in your configuration file (let's say it's ``ccp.yaml``):
         - etcd
         - glance-api
         - glance-registry
+        - heat-api-cfn
         - heat-api
         - heat-engine
         - horizon
