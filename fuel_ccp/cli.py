@@ -215,7 +215,7 @@ class ShowStatus(lister.Lister):
 
 
 class ImagesList(BaseCommand, lister.Lister):
-    """Get images mathcing list of components"""
+    """Get images matching list of components"""
 
     def get_parser(self, *args, **kwargs):
         parser = super(ImagesList, self).get_parser(*args, **kwargs)
@@ -230,7 +230,7 @@ class ImagesList(BaseCommand, lister.Lister):
             build.match_dockerfiles_by_component(dockerfiles, component)
         return (
             ('Name',),
-            ((d['name'],) for d in dockerfiles.values() if d['match']),
+            sorted((d['name'],) for d in dockerfiles.values() if d['match']),
         )
 
 
