@@ -6,6 +6,7 @@ import os
 from fuel_ccp.config import _yaml
 from fuel_ccp.config import builder
 from fuel_ccp.config import cli
+from fuel_ccp.config import files
 from fuel_ccp.config import images
 from fuel_ccp.config import kubernetes
 from fuel_ccp.config import registry
@@ -55,7 +56,7 @@ CONF = _Wrapper()
 
 CONFIG_MODULES = [
     builder, cli, images, kubernetes, registry, replicas, repositories,
-    sources, url,
+    sources, url, files,
 ]
 
 
@@ -116,7 +117,7 @@ def load_component_defaults():
     from fuel_ccp.common import utils
 
     sections = ['versions', 'sources', 'configs', 'nodes', 'roles', 'replicas',
-                'url']
+                'url', 'files']
     new_config = _yaml.AttrDict((k, _yaml.AttrDict()) for k in sections)
     for path in utils.get_config_paths():
         if not os.path.exists(path):

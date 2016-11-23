@@ -45,20 +45,30 @@ def _get_configmaps_version(configmaps, service_dir, files, configs):
     """
     versions = ''.join(cm.obj['metadata']['resourceVersion']
                        for cm in configmaps)
-    files_hash = _get_service_files_hash(service_dir, files, configs)
+    files_hash = _get_service_files_hash(files, configs)
 
     return versions + files_hash
 
 
-def _get_service_files_hash(service_dir, files, configs):
+def _get_service_files_hash(files, configs):
     data = {}
     if files:
         for filename, f in files.items():
-            path = os.path.join(service_dir, "files", f["content"])
             data[filename] = jinja_utils.jinja_render(
-                path, configs, ignore_undefined=True)
+                f["content"], configs, ignore_undefined=True)
     dump = json.dumps(data, sort_keys=True).encode("utf-8")
     return hashlib.sha1(dump).hexdigest()
+
+
+def process_files(files, service_dir):
+    if not files:
+        return
+    for filename, f in files.items():
+        if CONF.files.get(filename):
+            content = CONF.files.get(filename)
+        else:
+            content = os.path.join(service_dir, "files", f["content"])
+        f["content"] = content
 
 
 def parse_role(component, topology, configmaps):
@@ -71,6 +81,7 @@ def parse_role(component, topology, configmaps):
     LOG.info("Scheduling service %s deployment", service_name)
     _expand_files(service, role.get("files"))
 
+    process_files(role.get("files"), service_dir)
     files_cm = _create_files_configmap(
         service_dir, service_name, role.get("files"))
     meta_cm = _create_meta_configmap(service)
@@ -306,8 +317,7 @@ def _create_files_configmap(service_dir, service_name, files):
     data = {}
     if files:
         for filename, f in files.items():
-            with open(os.path.join(
-                    service_dir, "files", f["content"]), "r") as f:
+            with open(f["content"], "r") as f:
                 data[filename] = f.read()
     data["placeholder"] = ""
     template = templates.serialize_configmap(configmap_name, data)
