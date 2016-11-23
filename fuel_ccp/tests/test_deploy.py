@@ -153,7 +153,7 @@ class TestDeploy(base.TestCase):
             return_value='rendered'))
         expected_hash = '86e85bd63aef5a740d4b7b887ade37ec9017c961'
         self.assertEqual(
-            expected_hash, deploy._get_service_files_hash('/tmp', files, {}))
+            expected_hash, deploy._get_service_files_hash(files, {}))
 
 
 class TestDeployProcessPorts(base.TestCase):
