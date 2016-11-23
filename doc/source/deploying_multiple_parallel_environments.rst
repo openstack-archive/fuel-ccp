@@ -178,6 +178,7 @@ files for common configuration options and roles definitions.
         - etcd
         - glance-api
         - glance-registry
+        - heat-api-cfn
         - heat-api
         - heat-engine
         - horizon
