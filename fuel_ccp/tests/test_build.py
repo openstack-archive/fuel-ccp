@@ -1,4 +1,5 @@
 import collections
+import copy
 import os
 
 import fixtures
@@ -271,3 +272,70 @@ class TestRenderDockerfile(testscenarios.WithScenarios, base.TestCase):
             exc = self.assertRaises(ValueError, build.render_dockerfile,
                                     fname, 'name', self.config)
             self.assertEqual(exc.args[0], self.exception.args[0])
+
+
+class TestConnectChildren(testscenarios.WithScenarios, base.TestCase):
+    scenarios = [
+        ("normal", {
+            "dockerfiles": {
+                "base": {
+                    "name": "base",
+                    "parent": None,
+                    "children": [],
+                },
+                "dock-a": {
+                    "name": "dock-a",
+                    "parent": "base",
+                    "children": [],
+                },
+                "dock-b": {
+                    "name": "dock-b",
+                    "parent": "dock-a",
+                    "children": [],
+                },
+            },
+            "children": {
+                "base": ["dock-a"],
+                "dock-a": ["dock-b"],
+                "dock-b": [],
+            },
+
+        }),
+        ("orphan", {
+            "dockerfiles": {
+                "dock-a": {
+                    "name": "dock-a",
+                    "parent": "dock-c",
+                    "children": [],
+                },
+                "dock-b": {
+                    "name": "dock-b",
+                    "parent": "dock-a",
+                    "children": [],
+                },
+            },
+            "exception": (
+                RuntimeError,
+                "Could not find parents for the following images: "
+                "dock-a[dock-c]",
+            ),
+        }),
+    ]
+
+    dockerfiles = None
+    orphan = None
+    exception = None
+
+    def test_connect_children(self):
+        dockerfiles = copy.deepcopy(self.dockerfiles)
+        if self.exception is None:
+            build.connect_children(dockerfiles)
+            result_children = {}
+            for dockerfile in dockerfiles.values():
+                result_children[dockerfile["name"]] = \
+                    [d["name"] for d in dockerfile["children"]]
+            self.assertEqual(self.children, result_children)
+        else:
+            exc = self.assertRaises(
+                self.exception[0], build.connect_children, dockerfiles)
+            self.assertEqual(exc.args[0], self.exception[1])

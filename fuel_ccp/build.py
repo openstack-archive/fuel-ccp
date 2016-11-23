@@ -162,11 +162,21 @@ IMAGE_FULL_NAME_PATTERN = re.compile(IMAGE_FULL_NAME_RE)
 
 
 def connect_children(dockerfiles):
+    orphan_children = []
     for dockerfile in dockerfiles.values():
         parent = dockerfile['parent']
         if parent:
-            dockerfiles[parent]['children'].append(dockerfile)
-            dockerfile['parent'] = dockerfiles[parent]
+            if parent not in dockerfiles:
+                orphan_children.append(dockerfile)
+            else:
+                dockerfiles[parent]['children'].append(dockerfile)
+                dockerfile['parent'] = dockerfiles[parent]
+    if orphan_children:
+        orphan_str = ", ".join(
+            "{name}[{parent}]".format(**d) for d in orphan_children)
+        raise RuntimeError(
+            "Could not find parents for the following images: {}".format(
+                orphan_str))
 
 
 def get_dockerfiles(match=False):
