@@ -21,6 +21,9 @@ spec:
           port: 5000
         initialDelaySeconds: 3
         timeoutSeconds: 1
+      env:
+        - name: REGISTRY_STORAGE_DELETE_ENABLED
+          value: "true"
   nodeSelector:
     app: ccp-registry
   volumes:
