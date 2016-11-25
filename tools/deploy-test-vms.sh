@@ -49,6 +49,14 @@ create() {
         done
     fi
     openstack server list
+    if openstack server list | grep ERROR; then
+        NS=`kubectl get ns | awk '/ccp/ {print $1}'`
+        echo "Error while creating vm"
+        for f in `kubectl --namespace ${NS} get pod | awk '/nova/ {print $1}'`;do
+            echo "-------------- $f ---------------"
+            kubectl --namespace ${NS} logs $f
+        done
+    fi
     for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Console for $vm:"
         openstack console url show $vm
