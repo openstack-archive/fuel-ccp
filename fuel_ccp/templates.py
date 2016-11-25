@@ -177,7 +177,7 @@ def serialize_daemon_containers(service):
     return [serialize_daemon_container_spec(c) for c in service["containers"]]
 
 
-def serialize_daemon_pod_spec(service):
+def serialize_daemon_pod_spec(service, label=None):
     cont_spec = {
         "containers": serialize_daemon_containers(service),
         "volumes": serialize_volumes(service),
@@ -185,6 +185,8 @@ def serialize_daemon_pod_spec(service):
         "hostNetwork": service.get("hostNetwork", False),
         "hostPID": service.get("hostPID", False)
     }
+    if label is not None:
+        cont_spec["nodeSelector"] = {label: 'true'}
 
     return cont_spec
 
@@ -331,20 +333,23 @@ def serialize_deployment(name, spec, affinity, replicas, component_name,
     return deployment
 
 
-def serialize_affinity(service, topology):
-    policy = {
-        "nodeAffinity": {
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-                "nodeSelectorTerms": [{
-                    "matchExpressions": [{
-                        "key": "kubernetes.io/hostname",
-                        "operator": "In",
-                        "values": topology[service["name"]]
+def serialize_affinity(service, topology, node_affinity=True):
+    if node_affinity:
+        policy = {
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [{
+                        "matchExpressions": [{
+                            "key": "kubernetes.io/hostname",
+                            "operator": "In",
+                            "values": topology[service["name"]]
+                        }]
                     }]
-                }]
+                }
             }
         }
-    }
+    else:
+        policy = {}
     if service.get("hostNetwork"):
         policy["podAntiAffinity"] = {
             "requiredDuringSchedulingIgnoredDuringExecution": [{
