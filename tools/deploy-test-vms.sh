@@ -14,6 +14,7 @@ usage() {
     -k   Kubernetes namespace (optional)
     -i   Image to boot VMs from (optional, will upload Cirros if ommited)
     -f   Allocate floating IPs and associate with VMs (optional)
+    -d   Pring debug to stdout
 EOF
 }
 
@@ -49,6 +50,23 @@ create() {
         done
     fi
     openstack server list
+    if openstack server list | grep ERROR; then
+        NS=`kubectl get ns | awk '/ccp/ {print $1}'`
+        echo "Error while creating vm"
+        for f in `kubectl --namespace ${NS} get pod | awk '{print $1}' | tail -n +2`;do
+            if [ -n "${PRINT_STD}" ]; then
+                for v in `openstack server list -f value | awk '/ERROR/ { print $1 }'`; do
+                    echo "-------------- $f ---------------"
+                    kubectl --namespace ${NS} logs $f | grep $v
+                done
+            else
+                for v in `openstack server list -f value | awk '/ERROR/ { print $1 }'`; do
+                    echo "-------------- $f ---------------" >> deploy-test-vms.error.log
+                    kubectl --namespace ${NS} logs $f | grep $v >> deploy-test-vms.error.log
+                done
+            fi
+        done
+    fi
     for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Console for $vm:"
         openstack console url show $vm
@@ -64,7 +82,7 @@ destroy() {
     openstack image delete cirros
 }
 
-while getopts ":a:n:k:i:fh" opt; do
+while getopts ":a:n:k:i:fhd" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
@@ -80,6 +98,9 @@ while getopts ":a:n:k:i:fh" opt; do
             ;;
         f)
             ADD_FLOATING="yes"
+            ;;
+        d)
+            PRINT_STD="yes"
             ;;
         h)
             usage
