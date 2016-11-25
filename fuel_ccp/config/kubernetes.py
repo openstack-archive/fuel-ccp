@@ -7,6 +7,7 @@ DEFAULTS = {
         'cert_file': None,
         'insecure': None,
         'cluster_domain': 'cluster.local',
+        'use_labels': False,
     },
 }
 
@@ -22,6 +23,7 @@ SCHEMA = {
             'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'insecure': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'cluster_domain': {'type': 'string'},
+            'use_labels': {'type': 'boolean'},
         },
     },
 }
