@@ -14,6 +14,7 @@ usage() {
     -k   Kubernetes namespace (optional)
     -i   Image to boot VMs from (optional, will upload Cirros if ommited)
     -f   Allocate floating IPs and associate with VMs (optional)
+    -d   Print debug to stdout
 EOF
 }
 
@@ -28,6 +29,14 @@ do
     fi
 done
 
+vm_error_logs() {
+    for v in `openstack server list -f value | awk '/ERROR/ { print $1 }'`; do
+        echo "-------------- ${f} ---------------"
+        set +e
+        kubectl --namespace "${K8S_NAMESPACE}" logs "${f}" | grep "${v}"
+        set -e
+    done
+}
 
 create() {
     if [ -z "${NUMBER}" ]; then
@@ -49,22 +58,30 @@ create() {
         done
     fi
     openstack server list
+    if openstack server list | grep ERROR; then
+        echo "Error while creating vm"
+        if [ -n "${PRINT_STD}" ]; then
+            for f in `kubectl --namespace=${K8S_NAMESPACE} get pods -o go-template --template="{{ range .items }}{{ println .metadata.name}}{{end}}"`; do
+                vm_error_logs
+            done
+        fi
+    fi
     for vm in $(openstack server list -f value -c Name | grep test_vm); do
-        echo "Console for $vm:"
-        openstack console url show $vm
+        echo "Console for ${vm}:"
+        openstack console url show "${vm}"
     done
 }
 
 destroy() {
     for vm in $(openstack server list -f value -c Name | grep test_vm); do
         echo "Destroying $vm..."
-        openstack server delete --wait $vm
+        openstack server delete --wait "${vm}"
     done
     echo "Destroying cirros image..."
     openstack image delete cirros
 }
 
-while getopts ":a:n:k:i:fh" opt; do
+while getopts ":a:n:k:i:fhd" opt; do
     case $opt in
         a)
             ACTION="$OPTARG"
@@ -80,6 +97,9 @@ while getopts ":a:n:k:i:fh" opt; do
             ;;
         f)
             ADD_FLOATING="yes"
+            ;;
+        d)
+            PRINT_STD="yes"
             ;;
         h)
             usage
@@ -97,6 +117,11 @@ while getopts ":a:n:k:i:fh" opt; do
             ;;
     esac
 done
+
+if [ -z "${K8S_NAMESPACE}" ] && [ -n "${PRINT_STD}"]; then
+    echo "To print debug to stdout you need to set K8S namespace with -k parameter"
+    exit 1
+fi
 
 if [ -z "$ACTION" ]; then
     usage
