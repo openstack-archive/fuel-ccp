@@ -6,6 +6,7 @@ DEFAULTS = {
         'key_file': None,
         'cert_file': None,
         'insecure': None,
+        'use_labels': False,
     },
 }
 
@@ -20,6 +21,7 @@ SCHEMA = {
             'key_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'insecure': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'use_labels': {'type': 'boolean'},
         },
     },
 }

@@ -1,3 +1,4 @@
+import collections
 import hashlib
 import itertools
 import json
@@ -5,6 +6,7 @@ import logging
 import os
 import re
 
+import pykube.exceptions
 import six
 from six.moves import zip_longest
 
@@ -71,7 +73,7 @@ def process_files(files, service_dir):
         f["content"] = content
 
 
-def parse_role(component, topology, configmaps):
+def parse_role(component, topology, configmaps, label=None):
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -104,8 +106,9 @@ def parse_role(component, topology, configmaps):
         yield _create_post_jobs(service, cont, component_name, topology)
         cont['cm_version'] = cm_version
 
-    cont_spec = templates.serialize_daemon_pod_spec(service)
-    affinity = templates.serialize_affinity(service, topology)
+    cont_spec = templates.serialize_daemon_pod_spec(service, label)
+    affinity = templates.serialize_affinity(service, topology,
+                                            node_affinity=label is None)
 
     replicas = CONF.replicas.get(service_name)
     strategy = {'type': service.get('strategy', 'RollingUpdate')}
@@ -365,17 +368,23 @@ def _make_topology(nodes, roles, replicas):
         return nodes
 
     roles_to_node = {}
-    for node in sorted(nodes):
-        matched_nodes = find_match(node)
-        for role in nodes[node]["roles"]:
+    nodes_to_roles = collections.defaultdict(set)
+    for node_re in sorted(nodes):
+        matched_nodes = find_match(node_re)
+        for role in nodes[node_re]["roles"]:
             roles_to_node.setdefault(role, [])
             roles_to_node[role].extend(matched_nodes)
+        for node in matched_nodes:
+            nodes_to_roles[node].update(nodes[node_re]["roles"])
+
     service_to_node = {}
+    service_to_roles = collections.defaultdict(list)
     for role in sorted(roles):
         if role in roles_to_node:
             for svc in roles[role]:
                 service_to_node.setdefault(svc, [])
                 service_to_node[svc].extend(roles_to_node[role])
+                service_to_roles[svc].append(role)
         else:
             LOG.warning("Role '%s' defined, but unused", role)
 
@@ -398,7 +407,7 @@ def _make_topology(nodes, roles, replicas):
                   ", ".join(replicas.keys()))
         raise RuntimeError("Replicas defined for unspecified service(s)")
 
-    return service_to_node
+    return service_to_node, nodes_to_roles, service_to_roles
 
 
 def _create_namespace(configs):
@@ -529,9 +538,62 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
+def _label_from_roles(roles):
+    return '{}-role-{}'.format(
+        CONF.kubernetes.namespace,
+        '-'.join(sorted(roles)),
+    )
+
+
+def generate_labels(nodes_to_roles, service_to_roles):
+    roles_to_labels = collections.defaultdict(list)
+    labels_for_services = {}
+    for service, roles in service_to_roles.items():
+        label = _label_from_roles(roles)
+        labels_for_services[service] = label
+        if len(roles) > 1:
+            for role in roles:
+                roles_to_labels[role].append(label)
+    labels_for_nodes = {}
+    for node, roles in nodes_to_roles.items():
+        labels_for_nodes[node] = labels = []
+        for role in roles:
+            labels.append(_label_from_roles([role]))
+            labels.extend(roles_to_labels.get(role, ()))
+    return labels_for_nodes, labels_for_services
+
+
+def set_node_labels(labels_for_nodes):
+    nodes = kubernetes.list_k8s_nodes()
+    prefix = '{}-role-'.format(CONF.kubernetes.namespace)
+    for node in nodes:
+        for attempt in range(10):
+            labels = {}
+            meta = node.obj['metadata']
+            if 'labels' in meta:
+                for label, value in meta['labels'].items():
+                    if not label.startswith(prefix):
+                        labels[label] = value
+            for label in labels_for_nodes.get(node.name, []):
+                labels[label] = 'true'
+            if labels != meta['labels']:
+                meta['labels'] = labels
+                try:
+                    node.update()
+                except pykube.exceptions.HTTPError:
+                    if attempt == 9:
+                        raise
+                    LOG.debug("Failed to update node '%s', attempt #%d",
+                              node.name, attempt)
+                    node.reload()
+                    continue
+            break
+
+
 def deploy_components(components_map, components):
 
-    topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
+    topology, nodes_to_roles, service_to_roles = \
+        _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
     if not components:
         components = set(topology.keys()) & set(components_map.keys())
 
@@ -545,12 +607,24 @@ def deploy_components(components_map, components):
     start_script_cm = _create_start_script_configmap()
     configmaps = (start_script_cm,)
 
+    if CONF.kubernetes.use_labels:
+        labels_for_nodes, labels_for_services = \
+            generate_labels(nodes_to_roles, service_to_roles)
+        set_node_labels(labels_for_nodes)
+
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
+
+        if CONF.kubernetes.use_labels:
+            label = labels_for_services[service_name]
+        else:
+            label = None
+
         objects_gen = parse_role(service,
                                  topology=topology,
-                                 configmaps=configmaps)
+                                 configmaps=configmaps,
+                                 label=label)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
