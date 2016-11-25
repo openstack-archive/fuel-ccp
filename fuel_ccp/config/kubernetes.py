@@ -8,6 +8,7 @@ DEFAULTS = {
         'insecure': None,
         'cluster_domain': 'cluster.local',
         'image_pull_policy': None,
+        'use_labels': False,
     },
 }
 
@@ -27,6 +28,7 @@ SCHEMA = {
                 {'type': 'null'},
                 {'enum': ['Always', 'IfNotPresent', 'Never']},
             ]},
+            'use_labels': {'type': 'boolean'},
         },
     },
 }
