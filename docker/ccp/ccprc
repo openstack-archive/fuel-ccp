@@ -1,0 +1,1 @@
+alias ccp='docker run --rm  -t -i --name=fuel-ccp --network=host -v ~/.ccp.yaml:/root/.ccp.yaml -v ~/ccp-repos:/root/ccp-repos/ -v /var/run/docker.sock:/var/run/docker.sock fuel-ccp:latest'
