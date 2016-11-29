@@ -52,9 +52,9 @@ def get_pod_states(components=None):
     for dp in kubernetes.list_cluster_deployments():
         states.setdefault(dp.name, copy.deepcopy(STATE_TEMPLATE))
         dp_st = dp.obj["status"]
-        states[dp.name]["pod_total"] = dp_st["replicas"]
+        states[dp.name]["pod_total"] = dp.obj["spec"]["replicas"]
         states[dp.name]["pod_running"] = min(
-            dp_st.get("availableReplicas", 0), dp_st["updatedReplicas"])
+            dp_st.get("availableReplicas", 0), dp_st.get("updatedReplicas", 0))
 
     for job in kubernetes.list_cluster_jobs():
         app_name = job.obj["metadata"]["labels"].get("app")
