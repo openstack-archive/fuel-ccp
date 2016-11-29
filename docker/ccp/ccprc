@@ -1,0 +1,4 @@
+alias ccp='docker run --rm  -t -i --name=fuel-ccp --network=host \
+           -v ~/.ccp.yaml:/home/`whoami`/.ccp.yaml -v ~/ccp-repos/:/home/`whoami`/ccp-repos/ -v /var/run/docker.sock:/var/run/docker.sock \
+           -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_USER_NAME=`whoami` \
+           fuel-ccp:latest'
