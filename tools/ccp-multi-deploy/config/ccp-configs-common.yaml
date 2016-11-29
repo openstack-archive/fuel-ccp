@@ -41,6 +41,4 @@ repositories:
     - git_url: https://git.openstack.org/openstack/fuel-ccp-ceph
       name: fuel-ccp-ceph
 configs:
-    private_interface: eth0
-    public_interface: eth1
-    neutron_external_interface: eth2
+    private_interface: ens3
