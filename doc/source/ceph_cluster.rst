@@ -132,11 +132,12 @@ On any Ceph node run:
   sudo rados mkpool images
   sudo rados mkpool volumes
   sudo rados mkpool vms
+  sudo rados mkpool backups
 
 ::
 
   sudo ceph auth get-or-create client.glance osd 'allow rwx pool=images, allow rwx pool=vms' mon 'allow r' -o /etc/ceph/ceph.client.glance.keyring
-  sudo ceph auth get-or-create client.cinder osd 'allow rwx pool=volumes, allow rwx pool=vms, allow rx pool=images' mon 'allow r' -o /etc/ceph/ceph.client.cinder.keyring
+  sudo ceph auth get-or-create client.cinder osd "allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=backups, allow rwx pool=vms, allow rwx pool=images" mon "allow r" -o /etc/ceph/ceph.client.cinder.keyring
   sudo ceph auth get-or-create client.radosgw.gateway osd 'allow rwx' mon 'allow rwx' -o /etc/ceph/ceph.client.radosgw.keyring
 
 To list all user with permission and keys, run:
