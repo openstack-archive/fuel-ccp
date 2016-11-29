@@ -117,7 +117,7 @@ class TestDeploy(base.TestCase):
             "export OS_USERNAME=%s" % config['openstack']['user_name'],
             "export OS_PASSWORD=%s" % config['openstack']['user_password'],
             "export OS_IDENTITY_API_VERSION=3",
-            "export OS_AUTH_URL=http://keystone.ccp:%s/v3" %
+            "export OS_AUTH_URL=http://keystone.ccp.svc.cluster.local:%s/v3" %
             config['keystone']['public_port']['cont'],
         ]
 
