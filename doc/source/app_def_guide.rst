@@ -44,6 +44,69 @@ Before deployment, CCP will merge all these files into one dict, using the
 order above, so "component defaults" will override "global defaults" and
 "global config" will override everything.
 
+For example, one of common situations is to specify custom options for
+networking. To achieve user may overwrite options defined in
+``Global defaults`` and ``Component defaults`` by setting new values in
+``Global config``.
+
+File ``fuel_ccp/resources/defaults.yaml`` has follow settings:
+
+::
+
+  configs:
+    private_interface: eth0
+    public_interface: eth1
+    ...
+
+And part of the ``fuel-ccp-neutron/service/files/defaults.yaml`` looks like:
+
+::
+
+  configs:
+    neutron:
+      ...
+      bootstrap:
+        internal:
+          net_name: int-net
+          subnet_name: int-subnet
+          network: 10.0.1.0/24
+          gateway: 10.0.1.1
+      ...
+
+User may overwrite these sections by defining follow content in the .ccp.yaml:
+
+::
+
+  debug: true
+  configs:
+    private_interface: ens10
+    neutron:
+      bootstrap:
+        internal:
+          network: 22.0.1.0/24
+          gateway: 22.0.1.1
+
+To validate these changes user need to execute command ``ccp config dump``.
+It will return final config file with changes, which user did. So output should
+contain follow changes:
+
+::
+
+  debug: true
+  ...
+  configs:
+    private_interface: ens10     <----- it was changed
+    public_interface: eth1       <----- it wasn't changed
+    neutron:
+      bootstrap:
+        internal:
+          net_name: int-net        <--- it wasn't changed
+          subnet_name: int-subnet  <--- it wasn't changed
+          network: 22.0.1.0/24   <----- it was changed
+          gateway: 22.0.1.1      <----- it was changed
+
+
+
 Global defaults
 ---------------
 
