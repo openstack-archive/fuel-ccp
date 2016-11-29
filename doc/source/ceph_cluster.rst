@@ -136,6 +136,7 @@ On any Ceph node run:
 ::
 
   ceph auth get-or-create client.glance osd 'allow rwx pool=images, allow rwx pool=vms' mon 'allow r' -o /etc/ceph/ceph.client.glance.keyring
+  ceph auth get-or-create client.cinder osd "allow class-read object_prefix rbd_children, allow rwx pool=volumes, allow rwx pool=vms, allow rwx pool=images" mon "allow r"
   ceph auth get-or-create client.cinder osd 'allow rwx pool=volumes, allow rwx pool=vms, allow rx pool=images' mon 'allow r' -o /etc/ceph/ceph.client.cinder.keyring
   ceph auth get-or-create client.radosgw.gateway osd 'allow rwx' mon 'allow rwx' -o /etc/ceph/ceph.client.radosgw.keyring
 
