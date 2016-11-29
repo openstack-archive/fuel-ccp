@@ -30,6 +30,7 @@ Advanced topics
    ceph
    ceph_cluster
    using_calico_instead_of_ovs
+   using_odl_instead_of_ovs
    ironic
    known_issues
 
