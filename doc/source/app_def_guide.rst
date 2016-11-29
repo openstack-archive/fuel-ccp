@@ -37,12 +37,76 @@ There are three config locations, which the CCP CLI uses:
 #. ``Component defaults`` - service/files/defaults.yaml in each component repo.
 #. ``Global config`` - Optional. Set path to this config via
    "--config-file /path" CCP CLI arg. Otherwise ``fuel-ccp`` will try to find
-   config in next locations: ~.ccp.yaml, ~/.ccp/ccp.yaml, /etc/ccp.yaml,
+   config in next locations: ~/.ccp.yaml, ~/.ccp/ccp.yaml, /etc/ccp.yaml,
    /etc/ccp/ccp.yaml
 
 Before deployment, CCP will merge all these files into one dict, using the
 order above, so "component defaults" will override "global defaults" and
 "global config" will override everything.
+
+For example, one of the common situations is to specify custom options for
+networking. To achieve it user may overwrite options defined in
+``Global defaults`` and ``Component defaults`` by setting new values in
+``Global config``.
+
+File ``fuel_ccp/resources/defaults.yaml`` has the following settings:
+
+::
+
+  configs:
+    private_interface: eth0
+    public_interface: eth1
+    ...
+
+And part of the ``fuel-ccp-neutron/service/files/defaults.yaml`` looks like:
+
+::
+
+  configs:
+    neutron:
+      ...
+      bootstrap:
+        internal:
+          net_name: int-net
+          subnet_name: int-subnet
+          network: 10.0.1.0/24
+          gateway: 10.0.1.1
+      ...
+
+User may overwrite these sections by defining the following content in the
+~/.ccp.yaml:
+
+::
+
+  debug: true
+  configs:
+    private_interface: ens10
+    neutron:
+      bootstrap:
+        internal:
+          network: 22.0.1.0/24
+          gateway: 22.0.1.1
+
+To validate these changes user needs to execute command ``ccp config dump``.
+It will return final config file with changes, which user did. So output should
+contain the following changes:
+
+::
+
+  debug: true
+  ...
+  configs:
+    private_interface: ens10     <----- it was changed
+    public_interface: eth1       <----- it wasn't changed
+    neutron:
+      bootstrap:
+        internal:
+          net_name: int-net        <--- it wasn't changed
+          subnet_name: int-subnet  <--- it wasn't changed
+          network: 22.0.1.0/24   <----- it was changed
+          gateway: 22.0.1.1      <----- it was changed
+
+
 
 Global defaults
 ---------------
