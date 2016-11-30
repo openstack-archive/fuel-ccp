@@ -31,14 +31,28 @@ Options:
         (rely on existing local registry, default: false)
 -v, --openstack-version=VERSION
         set openstack version newton or master (default: master)
+-d, --debug-std
+        print debug logs to standard output
 EOF
     exit
 }
 
 function ccp_wait_for_deployment_to_finish {
+    cnt=0
     until [[ `${CCP} status -s -f value -c status` == "ok" ]]; do
         echo "Waiting for OpenStack deployment to finish..."
         sleep 5
+        cnt=`expr ${cnt} + 1`
+        if [ ${cnt} -eq 180 ]; then
+            echo "Max time exceeded"
+            if [ -n "${PRINT_STD}" ]; then
+                for f in `kubectl --namespace $1 get pod | grep -v -E '(Running|ContainerCreating|Pending)' | awk {'print $1'} | tail -n +2`; do
+                    echo "-------------- ${f} ---------------"
+                    kubectl --namespace $1 logs ${f}
+                done
+            fi
+            exit 1
+        fi
     done
     echo "...................................."
     echo "Jobs and pods in namespace: $1"
@@ -62,7 +76,7 @@ function run_openstack_tests {
 
 
 # Parse command line arguments:
-OPTS=`getopt -o 'hsn:v:' --long help,skip-building-images,number-of-envs:,openstack-version: -n 'parse-options' -- ${@}`
+OPTS=`getopt -o 'hdsn:v:' --long help,debug,skip-building-images,number-of-envs:,openstack-version: -n 'parse-options' -- ${@}`
 if [ ${?} != 0 ] ; then
     echo "Failed parsing options."
     exit 1
@@ -75,6 +89,7 @@ while true; do
         -n|--number-of-envs ) NUMBER_OF_ENVS=${2}; shift; shift ;;
         -s|--skip-building-images ) BUILD_IMAGES=false; shift ;;
         -v|--openstack-version ) VERSION="${2}"; NAMESPACE_PREFIX="ccp-${2}"; shift; shift ;;
+        -d|--debug-std ) PRINT_STD="yes"; shift ;;
         -- ) shift; break ;;
         * ) break ;;
     esac
