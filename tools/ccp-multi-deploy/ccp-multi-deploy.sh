@@ -36,10 +36,21 @@ EOF
 }
 
 function ccp_wait_for_deployment_to_finish {
+    cnt=0
     until [[ `${CCP} status -s -f value -c status` == "ok" ]]; do
         echo "Waiting for OpenStack deployment to finish..."
         sleep 5
+        cnt=`expr ${cnt} + 1`
+        if [ ${cnt} -eq 180 ];then
+            echo "Max time exceeded"
+            for f in `kubectl --namespace ccp get pod | grep -v Running | awk {'print $1'}`; do
+                echo "-------------- ${f} ---------------"
+                kubectl --namespace $1 logs ${f}
+            done
+            exit 1
+        fi
     done
+
     echo "...................................."
     echo "Jobs and pods in namespace: $1"
     kubectl --namespace $1 get jobs
