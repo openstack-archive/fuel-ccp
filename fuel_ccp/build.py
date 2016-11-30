@@ -42,6 +42,16 @@ def render_dockerfile(path, name, config):
         parent.append(image_name)
         return images.image_spec(image_name, add_address=CONF.builder.push)
 
+
+    def pip_install():
+        pip_command = None
+        index = CONF.configs.get("pypi_index", None)
+        if not index:
+            pip_command = "pip install"
+        else:
+            pip_command = "pip install --index-url %s" % index
+        return pip_command
+
     def render(fname):
         if fname.endswith('.j2'):
             oname = fname[:-3]
@@ -55,8 +65,8 @@ def render_dockerfile(path, name, config):
 
         return oname
 
-    content = jinja_utils.jinja_render(path, config['render'],
-                                       [copy_sources, image_spec, render])
+    render_helpers = [copy_sources, image_spec, render, pip_install]
+    content = jinja_utils.jinja_render(path, config['render'], render_helpers)
 
     return content, sources, render_files, parent[0] if parent else None
 
