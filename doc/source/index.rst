@@ -47,6 +47,7 @@ Design docs
    design/clusters_on_k8s
    design/ost_compute_on_k8s
    design/ref_arch_1000_nodes
+   design/k8s_1000_nodes
 
 Indices and tables
 ------------------
