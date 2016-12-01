@@ -1,5 +1,8 @@
 from fuel_ccp.common import utils
+from fuel_ccp import config
 from fuel_ccp import dependencies
+
+CONF = config.CONF
 
 
 def validate_requested_components(components, components_map):
@@ -9,7 +12,9 @@ def validate_requested_components(components, components_map):
     requested components are provided or already deployed.
     """
     deployed_components = utils.get_deployed_components()
-    required_components = dependencies.get_deps(components, components_map)
+    external_components = set(CONF.external_services._dict.keys())
+    required_components = dependencies.get_deps(
+        components, components_map) - external_components
 
     not_provided_components = (required_components - components -
                                deployed_components)
@@ -17,3 +22,9 @@ def validate_requested_components(components, components_map):
         raise RuntimeError('Following components are also required for '
                            'successful deployment: '
                            '%s' % ' '.join(not_provided_components))
+
+    both_requested = components & external_components
+    if both_requested:
+        raise RuntimeError('Following components deployment requested, '
+                           'however they are defined as external: %s'
+                           % ' '.join(both_requested))
