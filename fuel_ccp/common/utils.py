@@ -1,6 +1,7 @@
 import logging
 import os
 import pkg_resources
+import urlparse
 
 import yaml
 
@@ -54,7 +55,14 @@ def get_config_paths():
 def address(service, port=None, external=False, with_scheme=False):
     addr = None
     scheme = 'http'
-    if external:
+    if CONF.addresses.get(service):
+        url = urlparse.urlparse(CONF.addresses.get(service))
+        scheme = url.scheme
+        addr = url.hostname
+        if port:
+            addr = "%s:%s" % (addr, url.port)
+
+    elif external:
         if not port:
             raise RuntimeError('Port config is required for external address')
         if CONF.configs.ingress.enabled and port.get('ingress'):
