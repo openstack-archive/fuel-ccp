@@ -3,6 +3,7 @@ import logging
 import jsonschema
 import os
 
+from fuel_ccp.config import external_services
 from fuel_ccp.config import _yaml
 from fuel_ccp.config import builder
 from fuel_ccp.config import cli
@@ -56,7 +57,7 @@ CONF = _Wrapper()
 
 CONFIG_MODULES = [
     builder, cli, images, kubernetes, registry, replicas, repositories,
-    sources, url, files,
+    sources, url, files, external_services,
 ]
 
 
@@ -117,7 +118,7 @@ def load_component_defaults():
     from fuel_ccp.common import utils
 
     sections = ['versions', 'sources', 'configs', 'nodes', 'roles', 'replicas',
-                'url', 'files']
+                'url', 'files', 'external_services']
     new_config = _yaml.AttrDict((k, _yaml.AttrDict()) for k in sections)
     for path in utils.get_config_paths():
         if not os.path.exists(path):
@@ -135,6 +136,7 @@ def load_component_defaults():
     new_config['configs'][
         'cluster_domain'] = _REAL_CONF.kubernetes.cluster_domain
     new_config._merge(_REAL_CONF)
+    new_config['configs']['external_services'] = _REAL_CONF.external_services
     _REAL_CONF = new_config
 
 
