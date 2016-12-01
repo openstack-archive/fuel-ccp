@@ -54,7 +54,11 @@ def get_config_paths():
 def address(service, port=None, external=False, with_scheme=False):
     addr = None
     scheme = 'http'
-    if external:
+    ext_addr = CONF.external_services.get(service)
+    if ext_addr:
+        return ext_addr
+
+    elif external:
         if not port:
             raise RuntimeError('Port config is required for external address')
         if CONF.configs.ingress.enabled and port.get('ingress'):
