@@ -1,4 +1,5 @@
 import os
+import socket
 
 import jinja2
 
@@ -35,6 +36,7 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)), **kwargs)
     env.filters['host'] = get_host
+    env.filters['gethostbyname'] = socket.gethostbyname
     for func in functions:
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
