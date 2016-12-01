@@ -315,8 +315,8 @@ def main(argv=None):
     signal.signal(signal.SIGINT, signal_handler)
     if argv is None:
         argv = sys.argv[1:]
-    CCPApp().run(argv)
+    return CCPApp().run(argv)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
