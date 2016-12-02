@@ -6,78 +6,99 @@ Configuration files
 
 This section will describe configuration format used in CCP.
 
-File location
-=============
+Understanding globals and defaults config
+=========================================
 
-You can provide a path to file that you want to use as ``--config-file``
-argument to ccp tool, otherwise it will be taken from the first existing
-location out of the following ones:
+There are three config locations, which the CCP CLI uses:
 
-* :file:`~/.ccp.yaml`
-* :file:`~/.ccp/ccp.yaml`
-* :file:`/etc/ccp.yaml`
-* :file:`/etc/ccp/ccp.yaml`
+#. ``Global defaults`` - fuel_ccp/resources/defaults.yaml in ``fuel-ccp`` repo.
+#. ``Component defaults`` - service/files/defaults.yaml in each component repo.
+#. ``Global config`` - Optional. For more information read the
+   :doc:`global_config`.
 
-Note that you can use only one config file, if you want to split your file into
-several, you should use :ref:`includes <includes>`.
+Before deployment, CCP will merge all these files into one dict, using the
+order above, so "component defaults" will override "global defaults" and
+"global config" will override everything.
 
-Format
-======
+For example, one of common situations is to specify custom options for
+networking. To achieve user may overwrite options defined in
+``Global defaults`` and ``Component defaults`` by setting new values in
+``Global config``.
 
-Every config file is a simple YAML file with any number of YAML documents
-separated with ``---`` line::
+File ``fuel_ccp/resources/defaults.yaml`` has follow settings:
 
-  config_a: 1
-  config_b:
-    config_c: 2
-  ---
-  config_b:
-    config_d: 3
+::
 
-All documents are deeply merged into one (only dicts are deeply merged, not
-lists or other structures). So above config will be equivalent to::
+  configs:
+    private_interface: eth0
+    public_interface: eth1
+    ...
 
-  config_a: 1
-  config_b:
-    config_c: 2
-    config_d: 3
+And part of the ``fuel-ccp-neutron/service/files/defaults.yaml`` looks like:
 
-.. _includes:
+::
 
-Includes
-========
+  configs:
+    neutron:
+      ...
+      bootstrap:
+        internal:
+          net_name: int-net
+          subnet_name: int-subnet
+          network: 10.0.1.0/24
+          gateway: 10.0.1.1
+      ...
 
-If you want to split your config over several files (e.g. keep sentitive config
-arguments separately or have a general config file part for several
-deployments) you can use includes. An include is a separate YAML document with
-``!include`` tag and a list of files to be included in its place::
+User may overwrite these sections by defining follow content in the .ccp.yaml:
 
-  !include
-  - file_a
-  - file_b
+::
 
-If files are specified with relative paths, they are considered to be relative
-to file with includes. Absolute paths are taken as is.
+  debug: true
+  configs:
+    private_interface: ens10
+    neutron:
+      bootstrap:
+        internal:
+          network: 22.0.1.0/24
+          gateway: 22.0.1.1
 
-All documents from files in include list are substituted in place of an include
-in order of appearance, so values from the latest file take precedence over
-values in former ones.
+To validate these changes user need to execute command ``ccp config dump``.
+It will return final config file with changes, which user did. So output should
+contain follow changes:
 
-Note that include is just another YAML document in config file, so you can
-override values from include in following documents::
+::
 
-  basic_value: 1
-  ---
-  !include
-  - override_basic_value
-  ---
-  override_value: from_include
+  debug: true
+  ...
+  configs:
+    private_interface: ens10     <----- it was changed
+    public_interface: eth1       <----- it wasn't changed
+    neutron:
+      bootstrap:
+        internal:
+          net_name: int-net        <--- it wasn't changed
+          subnet_name: int-subnet  <--- it wasn't changed
+          network: 22.0.1.0/24   <----- it was changed
+          gateway: 22.0.1.1      <----- it was changed
 
-Configuration file sections
-===========================
 
-Here you can find description of configuration parameters in these sections:
+Global defaults
+---------------
 
-.. toctree::
+This is project wide defaults, CCP keeps it inside fuel-ccp repository in
+``fuel_ccp/resources/defaults.yaml`` file. This file defines global variables,
+that is variables that are not specific to any component, like eth interface
+names.
 
-  repositories
+Component defaults
+------------------
+
+Each component repository could contain a ``service/files/defaults.yaml`` file
+with default config for this component only.
+
+.. _section:
+
+Global config
+-------------
+
+See description in :doc:`global_config`.
