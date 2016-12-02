@@ -230,3 +230,37 @@ file
 +---------+------------------------------------------------+----------+--------+---------+
 | user    |                                                | false    | string |         |
 +---------+------------------------------------------------+----------+--------+---------+
+
+
+DSL versioning
+~~~~~~~~~~~~~~
+
+Some changes in CCP framework are backward compatible and some of them are not.
+To prevent situations when service definitions are being processed by
+incompatible version of CCP framework, DSL versioning has been implemented.
+
+DSL versioning is based on Semantic Versioning model. Version has a format
+``MAJOR.MINOR.PATCH`` and is being defined in ``dsl_version`` field of
+:file:`fuel_ccp/__init__.py` module. Each service definition contains
+``dsl_version`` field with the version of DSL it was implemented/updated for.
+
+During the validation phase of :command:`ccp deploy` those versions will be
+compared according to the following rules:
+
+#. if DSL version of ``fuel-ccp`` is less than service's DSL version -
+   they are incompatible - error will be printed, deployment will be
+   aborted;
+#. if ``MAJOR`` parts of these versions are different - they are incompatible
+   - error will be printed, deployment will be aborted;
+#. otherwise they are compatible and deployment can be continued.
+
+For ``dsl_version`` in ``fuel-ccp`` repository you should increment:
+
+#. MAJOR version when you make incompatible changes in DSL;
+#. MINOR version when you make backward-compatible changes in DSL;
+#. PATCH version when you make fixes that do not change DSL, but affect
+   processing flow.
+
+If you made a change in service definition that is not supposed to work with
+the current ```dsl_version```, you should bump it to the minimal appropriate
+number.

@@ -15,6 +15,7 @@ User docs
    quickstart
    monitoring_and_logging
    config/index
+   config/types
 
 Advanced topics
 ---------------
@@ -34,8 +35,8 @@ Developer docs
    :maxdepth: 1
 
    contributing
-   docker
    app_def_guide
+   docker
    dsl
 
 Design docs
