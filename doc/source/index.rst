@@ -49,6 +49,7 @@ Developer docs
    app_def_guide
    docker
    dsl
+   debugging
 
 Design docs
 -----------
