@@ -159,11 +159,11 @@ def serialize_job_container_spec(container, job):
     }
 
 
-def serialize_job_pod_spec(service, job, cont_spec, affinity):
+def serialize_job_pod_spec(service, job, cont_spec, annotations):
     return {
         "metadata": {
             "name": job["name"],
-            "annotations": affinity,
+            "annotations": annotations,
         },
         "spec": {
             "containers": [cont_spec],
@@ -297,7 +297,7 @@ def serialize_job(name, spec, component_name, app_name):
     }
 
 
-def serialize_deployment(name, spec, affinity, replicas, component_name,
+def serialize_deployment(name, spec, annotations, replicas, component_name,
                          strategy):
     if strategy['type'] == 'RollingUpdate':
         strategy.setdefault("rollingUpdate", {
@@ -316,7 +316,7 @@ def serialize_deployment(name, spec, affinity, replicas, component_name,
             "strategy": strategy,
             "template": {
                 "metadata": {
-                    "annotations": affinity,
+                    "annotations": annotations,
                     "labels": {
                         "app": name,
                         "ccp": "true",

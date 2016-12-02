@@ -124,8 +124,14 @@ def parse_role(component, topology, configmaps):
             strategy['rollingUpdate'] = {'maxSurge': 0, 'maxUnavailable': 1}
     else:
         replicas = replicas or 1
+    annotations = service.get('annotations', {})
+    same_keywords = set(annotations) & set(affinity)
+    if same_keywords:
+        LOG.warning('Affinity is in conflict with annotations with key: %s',
+                    same_keywords)
+    annotations.update(affinity)
 
-    obj = templates.serialize_deployment(service_name, cont_spec, affinity,
+    obj = templates.serialize_deployment(service_name, cont_spec, annotations,
                                          replicas, component_name, strategy)
     yield [obj]
 
