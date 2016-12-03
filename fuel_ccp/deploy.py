@@ -82,8 +82,7 @@ def parse_role(component, topology, configmaps):
     _expand_files(service, role.get("files"))
 
     process_files(role.get("files"), service_dir)
-    files_cm = _create_files_configmap(
-        service_dir, service_name, role.get("files"))
+    files_cm = _create_files_configmap(service_name, role.get("files"))
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
@@ -312,7 +311,7 @@ def _create_start_script_configmap():
     return kubernetes.process_object(cm)
 
 
-def _create_files_configmap(service_dir, service_name, files):
+def _create_files_configmap(service_name, files):
     configmap_name = "%s-%s" % (service_name, templates.FILES_CONFIG)
     data = {}
     if files:
@@ -457,8 +456,8 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology):
         if step.get('files'):
             step['files'] = {f: files[f] for f in step['files']}
 
-    _create_files_configmap(
-        component['service_dir'], prefix, files)
+    process_files(files, component['service_dir'])
+    _create_files_configmap(prefix, files)
     container = {
         "name": prefix,
         "pre": [],
