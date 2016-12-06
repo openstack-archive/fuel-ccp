@@ -5,7 +5,7 @@ DEFAULTS = {
         'ca_cert': None,
         'key_file': None,
         'cert_file': None,
-        'insecure': None,
+        'insecure': False,
         'cluster_domain': 'cluster.local',
     },
 }
@@ -20,7 +20,7 @@ SCHEMA = {
             'ca_cert': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'key_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
-            'insecure': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'insecure': {'anyOf': [{'type': 'boolean'}, {'type': 'null'}]},
             'cluster_domain': {'type': 'string'},
         },
     },
