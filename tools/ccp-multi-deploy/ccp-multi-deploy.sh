@@ -105,7 +105,7 @@ if [ -n "${APT_CACHE_SERVER}" ]; then
     cat >>"${CONFIG_DIR}"/ccp-configs-common.yaml << EOF
 url:
     debian: ${APT_CACHE_SERVER}/debian
-    security: ${APT_CACHE_SERVER}/security
+    debian_security: ${APT_CACHE_SERVER}/security
     ceph:
       debian:
         repo: ${APT_CACHE_SERVER}/ceph
