@@ -20,60 +20,85 @@ Clustering
 The prerequisite for High Availability of queue server is the configured
 and working RabbitMQ cluster. All data/state required for the operation
 of a RabbitMQ cluster is replicated across all nodes. An exception to
-this are message queues, which by default reside on one node, though
-they are visible and reachable from all nodes. [1]
+this is content of message queues, which by default reside on one node, though
+queues itself visible and reachable from all nodes. [1]
 
-Cluster assembly requires installing and using a clustering plugin on
-all servers. The following choices are considered in this document:
+There are a lot of possible approaches to RabbitMQ clustering on top
+of k8s, but they all share some common pitfals.
 
--  `rabbitmq-autocluster <https://github.com/aweber/rabbitmq-autocluster>`__
+Naming RabbitMQ nodes
+~~~~~~~~~~~~~~~~~~~~~
 
--  `rabbitmq-clusterer <https://github.com/rabbitmq/rabbitmq-clusterer>`__
+The very first problem is what kind of names we should use to make
+rabbits can see each other. Here are some examples of such names in
+different form:
 
-rabbit-autocluster
-^^^^^^^^^^^^^^^^^^
+- ``rabbit@hostname``
 
-Note that the plugin 'rabbitmq-autocluster' has `unresolved
-issue <https://github.com/aweber/rabbitmq-autocluster/issues/73>`__
-that can cause split-brain condition to pass unnoticed by RabbitMQ
-cluster. This issue must be resolved before this plugin can be
-considered production ready.
+- ``rabbit@hostname.domainname``
 
-The RabbitMQ cluster also needs proper fencing mechanism to exclude
-split brain conditions and preserve a quorum. Proposed solution for this
-problem is using 'pause\_minority' `partition
-mode <https://www.rabbitmq.com/partitions.html>`__ with the
-rabbit-autocluster plugin, once `the
-issue <https://www.google.com/url?q=https://github.com/aweber/rabbitmq-autocluster/issues/73&sa=D&ust=1470686640249000&usg=AFQjCNG0W3j1LOtbiKaiwc7Qtp-DQYCbfQ>`__
-with silent split brain is resolved. See the following link for the
-proof of concept implementation of the K8s driven RabbitMQ cluster:
-`https://review.openstack.org/#/c/345326/ <https://review.openstack.org/#/c/345326/>`__.
+- ``rabbit@172.17.0.4``
 
-rabbit-clusterer
-^^^^^^^^^^^^^^^^
+Even before trying to start any rabbits, you need to be sure that
+containers can reach each other using selected naming scheme -
+e.g. ``ping`` should work with the part that comes after the ``@``.
 
-Plugin 'rabbitmq-clusterer' employs more opinionated and less
-generalized approach to the cluster assembly solution. It is also cannot
-be directly integrated with etcd and other K8s configuration management
-mechanisms because of `static
-configuration <https://github.com/rabbitmq/rabbitmq-clusterer/blob/master/README.md#cluster-configuration>`__.
-Additional engineering effort required to implement configuration
-middleware. Because of that it is considered a fallback solution.
+Erlang distribution (which is actively used by RabbitMQ) can run in
+one of two naming modes: short names or long names. Rule of thumb is
+that it's long when it contains ``.``, and short otherwise. For name
+examples from above that means that the first one is the short name,
+and the second and the third are the long names.
+
+Looking at all this we see that on k8s we have following options for
+naming nodes:
+
+- Use `PetSets <http://kubernetes.io/docs/user-guide/petset/>`_ so we
+  will have some stable DNS names
+
+- Use IP-addresses and some sort of automatic peer discovery (like
+  `autocluster plugin
+  <https://github.com/aweber/rabbitmq-autocluster/>`_).
+
+Both this options require running in long-name mode, but the way in
+which DNS/hostnames are configured inside k8s pods is incompatible
+with RabbitMQ versions prior to 3.6.6 (`fix
+<https://github.com/rabbitmq/rabbitmq-server/issues/890/>`_).
+
+Clustering gotchas
+~~~~~~~~~~~~~~~~~~
+
+Another important things to know about RabbitMQ clusters is that
+when a node joins to a cluster, its data will be lost no matter
+what. It doesn't matter in the most common case - when it's the
+empty node that is joining to the cluster, as we have nothing to
+loose in this case. But if we had 2 nodes that operated
+independently for some time and accumulated some data, there is no
+way to join them without any losses (note that restoring a cluster
+after network-split or node outage is just a special case of the
+same thing, and also with data loss). For a specific workload you
+can invent some workarounds, like draining (manually or
+automatically) the nodes that are bound to be reset. But there is
+just no way for making such solution robust, automatic and
+universal.
+
+So our choice of automatic clustering solution is heavily
+influenced by what kinds of data losses we can tolerate for our
+concrete workloads.
 
 Replication
 ~~~~~~~~~~~
 
 Replication mechanism for RabbitMQ queues is known as 'mirroring'. By
-default, queues within a RabbitMQ cluster are located on a single node
+default, queue content within a RabbitMQ cluster is located on a single node
 (the node on which they were first declared). This is in contrast to
 exchanges and bindings, which can always be considered to be on all
-nodes. Queues can optionally be made mirrored across multiple nodes.
+nodes. Queue content can optionally be mirrored across multiple nodes.
 Each mirrored queue consists of one master and one or more slaves, with
 the oldest slave being promoted to the new master if the old master
 disappears for any reason. [2]
 
 Messages published to the queue are replicated to all members of the
-cluster. Consumers are connected to the master regardless of which node
+cluster. Consumers are interacting with the master regardless of which node
 they connect to, with slave nodes dropping messages that have been
 acknowledged at the master. Queue mirroring therefore aims to enhance
 availability, but does not distribute load across nodes (all
@@ -81,8 +106,12 @@ participating nodes each do all the work). It is important to note that
 using mirroring in RabbitMQ actually reduces the availability of queues
 by dropping performance by about 2 times in `performance
 tests <http://docs.openstack.org/developer/performance-docs/test_results/mq/rabbitmq/index.html>`__.
-See below for the list of issues identified in the RabbitMQ mirroring
-implementation. [6-13]
+
+Also there were observed significant amount bugs in mirroring
+implementation that in the end had lead to unnecessary node
+restarts. See below for the partial list of such bugs. [6-13] RabbitMQ
+3.6.6 is a lot more stable in that respect, but we cannot be sure that
+all those issues were rooted out.
 
 There are two main types of messages in OpenStack:
 
@@ -125,42 +154,162 @@ that node to be lost, both for RPC and Notification messages.
 Networking Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-RabbitMQ nodes address each other using domain names, either short or
-fully-qualified (FQDNs). Therefore hostnames of all cluster members must
-be resolvable from all cluster nodes, as well as machines on which
-command line tools such as rabbitmqctl might be used.
+Clustering is meant to be used across LAN. It is not recommended to
+run clusters that span WAN.
 
-RabbitMQ clustering has several modes of dealing with `network
-partitions <https://www.rabbitmq.com/partitions.html>`__, primarily
-consistency oriented. Clustering is meant to be used across LAN. It is
-not recommended to run clusters that span WAN. The
-`Shovel <https://www.rabbitmq.com/shovel.html>`__ or
-`Federation <https://www.rabbitmq.com/federation.html>`__ plugins are
-better solutions for connecting brokers across a WAN. Note that `Shovel
-and Federation are not equivalent to
-clustering <https://www.rabbitmq.com/distributed.html>`__. [1]
+The `Shovel <https://www.rabbitmq.com/shovel.html>`__ or `Federation
+<https://www.rabbitmq.com/federation.html>`__ plugins are better
+solutions for connecting brokers across a WAN. Note that `Shovel and
+Federation are not equivalent to clustering
+<https://www.rabbitmq.com/distributed.html>`__ and they are not
+suitable for RPC workloads. [1]
+
+Cluster formation options
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Here are some of our options.
+
+rabbit-autocluster
+^^^^^^^^^^^^^^^^^^
+`rabbitmq-autocluster <https://github.com/aweber/rabbitmq-autocluster>`__
+
+
+Custom startup script
+^^^^^^^^^^^^^^^^^^^^^
+
+We can implement something like `OCF script
+<https://github.com/rabbitmq/rabbitmq-server-release/blob/master/scripts/rabbitmq-server-ha.ocf>`_.
+With the guarantees provided by PetSets that only one node is
+performing startup at any given time it should work reasonably well.
+
+rabbit-clusterer
+^^^^^^^^^^^^^^^^
+
+`rabbitmq-clusterer <https://github.com/rabbitmq/rabbitmq-clusterer>`__
+
+Plugin 'rabbitmq-clusterer' employs more opinionated and less
+generalized approach to the cluster assembly solution. It is also cannot
+be directly integrated with etcd and other K8s configuration management
+mechanisms because of `static
+configuration <https://github.com/rabbitmq/rabbitmq-clusterer/blob/master/README.md#cluster-configuration>`__.
+Additional engineering effort required to implement configuration
+middleware. Because of that it is considered a fallback solution.
 
 Kubernetes Integration
 ~~~~~~~~~~~~~~~~~~~~~~
-
-Clustering plugins need configuration data about other nodes in the
-cluster. This data might be passed via etcd to RabbitMQ startup scripts.
-ConfigMaps are used to pass the data into containers by Kubernetes
-orchestration.
-
-The RabbitMQ server pods shall be configured as a DaemonSet with
-corresponding service. Physical nodes shall be labelled so as to run the
-containers with RabbitMQ on dedicated nodes, one pod per node (as per
-DaemonSet), or co-located with other control plane services.
-
-PetSets are not required to facilitate the RabbitMQ cluster as the
-servers are stateless, as described above.
 
 Proposed solution for running RabbitMQ cluster under Kubernetes is a
 `DaemonSet <http://kubernetes.io/docs/admin/daemons/>`__ with node
 labels to specify which nodes will run RabbitMQ servers. This will allow
 to move the cluster onto a set of dedicated nodes, if necessary, or run
 them on the same nodes as the other control plane components.
+
+Assuming that we've solved all naming-related problems and can cluster
+your rabbits manually using ``rabbitmqctl``, it's time to make our
+cluster assembly automatic. Bearing all the considerations from the
+above in mind, we can start desiging our solution. The less state the
+better, so using IP-addresses is preferable to using PetSets. And the
+autcluster plugin is our obvious candidate for forming a cluster from
+a bunch of dynamic disposable nodes.
+
+autocluster configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Going through `autocluster documentation
+<https://github.com/aweber/rabbitmq-autocluster/wiki/General%2520Settings`_
+we end setting the following configuration options:
+
+- ``{backend, etcd}`` - it's almost arbitary choice, ``consul`` or
+  ``k8s`` would've worked as well. The only reason for choosing it
+  was that it's easier to test - you can download ``etcd`` binary,
+  run it without any parameters and just start forming clusters on
+  localhost.
+
+- ``{autocluster_failure, stop}`` - pod that failed to join to
+  cluster is useless for us, so bail out and hope that next
+  restart will happen in a more friendly environment
+
+- ``{cluster_cleanup, true}``, ``{cleanup_interval, 30}``,
+  ``{cleanup_warn_only, false}``, ``{etcd_ttl, 15}``. Node is
+  registered in etcd only after it's successfully joined cluster
+  and fully started up. This registration TTL is constantly
+  updated while the node is alive. If the node dies (or fails to
+  update TTL in any other way), it's forcefully kicked from the
+  cluster. So even if the failed node will be restarted with the
+  same IP, it'll be able to join cluster afresh.
+
+Unexpected races
+^^^^^^^^^^^^^^^^
+
+If you've tried assembling a cluster several times with the config
+from above, you could've noticed that sometimes it can assemble
+several different unconnected clusters. This happens because the only
+protection against startup races in autocluster is some random delay
+during node startup - and with a very bad timing every node can decide
+that it is the first node (i.e. there is no other records in etcd) and
+just start in unclustered mode.
+
+This problem lead to the developement of a pretty big `patch
+<https://github.com/aweber/rabbitmq-autocluster/pull/98>`_ for
+autocluster. It adds proper startup locking - node acquires startup
+lock early in startup, and releases it only after it had properly
+registered itself in backend. Only ``etcd`` backend is supported at
+the moment, but others can be added easily (by implementing just 2 new
+callbacks in a backend module).
+
+Another solution to that problem are k8s PetSets, as they can
+perform startup orchestration - with only one node performing
+startup at any given time. But they are currently considered alpha
+feature. And the patch above provides provides this functionality
+for everyone, not only for k8s users.
+
+Monitoring
+^^^^^^^^^^
+The only thing left to make our cluster run unattended is adding
+some monitoring. We need to monitor both rabbit's health and
+whether it's properly clustered with the rest of nodes.
+
+You may remember the times when ``rabbitmqctl list_queues`` /
+``rabbitmqctl list_channels`` were used as a method of monitoring. But
+it's a very bad method: it can't distinguish local and remote problems
+and it creates significant network load. Meet the new and shiny
+``rabbitmqctl node_health_check`` - since `3.6.4
+<https://github.com/rabbitmq/rabbitmq-server/issues/818>`_ it's the
+best way to check the health of any single RabbitMQ node.
+
+Checking whether node is properly clustered requires several checks:
+
+- it is clustered with the best node registered in autocluster
+  backend (i.e. the node that new nodes will attempt to join to,
+  currently it is first alive node in alphabetical order)
+
+- even when node is properly clustered with the discovery node,
+  their data can still be in diverged state. And this check is not
+  transitive, so we need to check partitions list both on the
+  current node and on the discovery node.
+
+All this clustering checks are implemented in separate `commit
+<https://github.com/Mirantis/rabbitmq-autocluster/commit/5fee57752a0788bd2358d3f09eae76d4da67f039>`_
+and can be invoked using::
+
+    rabbitmqctl eval 'autocluster:cluster_health_check_report().'
+
+Using this 2 ``rabbitmqctl`` commands we can detect any problem with
+our rabbit node and stop it immediately, so k8s will have a chance
+to do its restarting magic.
+
+Links
+^^^^^
+
+If you want to replicate such setup yourself, you'll need a recent
+version of `RabbitMQ
+<https://github.com/rabbitmq/rabbitmq-server/releases/tag/rabbitmq_v3_6_6>`_
+and `the custom release of the autocluster plugin
+<https://github.com/Mirantis/rabbitmq-autocluster/releases/tag/0.6.1.950>`_
+(as the startup locking patch is not yet accepted upstream).
+
+You can also look into `exact code and config files
+<https://github.com/openstack/fuel-ccp-rabbitmq/tree/master/service/files>`_
+that are used by Fuel CCP, they should be pretty self explanatory.
 
 Alternatives
 ~~~~~~~~~~~~
@@ -508,6 +657,8 @@ preparation of this document.
 12. `https://github.com/rabbitmq/rabbitmq-server/pull/466 <https://github.com/rabbitmq/rabbitmq-server/pull/466>`__
 
 13. `https://github.com/rabbitmq/rabbitmq-server/pull/431 <https://github.com/rabbitmq/rabbitmq-server/pull/431>`__
+
+
 
 .. |image0| image:: media/image01.png
    :width: 6.50000in
