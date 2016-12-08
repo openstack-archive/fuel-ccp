@@ -213,6 +213,25 @@ spec:
         objects = list(deploy._process_ports(service))
         self.assertEqual([yaml.load(service_k8s_obj)], objects)
 
+    def test_create_service_with_annotations(self):
+        self.conf.configs._merge({'ingress': {'enabled': False}})
+        service = {
+            "name": "foo",
+            "annotations": {"bla": "ble", "foo": "boo"},
+            "ports": [
+                {"cont": 1111},
+                {"cont": "2222"},
+                {"cont": 3333,
+                 "node": 30000},
+                {"cont": "4444",
+                 "node": "33333"}
+            ]
+        }
+        objects = list(deploy._process_ports(service))
+        self.assertEqual(
+            {'bla': 'ble', 'foo': 'boo'},
+            objects[0]['metadata']['annotations'])
+
     def test_create_ingress(self):
         self.conf.configs._merge({'ingress': {'enabled': True,
                                               'domain': 'test'}})
