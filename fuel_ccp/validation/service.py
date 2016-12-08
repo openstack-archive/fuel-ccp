@@ -198,6 +198,14 @@ SERVICE_SCHEMA = {
                         }
                     }
                 },
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "pod": {"type": "object"},
+                        "service": {"type": "object"},
+                    }
+                },
                 "kind": {
                     "enum": ["Deployment", "DaemonSet"]
                 },
