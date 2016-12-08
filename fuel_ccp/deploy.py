@@ -125,8 +125,15 @@ def parse_role(component, topology, configmaps):
     else:
         replicas = replicas or 1
 
-    obj = templates.serialize_deployment(service_name, cont_spec, affinity,
-                                         replicas, component_name, strategy)
+    annotations = service.get('annotations', {})
+    same_keywords = set(annotations) & set(affinity)
+    if same_keywords:
+        LOG.warning('Affinity is in conflict with annotations with key: %s',
+                    same_keywords)
+    annotations.update(affinity)
+    obj = templates.serialize_deployment(service_name, cont_spec, annotations,
+                                         replicas, component_name, strategy,
+                                         annotations)
     yield [obj]
 
     yield _process_ports(service)
@@ -192,7 +199,9 @@ def _process_ports(service):
             if ingress_host:
                 ingress_rules.append(templates.serialize_ingress_rule(
                     service["name"], ingress_host, source_port))
-    service_template = templates.serialize_service(service["name"], ports)
+    service_template = templates.serialize_service(
+        service["name"], ports,
+        annotations=service.get('annotations', {}).get('service'))
     yield service_template
 
     if ingress_rules:

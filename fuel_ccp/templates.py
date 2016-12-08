@@ -297,7 +297,7 @@ def serialize_job(name, spec, component_name, app_name):
     }
 
 
-def serialize_deployment(name, spec, affinity, replicas, component_name,
+def serialize_deployment(name, spec, annotations, replicas, component_name,
                          strategy):
     if strategy['type'] == 'RollingUpdate':
         strategy.setdefault("rollingUpdate", {
@@ -316,7 +316,7 @@ def serialize_deployment(name, spec, affinity, replicas, component_name,
             "strategy": strategy,
             "template": {
                 "metadata": {
-                    "annotations": affinity,
+                    "annotations": annotations,
                     "labels": {
                         "app": name,
                         "ccp": "true",
@@ -373,7 +373,7 @@ def serialize_affinity(service, topology):
         policy, sort_keys=True)}
 
 
-def serialize_service(name, ports, headless=False):
+def serialize_service(name, ports, headless=False, annotations=None):
     ports_spec = []
     for port in ports:
         spec_entry = {"port": port["port"],
@@ -401,6 +401,9 @@ def serialize_service(name, ports, headless=False):
             "ports": ports_spec
         }
     }
+
+    if annotations:
+        obj['metadata']['annotations'] = annotations
 
     if not headless:
         obj["spec"]["type"] = "NodePort"
