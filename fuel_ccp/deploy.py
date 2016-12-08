@@ -192,7 +192,8 @@ def _process_ports(service):
             if ingress_host:
                 ingress_rules.append(templates.serialize_ingress_rule(
                     service["name"], ingress_host, source_port))
-    service_template = templates.serialize_service(service["name"], ports)
+    service_template = templates.serialize_service(
+        service["name"], ports, annotations=service.get('annotations'))
     yield service_template
 
     if ingress_rules:
