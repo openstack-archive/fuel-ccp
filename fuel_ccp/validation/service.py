@@ -198,6 +198,9 @@ SERVICE_SCHEMA = {
                         }
                     }
                 },
+                "annotations": {
+                    "type": "object",
+                },
                 "kind": {
                     "enum": ["Deployment", "DaemonSet"]
                 },
