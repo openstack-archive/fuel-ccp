@@ -260,7 +260,10 @@ SERVICE_SCHEMA = {
                                         "valueFrom": {"type": "object"}
                                     }
                                 }
-                            }
+                            },
+                            "antiAffinity": {
+                                "enum": ["local", "global"]
+                            },
                         }
                     }
                 }
