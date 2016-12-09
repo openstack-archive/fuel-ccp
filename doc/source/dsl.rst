@@ -16,6 +16,7 @@ Application definition template
             - internal-port:external-port
         hostNetwork: true
         hostPID: true
+        antiAffinity: local
         containers:
             - name: container-name
               image: container-image
@@ -101,6 +102,10 @@ service
 | strategy      | The strategy that should be used to replace   | false    | one of:          | RollingUpdate |
 |               | old Pods by new ones                          |          | ["RollingUpdate",|               |
 |               |                                               |          | "Recreate"]      |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| antiAffinity  | Restrict scheduling of pods on the same host: | false    | one of:          |               |
+|               | local - within namespace                      |          | ["global",       |               |
+|               | global - within k8s cluster                   |          | "local"]         |               |
 +---------------+-----------------------------------------------+----------+------------------+---------------+
 
 .. _container:

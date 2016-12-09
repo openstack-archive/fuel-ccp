@@ -345,7 +345,7 @@ def serialize_affinity(service, topology):
             }
         }
     }
-    if service.get("hostNetwork"):
+    if service.get("hostNetwork") or service.get("antiAffinity") == 'global':
         policy["podAntiAffinity"] = {
             "requiredDuringSchedulingIgnoredDuringExecution": [{
                 "labelSelector": {
@@ -357,7 +357,8 @@ def serialize_affinity(service, topology):
                 "namespaces": []
             }]
         }
-    elif service.get("kind") == "DaemonSet":
+    elif service.get("kind") == "DaemonSet" or service.get(
+            "antiAffinity") == 'local':
         policy["podAntiAffinity"] = {
             "requiredDuringSchedulingIgnoredDuringExecution": [{
                 "labelSelector": {
