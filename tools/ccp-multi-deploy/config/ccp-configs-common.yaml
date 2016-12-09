@@ -13,32 +13,32 @@ repositories:
   skip_empty: True
   repos:
     - git_url: https://git.openstack.org/openstack/fuel-ccp-debian-base
-      name: fuel-ccp-debian-base
+      name: debian-base
     - git_url: https://git.openstack.org/openstack/fuel-ccp-entrypoint
-      name: fuel-ccp-entrypoint
+      name: entrypoint
     - git_url: https://git.openstack.org/openstack/fuel-ccp-etcd
-      name: fuel-ccp-etcd
+      name: etcd
     - git_url: https://git.openstack.org/openstack/fuel-ccp-glance
-      name: fuel-ccp-glance
+      name: glance
     - git_url: https://git.openstack.org/openstack/fuel-ccp-heat
-      name: fuel-ccp-heat
+      name: heat
     - git_url: https://git.openstack.org/openstack/fuel-ccp-horizon
-      name: fuel-ccp-horizon
+      name: horizon
     - git_url: https://git.openstack.org/openstack/fuel-ccp-keystone
-      name: fuel-ccp-keystone
+      name: keystone
     - git_url: https://git.openstack.org/openstack/fuel-ccp-mariadb
-      name: fuel-ccp-mariadb
+      name: mariadb
     - git_url: https://git.openstack.org/openstack/fuel-ccp-memcached
-      name: fuel-ccp-memcached
+      name: memcached
     - git_url: https://git.openstack.org/openstack/fuel-ccp-neutron
-      name: fuel-ccp-neutron
+      name: neutron
     - git_url: https://git.openstack.org/openstack/fuel-ccp-nova
-      name: fuel-ccp-nova
+      name: nova
     - git_url: https://git.openstack.org/openstack/fuel-ccp-openstack-base
-      name: fuel-ccp-openstack-base
+      name: openstack-base
     - git_url: https://git.openstack.org/openstack/fuel-ccp-rabbitmq
-      name: fuel-ccp-rabbitmq
+      name: rabbitmq
     - git_url: https://git.openstack.org/openstack/fuel-ccp-ceph
-      name: fuel-ccp-ceph
+      name: ceph
 configs:
     private_interface: ens3
