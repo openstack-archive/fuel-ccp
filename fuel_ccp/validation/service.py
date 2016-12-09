@@ -210,6 +210,9 @@ SERVICE_SCHEMA = {
                 "strategy": {
                     "enum": ["RollingUpdate", "Recreate"]
                 },
+                "antiAffinity": {
+                    "enum": [None, "local", "global"]
+                },
                 "containers": {
                     "type": "array",
                     "minItems": 1,
@@ -260,7 +263,7 @@ SERVICE_SCHEMA = {
                                         "valueFrom": {"type": "object"}
                                     }
                                 }
-                            }
+                            },
                         }
                     }
                 }
