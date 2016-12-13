@@ -19,7 +19,8 @@ class TestJinjaUtils(base.TestCase):
                                            functions=[utils.address])
         self.assertEqual(
             "debian\njessie\nsome maintainer\nneedle\nneedle\n"
-            "keystone.ccp.svc.cluster.local\n127.0.0.1",
+            "keystone.ccp.svc.cluster.local\n"
+            "keystone.ccp.svc.cluster.local",
             content)
 
         context = {
@@ -40,7 +41,8 @@ class TestJinjaUtils(base.TestCase):
             ignore_undefined=True)
         self.assertEqual(
             "debian\njessie\nsome maintainer\nneedle\nneedle\n"
-            "keystone.ccp.svc.cluster.local\n127.0.0.1",
+            "keystone.ccp.svc.cluster.local\n"
+            "keystone.ccp.svc.cluster.local",
             content)
 
         context = {
@@ -50,5 +52,6 @@ class TestJinjaUtils(base.TestCase):
             self.filename, context, functions=[utils.address],
             ignore_undefined=True)
         self.assertEqual(
-            "debian\n\n\n\n\nkeystone.ccp.svc.cluster.local\n127.0.0.1",
+            "debian\n\n\n\n\nkeystone.ccp.svc.cluster.local\n"
+            "keystone.ccp.svc.cluster.local",
             content)
