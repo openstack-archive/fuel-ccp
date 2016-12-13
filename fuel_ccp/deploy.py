@@ -55,7 +55,8 @@ def _get_service_files_hash(files, configs):
     if files:
         for filename, f in files.items():
             data[filename] = jinja_utils.jinja_render(
-                f["content"], configs, ignore_undefined=True)
+                f["content"], configs, [utils.address],
+                ignore_undefined=True)
     dump = json.dumps(data, sort_keys=True).encode("utf-8")
     return hashlib.sha1(dump).hexdigest()
 
