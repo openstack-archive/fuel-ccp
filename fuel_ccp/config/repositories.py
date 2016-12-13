@@ -30,6 +30,7 @@ DEFAULTS = {
         'clone_concurrency': multiprocessing.cpu_count(),
         'skip_empty': True,
         'path': os.path.expanduser('~/ccp-repos/'),
+        'entrypoint_repo_name': 'fuel-ccp-entrypoint',
         'repos': [{
             'name': name,
             'git_url': 'https://git.openstack.org/openstack/{}'.format(name),
@@ -46,6 +47,7 @@ SCHEMA = {
             'clone_concurrency': {'type': 'integer'},
             'skip_empty': {'type': 'boolean'},
             'path': {'type': 'string'},
+            'entrypoint_repo_name': {'type': 'string'},
             'repos': {
                 'type': 'array',
                 'items': {
