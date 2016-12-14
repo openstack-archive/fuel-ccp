@@ -74,6 +74,11 @@ def _parse_service_deps(service_map):
         for pre in container.get('pre', []):
             if pre.get('type') == 'single':
                 dependencies.update([pre['name']])
+            else:
+                dependencies.update(pre.get('dependencies', []))
+        for post in container.get('post', []):
+            if post.get('type') != 'single':
+                dependencies.update(post.get('dependencies', []))
     return list(dependencies)
 
 
