@@ -74,6 +74,11 @@ def _parse_service_deps(service_map):
         for pre in container.get('pre', []):
             if pre.get('type') == 'single':
                 dependencies.update([pre['name']])
+            else:
+                dependencies.update(pre.get('dependencies', []))
+        for post in container.get('post', []):
+            if post.get('type') != 'single':
+                dependencies.update(post.get('dependencies', []))
     return list(dependencies)
 
 
@@ -82,10 +87,11 @@ def _parse_pre_and_post_deps(service_map):
     deps = {}
     for container in service_map['service']['containers']:
         for pre in container.get('pre', []):
-            deps[pre['name']] = Node(pre['name'],
-                                     'job',
-                                     pre.get('dependencies', []),
-                                     service_map['service']['name'])
+            if pre.get('type') == 'single':
+                deps[pre['name']] = Node(pre['name'],
+                                         'job',
+                                         pre.get('dependencies', []),
+                                         service_map['service']['name'])
 
         for post in container.get('post', []):
             if post.get('type') == 'single':
