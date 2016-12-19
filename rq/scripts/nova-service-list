@@ -1,0 +1,2 @@
+source "$OPENRC"
+nova help | grep 'service-list' &> /dev/null && nova service-list || nova-manage service list
