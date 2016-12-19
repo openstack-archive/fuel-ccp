@@ -14,6 +14,7 @@ User docs
 
    quickstart
    monitoring_and_logging
+   plugins/searchlight
    config/index
 
 Advanced topics
