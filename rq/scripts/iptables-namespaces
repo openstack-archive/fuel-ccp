@@ -1,0 +1,6 @@
+for i in $(ip netns)
+do
+    echo "namespace:$i"
+    ip netns exec "$i" ${IPTABLES_STR}
+    ip netns exec "$i" ${IPTABLES_STR} -t nat
+done

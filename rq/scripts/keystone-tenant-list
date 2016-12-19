@@ -1,0 +1,8 @@
+source "$OPENRC"
+which openstack 2>&1
+if [ "$?" -eq 0 ]
+then
+  openstack project list --long
+else
+  keystone tenant-list
+fi
