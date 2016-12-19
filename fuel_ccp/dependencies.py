@@ -27,20 +27,18 @@ YAML_FILE_RE = re.compile(r'\.yaml$')
 class Node(object):
     """Reperesents dependency. Service or job."""
 
-    def __init__(self, name, sort, dependencies=None, job_parent=None):
+    TYPES = ['service', 'container', 'job']
+
+    def __init__(self, name, sort, dependencies=None, parent_service=None):
         self.name = name
         self.sort = sort
-        if sort not in ['service', 'job']:
-            msg = "'sort' attribute must be 'service' or 'job' not \
-            '{sort}'".format(sort=sort)
-            raise ValueError(msg)
-
         self.dependencies = dependencies or []
-        self.job_parent = job_parent
-
-        if self.sort == 'job' and self.job_parent is None:
-            msg = "'job_parent' attribute for 'job' mustn't be None"
-            raise ValueError(msg)
+        self.parent_service = parent_service
+        assert sort in Node.TYPES, \
+            'Node sort must be one of: %s' % ','.join(Node.TYPES)
+        assert parent_service or sort == 'service', \
+            'You need to specify a service parent for %s node' \
+            % self.sort
 
     def is_service(self):
         return self.sort == 'service'
@@ -52,9 +50,8 @@ def get_deps_map(components_map=None):
 
     deps_map = {}
     for service_name, service_map in components_map.items():
-        deps_map[service_name] = Node(
-            service_name, 'service', _parse_service_deps(
-                service_map['service_content']))
+        deps_map.update(_parse_service_deps(
+            service_name, service_map['service_content']))
         deps_map.update(_parse_pre_and_post_deps(
             service_map['service_content']))
 
@@ -65,23 +62,39 @@ def _prepare_deps(deps):
     return [dep.partition(":")[0] for dep in deps]
 
 
-def _parse_service_deps(service_map):
-    """Parses service map and finds dependencies of daemons."""
-    dependencies = set()
+def _parse_service_deps(service_name, service_map):
+    """Collect per service and per containers depependencies into dep map"""
+
+    deps_map = {}
+    service_dependencies = set()
+
     for container in service_map['service']['containers']:
-        cont_deps = container['daemon'].get('dependencies', [])
-        dependencies.update(_prepare_deps(cont_deps))
+
+        cont_name = container['name']
+        cont_deps = _prepare_deps(container['daemon'].get('dependencies', []))
+        cont_deps = set(cont_deps)
+
         for pre in container.get('pre', []):
             if pre.get('type') == 'single':
-                dependencies.update([pre['name']])
+                cont_deps.update([pre['name']])
             else:
                 deps = _prepare_deps(pre.get('dependencies', []))
-                dependencies.update(deps)
+                cont_deps.update(deps)
         for post in container.get('post', []):
             if post.get('type') != 'single':
                 deps = _prepare_deps(post.get('dependencies', []))
-                dependencies.update(deps)
-    return list(dependencies)
+                cont_deps.update(deps)
+
+        service_dependencies.update(cont_deps)
+        deps_map[cont_name] = Node(cont_name,
+                                   sort='container',
+                                   parent_service=service_name,
+                                   dependencies=list(cont_deps))
+    # can overwrite previously defined container dependency with same name
+    deps_map[service_name] = Node(service_name,
+                                  sort='service',
+                                  dependencies=list(service_dependencies))
+    return deps_map
 
 
 def _parse_pre_and_post_deps(service_map):
@@ -112,7 +125,7 @@ def _calculate_service_deps(service_name, deps_map):
         LOG.error(msg)
         sys.exit(1)
     deps = set()
-    job_parents = set()
+    parent_services = set()
     current_iteration_set = {deps_map[service_name]}
 
     while current_iteration_set:
@@ -121,7 +134,7 @@ def _calculate_service_deps(service_name, deps_map):
             if deps_map[dep.name].is_service():
                 deps.update([deps_map[dep.name]])
             else:
-                job_parents.update([dep.job_parent])
+                parent_services.update([dep.parent_service])
 
         for dep in current_iteration_set:
             for dependency in deps_map[dep.name].dependencies:
@@ -129,26 +142,26 @@ def _calculate_service_deps(service_name, deps_map):
         current_iteration_set = next_iteration_set
 
     deps = {dep.name for dep in deps}
-    return deps, job_parents
+    return deps, parent_services
 
 
 def get_deps(components, components_map=None):
     deps_map = get_deps_map(components_map)
     result_deps = set()
     for service_name in components:
-        deps, job_parents = _calculate_service_deps(service_name, deps_map)
+        deps, parent_services = _calculate_service_deps(service_name, deps_map)
         checked = {service_name}
 
         while True:
-            deps.update(job_parents)
-            if not job_parents - checked:
+            deps.update(parent_services)
+            if not parent_services - checked:
                 break
-            for parent in job_parents - checked:
+            for parent in parent_services - checked:
                 parent_deps, parent_parents = _calculate_service_deps(
                     parent, deps_map)
                 deps.update(parent_deps)
-                checked.update(job_parents - checked)
-                job_parents.update(parent_parents)
+                checked.update(parent_services - checked)
+                parent_services.update(parent_parents)
         result_deps.update(deps)
     result_deps.add('etcd')
 
