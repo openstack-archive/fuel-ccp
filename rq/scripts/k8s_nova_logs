@@ -1,0 +1,10 @@
+set -xe
+
+echo "************************************************************************"
+id
+whereis kubectl
+NS=`kubectl get ns | grep ccp | awk {'print $1'}`
+for f in `kubectl -n $NS get pod | grep nova | awk {'print $1'}`;do
+    kubectl -n $NS logs $f
+done
+echo "$NS"

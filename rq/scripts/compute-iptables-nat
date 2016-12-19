@@ -1,0 +1,1 @@
+iptables -nvL -t nat

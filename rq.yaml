@@ -1,0 +1,8 @@
+scripts:
+    by_os_platform:
+        centos:
+            - packagelist-centos
+            - packages-md5-verify-centos
+        ubuntu:
+            - packagelist-ubuntu
+            - packages-md5-verify-ubuntu

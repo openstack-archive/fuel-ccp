@@ -1,0 +1,7 @@
+files:
+  __default:
+    - '/etc/neutron'
+logs:
+  __default:
+    path: '/var/log'
+    include: 'neutron'
