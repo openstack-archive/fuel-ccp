@@ -1,0 +1,1 @@
+mongo admin --eval "printjson(rs.conf())" -u admin --password $(python -c "import yaml; f=open('/etc/astute.yaml', 'r'); y=yaml.load(f); f.close(); print(y['ceilometer']['db_password'])")

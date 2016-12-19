@@ -1,0 +1,4 @@
++ /etc
++ /etc/cobbler
++ /etc/cobbler*
++ /etc/cobbler/**

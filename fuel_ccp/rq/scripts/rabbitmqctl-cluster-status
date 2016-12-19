@@ -1,0 +1,1 @@
+rabbitmqctl cluster_status

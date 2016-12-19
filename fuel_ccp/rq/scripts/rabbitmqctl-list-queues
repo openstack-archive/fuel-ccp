@@ -1,0 +1,1 @@
+rabbitmqctl list_queues

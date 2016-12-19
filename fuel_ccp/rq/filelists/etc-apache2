@@ -1,0 +1,7 @@
++ /etc
++ /etc/apache2
+- /etc/apache2/ssl
++ /etc/apache2/**
++ /etc/httpd
+- /etc/httpd/ssl
++ /etc/httpd/**

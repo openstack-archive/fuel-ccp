@@ -1,0 +1,65 @@
+filelists:
+  __default:
+    - 'root-.log'
+  by_roles:
+    controller:
+      - 'etc-apache2'
+      - 'etc-ceph'
+      - 'etc-cinder'
+      - 'etc-glance'
+      - 'etc-haproxy'
+      - 'etc-heat'
+      - 'etc-keystone'
+      - 'etc-mysql'
+      - 'etc-nova'
+      - 'etc-swift'
+      - 'root-ceph'
+    cinder: ['/etc/cinder']
+    ceph-osd: ['root-ceph', 'etc-ceph']
+    compute: ['etc-libvirt', 'etc-nova']
+    no_fuel: ['etc-hiera', 'etc-neutron']
+    virt: ['etc-libvirt']
+  by_os_platform:
+    ubuntu: ['etc-apt', 'etc-lsb-release', 'etc-network']
+    centos: ['etc-redhat-release', 'etc-sysconfig', 'etc-yum']
+  by_release:
+    '9.0': ['/etc/fuel']
+    '9.1': ['/etc/fuel']
+scripts:
+  by_roles:
+    fuel: [fuel-release, fuel-task-list, fuel-environment-list]
+    cinder: [ovs-vsctl-show, cinder-manage]
+    compute: [compute-iptables-nat, ovs-dump-flows, compute-iptables, ovs-ofctl-show-bridges,
+      ovs-vsctl-show]
+    controller: [rabbitmqctl-list-queues, nova-service-list, iptables-namespaces,
+      rabbitmqctl-cluster-status, crm-resource-status, pcs-status, ovs-dump-flows, neutron-agent-list,
+      mysql-status, ceph-mon-status, ovs-ofctl-show-bridges, rabbitmqctl-list-connections,
+      ovs-vsctl-show, rabbitmqctl-report, mysql-size, rabbitmqctl-status, crm-resource-list,
+      cinder-manage]
+    mongo: [mongo-replication-status, ipa, mongo-replica-conf, mongo-status, ovs-vsctl-show]
+  once_by_roles:
+    ceph-osd: [ceph-df, ceph-osd-status, ceph-osd-tree, ceph-pg-dump, ovs-vsctl-show,
+      ceph-health-detail, ceph-health]
+    controller: [neutron-router-list, neutron-net-list, neutron-subnet-list, keystone-endpoint-list,
+      cinder-list, nova-list, keystone-tenant-list, nova-usage-list,
+      neutron-port-list]
+  by_os_platform:
+      ubuntu: [dmesg-t-ubuntu, dpkg-l, apt-cache-policy]
+      centos: [dmesg-centos, yum-list-installed, yum-v-repolist]
+  __default:
+    [k8s_nova_logs, ip-ne, iptables, ipnetns, ss, ipa, iptables-nat, df-m, services-status, cpuinfo, df-i, ipro, mount, sysctl-a, pvdisplay, vgdisplay, lvdisplay, lsmod, dmidecode, cat-proc-interrupts, arp-an, uname-a, ps-auxwwf, uptime, dmsetup-info, brctl-show, blkid-o-list]
+logs:
+  __default:
+    path: '/var/log'
+#    exclude:
+#      - '\.[^12]\.gz$|\.\d{2,}\.gz$'
+# cmds:
+#   __default:
+#     test:
+#       'echo "test" | head -n 1'
+#     test2:
+#       'echo "test2" | less'
+#   by_roles:
+#     compute:
+#       t3: 'echo t3'
+#       t4: 'echo t4'

@@ -1,0 +1,6 @@
+for i in $(ovs-vsctl list-br)
+do
+    echo "ovs-ofctl show $i"
+    ovs-ofctl show $i
+    echo -n
+done

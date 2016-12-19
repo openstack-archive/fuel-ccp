@@ -1,0 +1,7 @@
+which ceph
+if [ "$?" -eq "0" ]
+then
+  ceph mon_status
+else
+  echo 'Timmy says: ceph not installed'
+fi

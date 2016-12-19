@@ -1,0 +1,3 @@
+cat /etc/sysconfig/selinux
+sestatus
+getenforce

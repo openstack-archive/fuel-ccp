@@ -1,0 +1,5 @@
++ /etc
++ /etc/yum
++ /etc/yum/**
++ /etc/yum.d
++ /etc/yum.d/**

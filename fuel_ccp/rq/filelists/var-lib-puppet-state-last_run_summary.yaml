@@ -1,0 +1,5 @@
++ /var
++ /var/lib
++ /var/lib/puppet
++ /var/lib/puppet/state
++ /var/lib/puppet/state/last_run_summary.yaml
