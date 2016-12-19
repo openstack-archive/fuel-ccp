@@ -8,6 +8,7 @@ from keystoneauth1 import session as keystone_session
 from neutronclient.neutron import client as neutron_client
 from novaclient import client as nova_client
 import pykube
+from swiftclient import client as swift_client
 
 from fuel_ccp.common import utils
 from fuel_ccp import config
@@ -111,6 +112,16 @@ def _cleanup_images(session):
         glance.images.delete(image.id)
 
 
+def _cleanup_object_storage(session):
+    LOG.info("Cleaning up object storage")
+    swift = swift_client.Connection(session=session)
+    for cont in swift.get_account()[1]:
+        LOG.debug("Delete bucket %s", cont["name"])
+        for obj in swift.get_container(cont["name"])[1]:
+            swift.delete_object(cont["name"], obj["name"])
+        swift.delete_container(cont["name"])
+
+
 def _cleanup_openstack_environment(configs, auth_url=None, verify=True):
     if 'project_name' not in configs.get('openstack', {}):
         # Ensure that keystone configs are provided. Assume that it is not an
@@ -156,6 +167,12 @@ def _cleanup_openstack_environment(configs, auth_url=None, verify=True):
     except keystoneauth_exceptions.EndpointNotFound:
         LOG.info('Neutron is not present, skipping network resources '
                  'cleanup')
+        pass
+
+    try:
+        _cleanup_object_storage(session)
+    except keystoneauth_exceptions.EndpointNotFound:
+        LOG.info("Object storage is not present, skipping buckets cleanup")
         pass
 
     LOG.info('OpenStack cleanup has been finished successfully.')
