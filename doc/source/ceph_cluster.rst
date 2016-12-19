@@ -116,7 +116,7 @@ Go to any ceph node and run with root permissions:
 
 ::
 
-  ceph -s
+  sudo ceph -s
 
 ``health`` should be HEALTH_OK. HEALTH_WARN signify non-critical error, check
 the description of the error to get the idea of how to fix it. HEALTH_ERR
@@ -129,20 +129,20 @@ On any Ceph node run:
 
 ::
 
-  rados mkpool images
-  rados mkpool volumes
-  rados mkpool vms
+  sudo rados mkpool images
+  sudo rados mkpool volumes
+  sudo rados mkpool vms
 
 ::
 
-  ceph auth get-or-create client.glance osd 'allow rwx pool=images, allow rwx pool=vms' mon 'allow r' -o /etc/ceph/ceph.client.glance.keyring
-  ceph auth get-or-create client.cinder osd 'allow rwx pool=volumes, allow rwx pool=vms, allow rx pool=images' mon 'allow r' -o /etc/ceph/ceph.client.cinder.keyring
-  ceph auth get-or-create client.radosgw.gateway osd 'allow rwx' mon 'allow rwx' -o /etc/ceph/ceph.client.radosgw.keyring
+  sudo ceph auth get-or-create client.glance osd 'allow rwx pool=images, allow rwx pool=vms' mon 'allow r' -o /etc/ceph/ceph.client.glance.keyring
+  sudo ceph auth get-or-create client.cinder osd 'allow rwx pool=volumes, allow rwx pool=vms, allow rx pool=images' mon 'allow r' -o /etc/ceph/ceph.client.cinder.keyring
+  sudo ceph auth get-or-create client.radosgw.gateway osd 'allow rwx' mon 'allow rwx' -o /etc/ceph/ceph.client.radosgw.keyring
 
 To list all user with permission and keys, run:
 
 ::
 
-  ceph auth list
+  sudo ceph auth list
 
 Now you're ready to use this Ceph cluster with CCP.
