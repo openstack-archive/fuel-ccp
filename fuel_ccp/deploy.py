@@ -553,6 +553,50 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
+def transform_dependencies(service, components_map):
+    """Replace any service dependency with its containers."""
+
+    service_content = service['service_content']
+    service_containers = service_content['service']['containers']
+
+    def transform(entity):
+        dependencies = entity.get('dependencies', [])
+        transformed_dependencies = set()
+        for dependency in dependencies:
+            dependency_name, _, dependency_type = dependency.partition(":")
+            if dependency_name not in components_map:
+                # means that the dependency is not a service
+                transformed_dependencies.add(dependency)
+                continue
+            # there is a service with this name, so get list of its containers
+            containers = utils.containers_of(dependency_name, components_map)
+            if dependency_name in containers:
+                # the case then there is a container with same name as service:
+                # service: A, containers: [A,B,C]
+                if len(containers) == 1:
+                    # a service consist of a single container with same name
+                    transformed_dependencies.add(dependency)
+                else:
+                    raise RuntimeError('Dependencies resolving conflict: '
+                                       'the %s simultaneously defined as '
+                                       'container and service. Please rename '
+                                       'anyone to make dependency clear.' %
+                                       dependency)
+            else:
+                # setup the service as set of containers
+                for c in containers:
+                    if dependency_type:
+                        c += ':' + dependency_type
+                    transformed_dependencies.add(c)
+
+        entity['dependencies'] = sorted(transformed_dependencies)
+
+    for container in service_containers:
+        transform(container['daemon'])
+        map(transform, container.get('pre', []))
+        map(transform, container.get('post', []))
+
+
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
@@ -582,6 +626,7 @@ def deploy_components(components_map, components):
         service = components_map[service_name]
         service["service_content"]['service']['exports_ctx'] = exports_ctx
         objects_gen = parse_role(service, topology, configmaps)
+        transform_dependencies(service, components_map)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
