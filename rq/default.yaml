@@ -1,0 +1,26 @@
+filelists:
+  __default:
+    - 'root-.log'
+  by_roles:
+    controller:
+      - 'etc-apt'
+      - 'etc-lsb-release'
+      - 'etc-network'
+scripts:
+  by_roles:
+    compute: [compute-iptables-nat, ovs-dump-flows, compute-iptables, ovs-ofctl-show-bridges,
+      ovs-vsctl-show]
+    controller: [rabbitmqctl-list-queues, nova-service-list, iptables-namespaces,
+      rabbitmqctl-cluster-status, crm-resource-status, pcs-status, ovs-dump-flows, neutron-agent-list,
+      mysql-status, ceph-mon-status, ovs-ofctl-show-bridges, rabbitmqctl-list-connections,
+      ovs-vsctl-show, rabbitmqctl-report, mysql-size, rabbitmqctl-status, crm-resource-list,
+      cinder-manage,k8s_nova_logs,k8s-nodes,k8s-pods,k8s-svc,ccp-status]
+  once_by_roles:
+    controller: [neutron-router-list, neutron-net-list, neutron-subnet-list, keystone-endpoint-list,
+      cinder-list, nova-list, keystone-tenant-list, nova-usage-list,
+      neutron-port-list]
+  __default:
+    [dockerctl-list,dockerctl-check,docker-images,docker-ps,ip-ne, iptables, ipnetns, ss, ipa, iptables-nat, df-m, services-status, cpuinfo, df-i, ipro, mount, sysctl-a, pvdisplay, vgdisplay, lvdisplay, lsmod, dmidecode, cat-proc-interrupts, arp-an, uname-a, ps-auxwwf, uptime, dmsetup-info, brctl-show, blkid-o-list, dmesg-t-ubuntu, dpkg-l, apt-cache-policy]
+logs:
+  __default:
+    path: '/var/log'

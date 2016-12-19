@@ -1,0 +1,13 @@
+files:
+  __default:
+    - '/etc/nova'
+    - '/etc/libvirt'
+scripts:
+  controller:
+    - nova-list
+    - nova-service-list
+    - nova-usage-list
+logs:
+  __default:
+    path: '/var/log'
+    include: '(nova|libvirt|qemu)'

@@ -1,0 +1,18 @@
+[
+   {
+       "ip": "node1",
+       "id": 1,
+       "roles": "controller"
+   },
+   {
+       "ip": "node2",
+       "id": 2,
+       "roles": "compute"
+   },
+   {
+       "ip": "node3",
+       "id": 3,
+       "roles": "compute"
+   }
+]
+

@@ -1,0 +1,2 @@
+rabbit_container=`kubectl -n $NS get pod| grep rabbit | awk {'print $1'}`
+kubectl -n $NS exec $rabbit_container rabbitmqctl cluster_status

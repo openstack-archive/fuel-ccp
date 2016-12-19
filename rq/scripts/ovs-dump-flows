@@ -1,0 +1,6 @@
+for i in $(ovs-vsctl list-br)
+do
+    echo "bridge $i:"
+    ovs-ofctl dump-flows $i
+    echo -n
+done
