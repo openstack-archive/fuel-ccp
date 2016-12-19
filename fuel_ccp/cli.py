@@ -19,6 +19,7 @@ from fuel_ccp import deploy
 from fuel_ccp import fetch
 from fuel_ccp import status
 from fuel_ccp import validate
+from fuel_ccp import diagnostic
 from fuel_ccp.validation import service as validation_service
 
 CONF = config.CONF
@@ -184,6 +185,13 @@ class ConfigDump(BaseCommand):
             do_fetch()
         config.load_component_defaults()
         config.dump_yaml(self.app.stdout)
+
+class Diagnostic(BaseCommand):
+    """Get diagnostic snapshot"""
+
+    def take_action(self, parsed_args):
+        config.load_component_defaults()
+        diagnostic.diagnostic()
 
 
 class ShowStatus(lister.Lister):

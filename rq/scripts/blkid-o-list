@@ -1,0 +1,2 @@
+blkid -o list | perl -pe 's/[^[:print:]\r\n]//g'
+# perl cleanup is necessary to workaroud corrupt output of blkid with long mount points (docker mount points have garbage in the end) - this at least prevents our Python code from crashing
