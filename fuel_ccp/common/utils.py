@@ -166,3 +166,10 @@ def get_deployed_components():
         kubernetes.get_object_names(deployed_deployments)
     )
     return deployed_components
+
+
+def containers_of(service_name, components_map=None):
+    components_map = components_map or get_deploy_components_info()
+    service_map = components_map[service_name]['service_content']['service']
+    names = [cntr['name'] for cntr in service_map['containers']]
+    return names
