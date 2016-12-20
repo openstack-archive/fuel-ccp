@@ -107,7 +107,7 @@ Make sure you have passwordless ssh key access to each node and run:
 
 ::
 
-  ansible-playbook -e 'host_key_checking=False' -i inventory_file site.yml.sample
+  ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory_file site.yml.sample
 
 Check Ceph deployment
 ~~~~~~~~~~~~~~~~~~~~~
