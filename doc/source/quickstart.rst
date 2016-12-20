@@ -147,6 +147,8 @@ your environment may be different.
   ``vlan_range`` is range of allowed VLANs, should be false if VLAN
   segmenantion is not allowed.
 
+For configuration bootstraping please read the :doc:`bootstraping`.
+
 Fetch CCP components repos:
 
 ::
