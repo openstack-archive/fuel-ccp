@@ -16,6 +16,7 @@ User docs
    monitoring_and_logging
    config/index
    config/types
+   bootstraping
 
 Advanced topics
 ---------------
