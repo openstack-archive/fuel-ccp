@@ -17,6 +17,11 @@ Application definition template
         hostNetwork: true
         hostPID: true
         antiAffinity: local
+        annotations:
+            pod:
+              description: frontend ports
+            service:
+              description: frontend service
         containers:
             - name: container-name
               image: container-image
@@ -106,6 +111,9 @@ service
 | antiAffinity  | Restrict scheduling of pods on the same host: | false    | one of:          | null          |
 |               | local - within namespace                      |          | [null, "global", |               |
 |               | global - within k8s cluster                   |          | "local"]         |               |
++---------------+-----------------------------------------------+----------+------------------+---------------+
+| annotations   | pod - annotations for pods                    | false    | string dict      | null          |
+|               | service - annotations for service             |          |                  |               |
 +---------------+-----------------------------------------------+----------+------------------+---------------+
 
 .. _container:
