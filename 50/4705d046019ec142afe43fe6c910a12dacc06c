@@ -1,0 +1,10 @@
+Code-Review+2: Proskurin Kirill <kproskurin@mirantis.com>
+Code-Review+2: Aleksandr Mogylchenko <amogylchenko@mirantis.com>
+Workflow+1: Aleksandr Mogylchenko <amogylchenko@mirantis.com>
+Code-Review+1: Dmitry Klenov <dklenov@mirantis.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 21 Dec 2016 13:01:24 +0000
+Reviewed-on: https://review.openstack.org/412970
+Project: openstack/fuel-ccp
+Branch: refs/heads/master
