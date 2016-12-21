@@ -49,7 +49,7 @@ First part configures internal network. All options have default values:
 +-------------+-----------------------------------------------+---------------+
 | Name        | Description                                   | Default       |
 +=============+===============================================+===============+
-| enable      | boolean flag, which turns on/off bootsrap.    | true          |
+| enable      | boolean flag, which turns on/off bootstrap.   | true          |
 +-------------+-----------------------------------------------+---------------+
 | net_name    | Name of the internal network, which will be   | int-net       |
 |             | created in neutron.                           |               |
@@ -70,7 +70,7 @@ after turning it on, because most of them don't have default values.
 +-------------+-----------------------------------------------+---------------+
 | Name        | Description                                   | Default       |
 +=============+===============================================+===============+
-| enable      | boolean flag, which turns on/off bootsrap.    | false         |
+| enable      | boolean flag, which turns on/off bootstrap.   | false         |
 +-------------+-----------------------------------------------+---------------+
 | net_name    | Name of the external network, which will be   | ext-net       |
 |             | created in neutron. Default value can be used.|               |
@@ -145,7 +145,7 @@ Host for Kubernetes cluster has interface with IP address equal to specified IP
 in the gateway field. It's usually necessary for providing access from
 Openstack VMs to service APIs.
 At the end don't forget to be careful with pool of available external
-addresses. The should not contain IPs outside of cluster.
+addresses. It should not contain IPs outside of cluster.
 
 .. _images:
 
