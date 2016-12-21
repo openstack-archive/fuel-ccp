@@ -40,7 +40,7 @@ create() {
         openstack image create --disk-format qcow2 --public --file /tmp/cirros.img cirros
         rm -f /tmp/cirros.img
     fi
-    NETID="$(openstack network show int-net -f value -c id)"
+    NETID="$(neutron net-show int-net -f value -c id)"
     openstack server create --flavor m1.tiny --image "${IMAGE}" --nic net-id="$NETID" --min $NUMBER --max $NUMBER --wait test_vm
     if [ -n "${ADD_FLOATING}" ]; then
         for vm in $(openstack server list -f value -c Name | grep test_vm); do
