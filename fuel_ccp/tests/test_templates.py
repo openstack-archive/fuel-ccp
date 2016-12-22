@@ -65,26 +65,36 @@ class TestDeploy(base.TestCase):
                 "timeoutSeconds": 1,
                 "initialDelaySeconds": 10
             },
-            "env": [{
-                "name": "CCP_NODE_NAME",
-                'valueFrom': {
-                    'fieldRef': {
-                        'fieldPath': 'spec.nodeName'
-                    }
-                }
-            },
+            "env": [
                 {
-                "name": "env_foo",
-                "valueFrom": {
-                    "valueField": {
-                        "valuePath": "metadata.name"
+                    "name": "CCP_NODE_NAME",
+                    'valueFrom': {
+                        'fieldRef': {
+                            'fieldPath': 'spec.nodeName'
+                        }
                     }
-                }
-            },
+                },
                 {
-                "name": "CM_VERSION",
-                "value": 1
-            }],
+                    "name": "CCP_POD_NAME",
+                    "valueFrom": {
+                        "fieldRef": {
+                            "fieldPath": "metadata.name"
+                        }
+                    }
+                },
+                {
+                    "name": "env_foo",
+                    "valueFrom": {
+                        "valueField": {
+                            "valuePath": "metadata.name"
+                        }
+                    }
+                },
+                {
+                    "name": "CM_VERSION",
+                    "value": 1
+                }
+            ],
             "securityContext": {
                 "privileged": False
             }
