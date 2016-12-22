@@ -2,6 +2,9 @@ import os
 import re
 
 import jinja2
+from jinja2.exceptions import TemplateRuntimeError
+from jinja2.ext import Extension
+from jinja2 import nodes
 
 from six.moves.urllib import parse as urlparse
 
@@ -22,6 +25,21 @@ class SilentUndefined(jinja2.Undefined):
         __rpow__ = _fail_with_undefined_error
 
 
+class RaiseExtension(Extension):
+    tags = set(['raise'])
+
+    def parse(self, parser):
+        lineno = next(parser.stream).lineno
+        message_node = parser.parse_expression()
+        return jinja2.nodes.CallBlock(
+            self.call_method('_raise', [message_node], lineno=lineno),
+            [], [], [], lineno=lineno
+        )
+
+    def _raise(self, msg, caller):
+        raise TemplateRuntimeError(msg)
+
+
 def get_host(path):
     return urlparse.urlsplit(path).netloc
 
@@ -32,9 +50,10 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
         kwargs['undefined'] = SilentUndefined
     else:
         kwargs['undefined'] = jinja2.StrictUndefined
+        kwargs['extensions'] = [RaiseExtension]
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-        os.path.dirname(path)), **kwargs)
+                                 os.path.dirname(path)), **kwargs)
     env.filters['host'] = get_host
     # FIXME: gethostbyname should be only used during config files render
     env.filters['gethostbyname'] = lambda x: x
