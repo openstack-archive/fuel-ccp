@@ -29,6 +29,14 @@ Advanced topics
    ceph_cluster
    using_calico_instead_of_ovs
 
+Service plugins docs
+--------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   plugins/searchlight
+
 Developer docs
 --------------
 
