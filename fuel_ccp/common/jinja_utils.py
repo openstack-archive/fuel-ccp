@@ -26,18 +26,25 @@ def get_host(path):
     return urlparse.urlsplit(path).netloc
 
 
+def raise_exception(msg):
+    raise AssertionError(msg)
+
+
 def jinja_render(path, context, functions=(), ignore_undefined=False):
     kwargs = {}
+
     if ignore_undefined:
         kwargs['undefined'] = SilentUndefined
     else:
         kwargs['undefined'] = jinja2.StrictUndefined
+        functions = list(functions) + [raise_exception]
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)), **kwargs)
     env.filters['host'] = get_host
     # FIXME: gethostbyname should be only used during config files render
     env.filters['gethostbyname'] = lambda x: x
+
     for func in functions:
         env.globals[func.__name__] = func
     content = env.get_template(os.path.basename(path)).render(context)
