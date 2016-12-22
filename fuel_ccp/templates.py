@@ -89,14 +89,24 @@ def serialize_volume_mounts(container, for_job=None):
 
 
 def serialize_env_variables(container):
-    env = [{
-        "name": "CCP_NODE_NAME",
-        "valueFrom": {
-            "fieldRef": {
-                "fieldPath": "spec.nodeName"
+    env = [
+        {
+            "name": "CCP_NODE_NAME",
+            "valueFrom": {
+                "fieldRef": {
+                    "fieldPath": "spec.nodeName"
+                }
             }
+        },
+        {
+            "name": "CCP_POD_NAME",
+            "valueFrom": {
+                "fieldRef": {
+                    "fieldPath": "metadata.name"
+                }
+            },
         }
-    }]
+    ]
     if container.get('env'):
         env.extend(container['env'])
     return env
