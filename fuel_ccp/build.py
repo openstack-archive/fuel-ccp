@@ -267,6 +267,7 @@ def process_dockerfile(dockerfile, tmp_dir, config, executor, future_list,
     path = create_rendered_dockerfile(dockerfile, tmp_dir, config)
     dockerfile['path'] = path
     with contextlib.closing(docker.Client(
+            base_url=CONF.builder.docker.base_url,
             timeout=CONF.registry.timeout)) as dc:
         build_dockerfile(dc, dockerfile)
         if CONF.builder.push and CONF.registry.address:
@@ -305,6 +306,7 @@ def match_not_ready_base_dockerfiles(dockerfile, ready_images):
 
 def get_ready_image_names():
     with contextlib.closing(docker.Client(
+            base_url=CONF.builder.docker.base_url,
             timeout=CONF.registry.timeout)) as dc:
         ready_images = []
         for image in dc.images():

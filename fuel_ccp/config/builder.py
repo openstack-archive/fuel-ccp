@@ -7,7 +7,10 @@ DEFAULTS = {
         'build_base_images_if_not_exist': True,
         'push': False,
         'no_cache': False,
-    },
+        'docker': {
+            'base_url': 'unix://var/run/docker.sock'
+        }
+    }
 }
 
 SCHEMA = {
@@ -20,6 +23,13 @@ SCHEMA = {
             'build_base_images_if_not_exist': {'type': 'boolean'},
             'push': {'type': 'boolean'},
             'no_cache': {'type': 'boolean'},
+            'docker': {
+                'type': 'object',
+                'additionalProperties': False,
+                'properties': {
+                    'base_url': {'type': 'string'}
+                }
+            }
         },
     },
 }
