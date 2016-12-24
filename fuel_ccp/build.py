@@ -262,12 +262,18 @@ def push_dockerfile(dc, dockerfile):
                  CONF.registry.address)
 
 
+def get_docker_client():
+    return contextlib.closing(
+        docker.Client(
+            base_url=CONF.builder.docker["base_url"],
+            timeout=CONF.registry.timeout))
+
+
 def process_dockerfile(dockerfile, tmp_dir, config, executor, future_list,
                        ready_images):
     path = create_rendered_dockerfile(dockerfile, tmp_dir, config)
     dockerfile['path'] = path
-    with contextlib.closing(docker.Client(
-            timeout=CONF.registry.timeout)) as dc:
+    with get_docker_client() as dc:
         build_dockerfile(dc, dockerfile)
         if CONF.builder.push and CONF.registry.address:
             push_dockerfile(dc, dockerfile)
@@ -304,8 +310,7 @@ def match_not_ready_base_dockerfiles(dockerfile, ready_images):
 
 
 def get_ready_image_names():
-    with contextlib.closing(docker.Client(
-            timeout=CONF.registry.timeout)) as dc:
+    with get_docker_client() as dc:
         ready_images = []
         for image in dc.images():
             if image["RepoTags"]:
