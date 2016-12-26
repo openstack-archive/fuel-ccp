@@ -149,23 +149,35 @@ Allowed content:
 
 - This key has the following list of sub-keys:
 
-+--------------------------------+----------------------------------+----------+------------+
-| Name                           | Description                      | Schema   | Default    |
-+================================+==================================+==========+============+
-| workers                        | Number of the workers, which     | integer  | number of  |
-|                                | will be used during building     |          | CPU in the |
-|                                | component images.                |          | system     |
-+--------------------------------+----------------------------------+----------+------------+
-| keep_image_tree_consistency    | Rebuld dependent images, if base | boolean  | True       |
-|                                | image was rebuilt.               |          |            |
-+--------------------------------+----------------------------------+----------+------------+
-| build_base_images_if_not_exist | Forces base image building.      | boolean  | True       |
-+--------------------------------+----------------------------------+----------+------------+
-| push                           | Push images to docker registry.  | boolean  | False      |
-+--------------------------------+----------------------------------+----------+------------+
-| no_cache                       | Do not use docker caching during |          |            |
-|                                | building images.                 | boolean  | False      |
-+--------------------------------+----------------------------------+----------+------------+
+.. list-table::
+   :widths: 10 25 10 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Schema
+     - Default
+   * - workers
+     - Number of the workers, which will be used during building component
+       images.
+     - integer
+     - number of CPU in the system
+   * - keep_image_tree_consistency
+     - Rebuld dependent images, if base image was rebuilt.
+     - boolean
+     - True
+   * - build_base_images_if_not_exist
+     - Forces base image building.
+     - boolean
+     - True
+   * - push
+     - Push images to docker registry.
+     - boolean
+     - False
+   * - no_cache
+     - Do not use docker caching during building images.
+     - boolean
+     - False
 
 .. _versions:
 
@@ -289,27 +301,42 @@ Allowed content:
 
 - This key has the following list of sub-keys:
 
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| Name         | Description                      | Schema   | Default                                            |
-+==============+==================================+==========+====================================================+
-| namespace    | Namespace which should be used   | string   | ccp                                                |
-|              | for **ccp** related images.      |          |                                                    |
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| tag          | Tag for **ccp** related images.  | string   | latest                                             |
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| base_distro  | Base image for building **ccp**  | string   | debian                                             |
-|              | images.                          |          |                                                    |
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| base_tag     | Tag of the base image for bulding| string   | jessie                                             |
-|              | **ccp** images.                  |          |                                                    |
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| base_images  | Names of base images.            | array of | ['base']                                           |
-|              |                                  | strings  |                                                    |
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| maintainer   | Maintainer of **ccp** images.    | string   | MOS Microservices <mos-microservices@mirantis.com> |
-+--------------+----------------------------------+----------+----------------------------------------------------+
-| image_specs  | Extra keys for building images.  | json     |                                                    |
-+--------------+----------------------------------+----------+----------------------------------------------------+
+.. list-table::
+   :widths: 10 25 10 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Schema
+     - Default
+   * - namespace
+     - Namespace which should be used  for **ccp** related images.
+     - string
+     - ccp
+   * - tag
+     - Tag for **ccp** related images.
+     - string
+     - latest
+   * - base_distro
+     - Base image for building **ccp** images.
+     - string
+     - debian
+   * - base_tag
+     - Tag of the base image for bulding **ccp** images.
+     - string
+     - jessie
+   * - base_images
+     - Names of base images.
+     - array of strings
+     - ['base']
+   * - maintainer
+     - Maintainer of **ccp** images.
+     - string
+     - MOS Microservices <mos-microservices@mirantis.com>
+   * - image_specs
+     - Extra keys for building images.
+     - json
+     - --
 
 .. _configs:
 
@@ -376,32 +403,43 @@ Allowed content:
 
 - This key has the following list of sub-keys:
 
-+----------------+----------------------------------+----------+-----------------------+
-| Name           | Description                      | Schema   | Default               |
-+================+==================================+==========+=======================+
-| server         | URL for accessing of Kubernetes  | string   | http://localhost:8080 |
-|                | API.                             |          |                       |
-+----------------+----------------------------------+----------+-----------------------+
-| namespace      | Namespace which will be created  | string   | ccp                   |
-|                | and used for deploying Openstack.|          |                       |
-+----------------+----------------------------------+----------+-----------------------+
-| ca_cert        | Path of CA TLS certificate(s)    | string   |                       |
-|                | used to verify the Kubernetes    |          |                       |
-|                | server's certificate.            |          |                       |
-+----------------+----------------------------------+----------+-----------------------+
-| key_file       | Path of client key to use in SSL | string   |                       |
-|                | connection.                      |          |                       |
-+----------------+----------------------------------+----------+-----------------------+
-| cert_file      | Path of certificate file to use  | string   |                       |
-|                | in SSL connection.               |          |                       |
-+----------------+----------------------------------+----------+-----------------------+
-| insecure       | Explicitly allow **ccp**         | boolean  | False                 |
-|                | to perform "insecure SSL"        |          |                       |
-|                | (https) requests.                |          |                       |
-+----------------+----------------------------------+----------+-----------------------+
-| cluster_domain | Name of the cluster domain.      | string   | cluster.local         |
-+----------------+----------------------------------+----------+-----------------------+
+.. list-table::
+   :widths: 10 25 10 10
+   :header-rows: 1
 
+   * - Name
+     - Description
+     - Schema
+     - Default
+   * - server
+     - URL for accessing of Kubernetes  API.
+     - string
+     - http://localhost:8080
+   * - namespace
+     - Namespace which will be created and used for deploying Openstack.
+     - string
+     - ccp
+   * - ca_cert
+     - Path of CA TLS certificate(s) used to verify the Kubernetes server's
+       certificate.
+     - string
+     - --
+   * - key_file
+     - Path of client key to use in SSL connection.
+     - string
+     - --
+   * - cert_file
+     - Path of certificate file to use in SSL connection.
+     - string
+     - --
+   * - insecure
+     - Explicitly allow **ccp** to perform "insecure SSL" (https) requests.
+     - boolean
+     - False
+   * - cluster_domain
+     - Name of the cluster domain.
+     - string
+     - cluster.local
 
 .. _replicas:
 
@@ -458,21 +496,34 @@ Allowed content:
 
 - This key has the following list of sub-keys:
 
-+-----------+------------------------------------+----------+-----------+
-| Name      | Description                        | Schema   | Default   |
-+===========+====================================+==========+===========+
-| address   | Address of registry service.       | string   |           |
-+-----------+------------------------------------+----------+-----------+
-| insecure  | Use insecure connection or not.    | boolean  | False     |
-+-----------+------------------------------------+----------+-----------+
-| username  | Username to access docker registry.| string   |           |
-+-----------+------------------------------------+----------+-----------+
-| password  | Password to access docker registry.| string   |           |
-+-----------+------------------------------------+----------+-----------+
-| timeout   | Value, which specifies how long    | integer  | 300       |
-|           | the CCP waits response from        |          |           |
-|           | registry.                          |          |           |
-+-----------+------------------------------------+----------+-----------+
+.. list-table::
+   :widths: 10 25 10 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Schema
+     - Default
+   * - address
+     - Address of registry service.
+     - string
+     - --
+   * - insecure
+     - Use insecure connection or not.
+     - boolean
+     - False
+   * - username
+     - Username to access docker registry.
+     - string
+     - --
+   * - password
+     - Password to access docker registry.
+     - string
+     - --
+   * - timeout
+     - Value, which specifies how long the CCP waits response from registry.
+     - integer
+     - 300
 
 This is used to pass information for accessing docker registry.
 Example can be found in :doc:`quickstart`.

@@ -84,72 +84,125 @@ Parameters description
 service
 -------
 
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| Name          | Description                                   | Required | Schema           | Default       |
-+===============+===============================================+==========+==================+===============+
-| name          | Name of the service.                          | true     | string           |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| kind          | Kind of k8s object to use for containers      | false    | one of:          | Deployment    |
-|               | deployment                                    |          | ["Deployment",   |               |
-|               |                                               |          | "DaemonSet"]     |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| containers    | List of containers under multi-container pod  | true     | container_ array |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| ports         | k8s Service will be created if specified      | false    | internal-port:   |               |
-|               | (with NodePort type for now)                  |          | external-port    |               |
-|               | Only internal or both internal:external ports |          | array            |               |
-|               | can be specified                              |          |                  |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| hostNetwork   | Use the host’s network namespace              | false    | boolean          | false         |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| hostPID       | Use the host’s pid namespace                  | false    | boolean          | false         |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| strategy      | The strategy that should be used to replace   | false    | one of:          | RollingUpdate |
-|               | old Pods by new ones                          |          | ["RollingUpdate",|               |
-|               |                                               |          | "Recreate"]      |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| antiAffinity  | Restrict scheduling of pods on the same host: | false    | one of:          | null          |
-|               | local - within namespace                      |          | [null, "global", |               |
-|               | global - within k8s cluster                   |          | "local"]         |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
-| annotations   | pod - annotations for pods                    | false    | string dict      | null          |
-|               | service - annotations for service             |          |                  |               |
-+---------------+-----------------------------------------------+----------+------------------+---------------+
+.. list-table::
+   :widths: 10 35 7 15 7
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Required
+     - Schema
+     - Default
+   * - name
+     - Name of the service.
+     - true
+     - string
+     - --
+   * - kind
+     - Kind of k8s object to use for containers deployment.
+     - false
+     - one of: ["Deployment", "DaemonSet"]
+     - Deployment
+   * - containers
+     - List of containers under multi-container pod.
+     - true
+     - container_ array
+     - --
+   * - ports
+     - k8s Service will be created if specified (with NodePort type for now).
+       Only internal or both internal:external ports can be specified.
+     - false
+     - internal-port: external-port array
+     - --
+   * - hostNetwork
+     - Use the host’s network namespace.
+     - false
+     - boolean
+     - false
+   * - hostPID
+     - Use the host’s pid namespace.
+     - false
+     - boolean
+     - false
+   * - strategy
+     - The strategy that should be used to replace old Pods by new ones.
+     - false
+     - one of: ["RollingUpdate", "Recreate"]
+     - RollingUpdate
+   * - antiAffinity
+     - Restrict scheduling of pods on the same host:
+       local - within namespace, global - within k8s cluster
+     - false
+     - one of: [null, "global", "local"]
+     - null
+   * - annotations
+     - pod - annotations for pods, service - annotations for service.
+     - false
+     - string dict
+     - null
 
 .. _container:
 
 container
 ---------
 
-+---------+--------------------------------------------+----------+------------------+---------+
-| Name    | Description                                | Required | Schema           | Default |
-+=========+============================================+==========+==================+=========+
-| name    | Name of the container. It will be used to  | true     | string           |         |
-|         | track status in etcd                       |          |                  |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| image   | Name of the image. registry, namespace,    | true     | string           |         |
-|         | tag will be added by framework             |          |                  |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| probes  | Readiness, liveness or both checks can be  | false    | dict with        |         |
-|         | defined. Exec action will be used for both |          | two keys:        |         |
-|         | checks                                     |          |   liveness: cmd  |         |
-|         |                                            |          |   readiness: cmd |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| volumes |                                            | false    | volume_ array    |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| pre     | List of commands that need to be executed  | false    | command_ array   |         |
-|         | before daemon process start                |          |                  |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| daemon  |                                            | true     | command_         |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| post    | The same as for “pre” except that post     | false    | command_ array   |         |
-|         | commands will be executed after daemon     |          |                  |         |
-|         | process has been started                   |          |                  |         |
-+---------+--------------------------------------------+----------+------------------+---------+
-| env     | An array of environment variables defined  | false    | env_ array       |         |
-|         | in kubernetes way.                         |          |                  |         |
-|         |                                            |          |                  |         |
-+---------+--------------------------------------------+----------+------------------+---------+
+.. list-table::
+   :widths: 10 35 7 15 7
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Required
+     - Schema
+     - Default
+   * - name
+     - Name of the container. It will be used to track status in etcd.
+     - true
+     - string
+     - --
+   * - image
+     - Name of the image. registry, namespace, tag will be added by framework.
+     - true
+     - string
+     - --
+   * - probes
+     - Readiness, liveness or both checks can be defined. Exec action will be
+       used for both checks.
+     - false
+     - dict with two keys:
+
+       liveness:
+         cmd
+
+       readiness:
+         cmd
+     - --
+   * - volumes
+     - --
+     - false
+     - volume_ array
+     - --
+   * - pre
+     - List of commands that need to be executed before daemon process start.
+     - false
+     - command_ array
+     - --
+   * - daemon
+     - --
+     - true
+     - command_
+     - --
+   * - post
+     - The same as for “pre” except that post commands will be executed after
+       daemon process has been started.
+     - false
+     - command_ array
+     - --
+   * - env
+     - An array of environment variables defined in kubernetes way.
+     - false
+     - env_ array
+     - --
 
 .. _env: http://kubernetes.io/docs/api-reference/v1/definitions/#_v1_envvar
 
@@ -158,87 +211,149 @@ container
 volume
 ------
 
-+------------+-------------------------------------------+----------+-----------------------+---------+
-| Name       | Description                               | Required | Schema                | Default |
-+============+===========================================+==========+=======================+=========+
-| name       | Name of the volume                        | true     | string                |         |
-+------------+-------------------------------------------+----------+-----------------------+---------+
-| type       | host and empty-dir type supported for now | true     | one of:               |         |
-|            |                                           |          | ["host", "empty-dir"] |         |
-+------------+-------------------------------------------+----------+-----------------------+---------+
-| path       | Host path that should be mounted          | false    | string                |         |
-|            | (only if type = "host")                   |          |                       |         |
-+------------+-------------------------------------------+----------+-----------------------+---------+
-| mount-path | Mount path in container                   | false    | string                | path    |
-+------------+-------------------------------------------+----------+-----------------------+---------+
-| readOnly   | Mount mode of the volume                  | false    | bool                  | False   |
-+------------+-------------------------------------------+----------+-----------------------+---------+
+.. list-table::
+   :widths: 10 35 7 15 7
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Required
+     - Schema
+     - Default
+   * - name
+     - Name of the volume.
+     - true
+     - string
+     - --
+   * - type
+     - host and empty-dir type supported for now.
+     - true
+     - one of: ["host", "empty-dir"]
+     - --
+   * - path
+     - Host path that should be mounted (only if type = "host").
+     - false
+     - string
+     - --
+   * - mount-path
+     - Mount path in container.
+     - false
+     - string
+     - path
+   * - readOnly
+     - Mount mode of the volume.
+     - false
+     - bool
+     - False
 
 .. _command:
 
 command
 -------
 
-+--------------+--------------------------------------------+----------+----------------------+---------+
-| Name         | Description                                | Required | Schema               | Default |
-+==============+============================================+==========+======================+=========+
-| name         | Name of the command. Required only for     |    --    | string               |         |
-|              | `pre` and `post` with type `single`        |          |                      |         |
-+--------------+--------------------------------------------+----------+----------------------+---------+
-| command      |                                            | true     | string               |         |
-+--------------+--------------------------------------------+----------+----------------------+---------+
-| dependencies | These keys will be polled from etcd        | false    | string array         |         |
-|              | before commands execution                  |          |                      |         |
-+--------------+--------------------------------------------+----------+----------------------+---------+
-| type         | type: single means that this command       | false    | one of:              | local   |
-|              | should be executed once per openstack      |          | ["single", "local"]  |         |
-|              | deployment. For commands with              |          |                      |         |
-|              | type: single Job object will be created    |          |                      |         |
-|              |                                            |          |                      |         |
-|              | type: local (or if type is not specified)  |          |                      |         |
-|              | means that command will be executed        |          |                      |         |
-|              | inside the same container as a             |          |                      |         |
-|              | daemon process.                            |          |                      |         |
-+--------------+--------------------------------------------+----------+----------------------+---------+
-| files        | List of the files that maps to the keys    | false    | file_ keys array     |         |
-|              | of files dict. It defines which files will |          |                      |         |
-|              | be rendered inside a container             |          |                      |         |
-+--------------+--------------------------------------------+----------+----------------------+---------+
-| user         |                                            | false    | string               |         |
-+--------------+--------------------------------------------+----------+----------------------+---------+
+.. list-table::
+   :widths: 10 35 7 15 7
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Required
+     - Schema
+     - Default
+   * - name
+     - Name of the command. Required only for `pre` and `post` with type
+       `single`.
+     - --
+     - string
+     - --
+   * - command
+     - --
+     - true
+     - string
+     - --
+   * - dependencies
+     - These keys will be polled from etcd before commands execution.
+     - false
+     - string array
+     - --
+   * - type
+     - type: single means that this command should be executed once per
+       openstack deployment. For commands with type: single Job object will be
+       created.
+
+       type: local (or if type is not specified) means that command will be
+       executed inside the same container as a daemon process.
+     - false
+     - one of: ["single", "local"]
+     - local
+   * - files
+     - List of the files that maps to the keys of files dict. It defines which
+       files will be rendered inside a container.
+     - false
+     - file_ keys array
+     - --
+   * - user
+     - --
+     - false
+     - string
+     - --
 
 .. _files:
 
 files
 -----
 
-+------------------------------+-------------+----------+-------------+---------+
-| Name                         | Description | Required | Schema      | Default |
-+==============================+=============+==========+=============+=========+
-| Name of the file to refer in |             | false    | file_ array |         |
-| files list of commands       |             |          |             |         |
-+------------------------------+-------------+----------+-------------+---------+
+.. list-table::
+   :widths: 35 10 7 15 7
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Required
+     - Schema
+     - Default
+   * - Name of the file to refer in files list of commands
+     - --
+     - false
+     - file_ array
+     - --
 
 .. _file:
 
 file
 ----
 
-+---------+------------------------------------------------+----------+--------+---------+
-| Name    | Description                                    | Required | Schema | Default |
-+=========+================================================+==========+========+=========+
-| path    | Destination path inside a container            | true     | string |         |
-+---------+------------------------------------------------+----------+--------+---------+
-| content | Name of the file under                         | true     | string |         |
-|         | {{ service_repo }}/service/files directory.    |          |        |         |
-|         | This file will be rendered inside a container  |          |        |         |
-|         | and moved to the destination defined with path |          |        |         |
-+---------+------------------------------------------------+----------+--------+---------+
-| perm    |                                                | false    | string |         |
-+---------+------------------------------------------------+----------+--------+---------+
-| user    |                                                | false    | string |         |
-+---------+------------------------------------------------+----------+--------+---------+
+.. list-table::
+   :widths: 10 35 7 15 7
+   :header-rows: 1
 
+   * - Name
+     - Description
+     - Required
+     - Schema
+     - Default
+   * - path
+     - Destination path inside a container.
+     - true
+     - string
+     - --
+   * - content
+     - Name of the file under {{ service_repo }}/service/files directory. This
+       file will be rendered inside a container and moved to the destination
+       defined with path.
+     - true
+     - string
+     - --
+   * - perm
+     - --
+     - false
+     - string
+     - --
+   * - user
+     - --
+     - false
+     - string
+     - --
 
 DSL versioning
 ~~~~~~~~~~~~~~

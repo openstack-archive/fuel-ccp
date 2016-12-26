@@ -46,56 +46,69 @@ Snippet below demonstrates all available options:
 
 First part configures internal network. All options have default values:
 
-+-------------+-----------------------------------------------+---------------+
-| Name        | Description                                   | Default       |
-+=============+===============================================+===============+
-| enable      | boolean flag, which turns on/off bootstrap.   | true          |
-+-------------+-----------------------------------------------+---------------+
-| net_name    | Name of the internal network, which will be   | int-net       |
-|             | created in neutron.                           |               |
-+-------------+-----------------------------------------------+---------------+
-| subnet_name | Name of the subnet in internal network, which | int-subnet    |
-|             | will be created in neutron.                   |               |
-+-------------+-----------------------------------------------+---------------+
-| network     | CIDR of the internal network for allocating   | 10.0.1.0/24   |
-|             | internal IP addresses.                        |               |
-+-------------+-----------------------------------------------+---------------+
-| gateway     | Gateway for subnet in the internal network.   | 10.0.1.1      |
-+-------------+-----------------------------------------------+---------------+
+.. list-table:: **Internal network configuration options**
+   :widths: 10 25 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - enable
+     - boolean flag, which turns on/off bootstrap.
+     - true
+   * - net_name
+     - Name of the internal network, which will be created in neutron.
+     - int-net
+   * - subnet_name
+     - Name of the subnet in internal network, which will be created in
+       neutron.
+     - int-subnet
+   * - network
+     - CIDR of the internal network for allocating internal IP addresses.
+     - 10.0.1.0/24
+   * - gateway
+     - Gateway for subnet in the internal network.
+     - 10.0.1.1
 
 Second part describes external network configuration. Bootstrapping for
 external network is disabled by default and user should specify all options
 after turning it on, because most of them don't have default values.
 
-+-------------+-----------------------------------------------+---------------+
-| Name        | Description                                   | Default       |
-+=============+===============================================+===============+
-| enable      | boolean flag, which turns on/off bootstrap.   | false         |
-+-------------+-----------------------------------------------+---------------+
-| net_name    | Name of the external network, which will be   | ext-net       |
-|             | created in neutron. Default value can be used.|               |
-+-------------+-----------------------------------------------+---------------+
-| subnet_name | Name of the subnet in external network, which | ext-subnet    |
-|             | will be created in neutron. Default value can |               |
-|             | be used.                                      |               |
-+-------------+-----------------------------------------------+---------------+
-| physnet     | Name of the physnet, which was defined in     |               |
-|             | **physnets** section.                         |               |
-+-------------+-----------------------------------------------+---------------+
-| network     | CIDR of the external network for allocating   |               |
-|             | external IP addresses.                        |               |
-+-------------+-----------------------------------------------+---------------+
-| gateway     | Gateway for subnet in the external network.   |               |
-+-------------+-----------------------------------------------+---------------+
-| nameserver  | DNS server for subnet in external network.    |               |
-+-------------+-----------------------------------------------+---------------+
-| pool        | Pool of the addresses from external network,  |               |
-|             | which can be used for association with        |               |
-|             | Openstack VMs.                                |               |
-|             | Should be specified by using nested keys:     |               |
-|             | **start** and **end**, which requires         |               |
-|             | corresponding IP addresses.                   |               |
-+-------------+-----------------------------------------------+---------------+
+.. list-table:: **External network configuration options**
+   :widths: 10 25 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - enable
+     - boolean flag, which turns on/off bootstrap.
+     - false
+   * - net_name
+     - Name of the external network, which will be created in neutron. Default
+       value can be used.
+     - ext-net
+   * - subnet_name
+     - Name of the subnet in external network, which will be created in
+       neutron. Default value can be used.
+     - ext-subnet
+   * - physnet
+     - Name of the physnet, which was defined in **physnets** section.
+     - --
+   * - network
+     - CIDR of the external network for allocating external IP addresses.
+     - --
+   * - gateway
+     - Gateway for subnet in the external network.
+     - --
+   * - nameserver
+     - DNS server for subnet in external network.
+     - --
+   * - pool
+     - Pool of the addresses from external network, which can be used for
+       association with Openstack VMs. Should be specified by using nested
+       keys: **start** and **end**, which requires corresponding IP addresses.
+     - --
 
 The last section is a router configuration. It allows to specify name of the
 router, which will be created in neutron. Both networks will be connected with
@@ -174,17 +187,23 @@ The last part of the snippet describes image specific options.
 All options should be specified, othrwise it will cause an error during job
 execution:
 
-+-------------+-----------------------------------------------+---------------------------------------------------------------------+
-| Name        | Description                                   | Default                                                             |
-+=============+===============================================+=====================================================================+
-| url         | url, which will be used for downloading image.| http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img |
-+-------------+-----------------------------------------------+---------------------------------------------------------------------+
-| disk_format | format of the image which will be used during | qcow2                                                               |
-|             | image creation in the glance.                 |                                                                     |
-+-------------+-----------------------------------------------+---------------------------------------------------------------------+
-| name        |  name of the image, which will be created     | cirros                                                              |
-|             |  in the glance.                               |                                                                     |
-+-------------+-----------------------------------------------+---------------------------------------------------------------------+
+.. list-table:: **Glance image bootstrapping default configuration options**
+   :widths: 10 25 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - url
+     - url, which will be used for downloading image.
+     - http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+   * - disk_format
+     - format of the image which will be used during image creation in the
+       glance.
+     - qcow2
+   * - name
+     - name of the image, which will be created in the glance.
+     - cirros
 
 Creation of the image is handled by glance post deployment job
 **glance-cirros-image-upload**, which uses Bash script from fuel-ccp-glance
