@@ -55,8 +55,9 @@ a part of groups mentioned erlier.
 
 - :ref:`registry`
 - :ref:`action`
-- :ref:`ccp`
 - :ref:`network_topology`
+- :ref:`ccp_node`
+- :ref:`ccp_pod`
 
 List of keys
 ~~~~~~~~~~~~
@@ -536,40 +537,6 @@ action
 .. WARNING:: This option was deprecated in favor of CLI parameters, so please
              don't use it, because it will be removed in future.
 
-.. _ccp:
-
-"CCP_*" env variables
----------------------
-
-Isolation:
-
-- Used in service templates files (service/files/).
-
-Allowed content:
-
-- This variables are created from the application definition ``env`` key.
-  Only env keys which start with "CCP\_" will be passed to config hash.
-
-This is mainly used to pass some k8s related information to container, for
-example, you could use it to pass k8s node hostname to container via this
-variable:
-
-Create env key:
-
-::
-
-      env:
-        - name: CCP_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-
-Use this variable in some config:
-
-::
-
-    {{ CCP_NODE_NAME }}
-
 .. _network_topology:
 
 network_topology
@@ -591,3 +558,45 @@ You could use it to get the private and public eth IP address. For example:
 
     bind = "{{ network_topology["private"]["address"] }}"
     listen = "{{ network_topology["public"]["address"] }}"
+
+.. _ccp_node:
+
+node_name
+---------
+
+Isolation:
+
+- Used in service templates files (service/files/).
+
+Allowed content:
+
+- This key is auto-created by entrypoint script based on kubernetes downward
+  api.
+
+You could use it to get the name of the node on which container is deployed.
+For example:
+
+::
+
+    my_node = "{{ node_name }}"
+
+.. _ccp_pod:
+
+pod_name
+--------
+
+Isolation:
+
+- Used in service templates files (service/files/).
+
+Allowed content:
+
+- This key is auto-created by entrypoint script based on kubernetes downward
+  api.
+
+You could use it to get the name of the pod on which container is deployed.
+For example:
+
+::
+
+    my_pod = "{{ pod_name }}"
