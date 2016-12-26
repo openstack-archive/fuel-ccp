@@ -198,21 +198,16 @@ Flavor bootstrapping
 The CCP automatically creates list of the default flavors, which are mentioned
 in the table below:
 
-+-----------+----+-------+------+-------+
-| Name      | ID | RAM   | Disk | VCPUs |
-+===========+====+=======+======+=======+
-| m1.test   |  0 | 128   | 1    | 1     |
-+-----------+----+-------+------+-------+
-| m1.tiny   |  1 | 512   | 1    | 1     |
-+-----------+----+-------+------+-------+
-| m1.small  |  2 | 2048  | 20   | 1     |
-+-----------+----+-------+------+-------+
-| m1.medium |  3 | 4096  | 40   | 2     |
-+-----------+----+-------+------+-------+
-| m1.large  |  4 | 8192  | 80   | 4     |
-+-----------+----+-------+------+-------+
-| m1.xlarge |  5 | 16384 | 160  | 8     |
-+-----------+----+-------+------+-------+
+========== == ====== ===== =====
+ Name      ID  RAM    Disk VCPUs
+========== == ====== ===== =====
+ m1.test    0  128    1    1
+ m1.tiny    1  512    1    1
+ m1.small   2  2048   20   1
+ m1.medium  3  4096   40   2
+ m1.large   4  8192   80   4
+ m1.xlarge  5  16384  160  8
+========== == ====== ===== =====
 
 Creation of the flavors is handled by nova post deployment job
 **nova-create-default-flavors**, which uses Bash script from fuel-ccp-nova
