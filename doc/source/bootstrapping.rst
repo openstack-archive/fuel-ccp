@@ -184,7 +184,7 @@ Note, that by default **enable** option is False. So if user wants to use
 bootstrapping he should explicitly set it to True.
 
 The last part of the snippet describes image specific options.
-All options should be specified, othrwise it will cause an error during job
+All options should be specified, otherwise it will cause an error during job
 execution:
 
 .. list-table:: **Glance image bootstrapping default configuration options**
@@ -232,5 +232,57 @@ Creation of the flavors is handled by nova post deployment job
 **nova-create-default-flavors**, which uses Bash script from fuel-ccp-nova
 repository: *service/files/create-default-flavors.sh.j2*
 
-Right now there is no option to specify custom flavors bootstrapping in the
-~/.ccp.yaml, but it can be added in future.
+Also the CCP allows to bootstrap custom flavors. Similarly previous sections
+it can be done by adding the following snippet to ~/.ccp.yaml:
+
+::
+
+ configs:
+   nova:
+     bootstrap:
+       enable: true
+       flavors:
+         - name: custom_name1
+           id: 42
+           ram: 1024
+           disk: 1
+           vcpus: 1
+         - name: custom_name2
+           id: 43
+           ram: 2024
+           disk: 2
+           vcpus: 2
+
+This snippet adds **bootstrap** section for nova service and enables it.
+Note, that by default **enable** option is False. So if user wants to use
+bootstrapping he should explicitly set it to True.
+
+The last part of the snippet describes list of flavors with related options.
+All options should be specified, otherwise it will cause an error during job
+execution:
+
+.. list-table:: **Nova flavor bootstrapping configuration options**
+   :widths: 10 25 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - name
+     - Name of the custom flavor.
+     - --
+   * - id
+     - Indentifier of the flavor.
+     - --
+   * - ram
+     - Vaqlue of the RAM memory for the current flavor.
+     - --
+   * - disk
+     - Disk size for the curretn flavor.
+     - --
+   * - vcpus
+     - Number of the vcpus for the current flavor.
+     - --
+
+.. NOTE:: Default value for flavors is an empty list, so it means that
+          creation of custom flavors will be skipped.
