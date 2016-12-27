@@ -26,6 +26,10 @@ def get_host(path):
     return urlparse.urlsplit(path).netloc
 
 
+def j2raise(msg):
+    raise AssertionError(msg)
+
+
 def jinja_render(path, context, functions=(), ignore_undefined=False):
     kwargs = {}
     if ignore_undefined:
@@ -38,8 +42,10 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
     env.filters['host'] = get_host
     # FIXME: gethostbyname should be only used during config files render
     env.filters['gethostbyname'] = lambda x: x
+
     for func in functions:
         env.globals[func.__name__] = func
+    env.globals['raise_exception'] = j2raise
     content = env.get_template(os.path.basename(path)).render(context)
     return content
 
