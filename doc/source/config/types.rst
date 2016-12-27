@@ -58,6 +58,7 @@ a part of groups mentioned erlier.
 - :ref:`network_topology`
 - :ref:`ccp_node`
 - :ref:`ccp_pod`
+- :ref:`address`
 
 List of keys
 ~~~~~~~~~~~~
@@ -600,3 +601,50 @@ For example:
 ::
 
     my_pod = "{{ pod_name }}"
+
+.. _address:
+
+address
+-------
+
+Isolation:
+
+- Used in service templates files (service/files/).
+
+- Used in application definition file service/component_name.yaml.
+
+Allowed content:
+
+- This is a function with the following params:
+
+.. list-table::
+   :widths: 10 25 10 10
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+     - Required
+     - Default
+   * - service
+     - Name of the service.
+     - True
+     - --
+   * - port
+     - Add port to the url. Port config section should be specified.
+     - False
+     - --
+   * - external
+     - Use external url instead of internal.
+     - False
+     - False
+   * - with_scheme
+     - Add scheme to the url.
+     - False
+     - False
+
+You could use it to get address of the service. For example:
+
+::
+
+    service_address = "{{ address('keystone', keystone.public_port, external=True, with_scheme=True) }}"
+
