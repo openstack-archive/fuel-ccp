@@ -28,6 +28,7 @@ Advanced topics
    ceph
    ceph_cluster
    using_calico_instead_of_ovs
+   ironic
 
 Service plugins docs
 --------------------
