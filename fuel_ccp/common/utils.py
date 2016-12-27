@@ -36,17 +36,26 @@ def get_resource_path(path):
     return pkg_resources.resource_filename(fuel_ccp.version_info.package, path)
 
 
+def get_repositories_paths():
+    """Get repositories paths.
+
+    :returns: list -- list of full repositories paths
+    """
+    paths = []
+    for repo in CONF.repositories.repos:
+        paths.append(os.path.join(CONF.repositories.path, repo["name"]))
+    return paths
+
+
 def get_config_paths():
-    components = [d['name'] for d in CONF.repositories.repos]
     paths = []
     # Order does matter. At first we add global defaults.
     for conf_path in ("resources/defaults.yaml", "resources/globals.yaml"):
         paths.append(get_resource_path(conf_path))
 
     # After we add component defaults.
-    for component in components:
-        paths.append(os.path.join(CONF.repositories.path, component,
-                                  "service/files/defaults.yaml"))
+    for repo in get_repositories_paths():
+        paths.append(os.path.join(repo, "service", "files", "defaults.yaml"))
 
     return paths
 
@@ -79,9 +88,8 @@ def address(service, port=None, external=False, with_scheme=False):
 def get_repositories_exports(repos_names=None):
     """Load shared templates from ./export dirs of the repositories. """
     exports = dict()
-    repos_names = repos_names or [d['name'] for d in CONF.repositories.repos]
-    for repo in repos_names:
-        exports_dir = os.path.join(CONF.repositories.path, repo, 'exports')
+    for repo in get_repositories_paths():
+        exports_dir = os.path.join(repo, 'exports')
         if os.path.exists(exports_dir) and os.path.isdir(exports_dir):
             for export in os.listdir(exports_dir):
                 path = os.path.join(exports_dir, export)
@@ -102,13 +110,11 @@ def get_deploy_components_info(rendering_context=None):
         rendering_context = CONF.configs._dict
     components_map = {}
 
-    for component_ref in CONF.repositories.repos:
-        component_name = component_ref['name']
-        service_dir = os.path.join(CONF.repositories.path,
-                                   component_name,
-                                   'service')
+    for repo in get_repositories_paths():
+        service_dir = os.path.join(repo, "service")
         if not os.path.isdir(service_dir):
             continue
+        component_name = os.path.basename(repo)
         REPO_NAME_PREFIX = "fuel-ccp-"
         if component_name.startswith(REPO_NAME_PREFIX):
             component_name = component_name[len(REPO_NAME_PREFIX):]
