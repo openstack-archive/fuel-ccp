@@ -7,6 +7,7 @@ DEFAULTS = {
         'cert_file': None,
         'insecure': False,
         'cluster_domain': 'cluster.local',
+        'image_pull_policy': None,
     },
 }
 
@@ -22,6 +23,10 @@ SCHEMA = {
             'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
             'insecure': {'type': 'boolean'},
             'cluster_domain': {'type': 'string'},
+            'image_pull_policy': {'oneOf': [
+                {'type': 'null'},
+                {'enum': ['Always', 'IfNotPresent', 'Never']},
+            ]},
         },
     },
 }

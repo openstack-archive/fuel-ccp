@@ -138,7 +138,7 @@ def serialize_daemon_container_spec(container):
     cont_spec = {
         "name": container["name"],
         "image": images.image_spec(container["image"]),
-        "imagePullPolicy": "Always",
+        "imagePullPolicy": CONF.kubernetes.image_pull_policy,
         "command": _get_start_cmd(container["name"]),
         "volumeMounts": serialize_volume_mounts(container),
         "readinessProbe": {
@@ -167,7 +167,7 @@ def serialize_job_container_spec(container, job):
     return {
         "name": job["name"],
         "image": images.image_spec(container["image"]),
-        "imagePullPolicy": "Always",
+        "imagePullPolicy": CONF.kubernetes.image_pull_policy,
         "command": _get_start_cmd(job["name"]),
         "volumeMounts": serialize_volume_mounts(container, job),
         "env": serialize_env_variables(container)
