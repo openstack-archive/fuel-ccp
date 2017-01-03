@@ -46,9 +46,15 @@ function ccp_wait_for_deployment_to_finish {
         if [ ${cnt} -eq 180 ]; then
             echo "Max time exceeded"
             if [ -n "${PRINT_STD}" ]; then
-                for f in `kubectl --namespace $1 get pod | grep -v -E '(Running|ContainerCreating|Pending)' | awk {'print $1'} | tail -n +2`; do
-                    echo "-------------- ${f} ---------------"
-                    kubectl --namespace "${1}" logs "${f}"
+                for f in `${CCP} status | awk '/wip/{print $2}'`; do
+                    POD_NAME=`kubectl -n "${1}" get pods | grep "${f}" | awk '{print $1}'`
+                    if kubectl -n ${1} get pods "${POD_NAME}" -o jsonpath={.spec.containers[*].name}; then
+                        CONTAINERS_NAMES=`kubectl -n ccp get pods "${POD_NAME}" -o jsonpath={.spec.containers[*].name}`
+                        for c in ${CONTAINERS_NAMES}; do
+                            echo "********* ${c} *********"
+                            kubectl -n "${1}" logs "${POD_NAME}" "${c}"
+                        done
+                    fi
                 done
             fi
             exit 1
