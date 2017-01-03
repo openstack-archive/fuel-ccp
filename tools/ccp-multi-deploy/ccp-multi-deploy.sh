@@ -43,12 +43,24 @@ function ccp_wait_for_deployment_to_finish {
         echo "Waiting for OpenStack deployment to finish..."
         sleep 5
         cnt=$((cnt + 1))
-        if [ ${cnt} -eq 180 ]; then
+        if [ ${cnt} -eq 300 ]; then
             echo "Max time exceeded"
             if [ -n "${PRINT_STD}" ]; then
-                for f in `kubectl --namespace $1 get pod | grep -v -E '(Running|ContainerCreating|Pending)' | awk {'print $1'} | tail -n +2`; do
-                    echo "-------------- ${f} ---------------"
-                    kubectl --namespace "${1}" logs "${f}"
+                # We take all components from ccp status commmand that are in wip
+                # state, then grep all pods for this component name, then get containers
+                # in these pods and finally get logs for these containers.
+                ${CCP} status
+                kubectl -n "${1}" get pods
+                for f in `${CCP} status | awk '/wip/{print $2}'`; do
+                    POD_NAME=`kubectl -n "${1}" get pods | grep "${f}" | awk '{print $1}'`
+                    if kubectl -n ${1} get pods "${POD_NAME}" -o jsonpath={.spec.containers[*].name}; then
+                        CONTAINERS_NAMES=`kubectl -n ${1} get pods "${POD_NAME}" -o jsonpath={.spec.containers[*].name}`
+                        for c in ${CONTAINERS_NAMES}; do
+                            echo "********* ${c} *********"
+                            kubectl -n "${1}" describe pod "${POD_NAME}"
+                            kubectl -n "${1}" logs "${POD_NAME}" "${c}"
+                        done
+                    fi
                 done
             fi
             exit 1
