@@ -179,6 +179,13 @@ SERVICE_SCHEMA = {
             "additionalProperties": False,
             "required": ["name", "containers"],
 
+            "not": {  # strategy needs to be absent for StatefulSet's
+                "properties": {
+                    "kind": {"enum": ["StatefulSet"]},
+                },
+                "required": ["kind", "strategy"],
+            },
+
             "properties": {
                 "name": NOT_EMPTY_STRING_SCHEMA,
                 "ports": {
@@ -207,7 +214,7 @@ SERVICE_SCHEMA = {
                     }
                 },
                 "kind": {
-                    "enum": ["Deployment", "DaemonSet"]
+                    "enum": ["Deployment", "DaemonSet", "StatefulSet"]
                 },
                 "hostNetwork": {
                     "type": "boolean"

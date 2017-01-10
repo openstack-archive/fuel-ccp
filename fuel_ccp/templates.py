@@ -352,6 +352,31 @@ def serialize_deployment(name, spec, annotations, replicas, component_name,
     return deployment
 
 
+def serialize_statefulset(name, spec, annotations, replicas, component_name):
+    return {
+        "apiVersion": "apps/v1beta1",
+        "kind": "StatefulSet",
+        "metadata": {
+            "name": name
+        },
+        "spec": {
+            "serviceName": name,
+            "replicas": replicas,
+            "template": {
+                "metadata": {
+                    "annotations": annotations,
+                    "labels": {
+                        "ccp": "true",
+                        "app": name,
+                        "ccp-component": component_name
+                    }
+                },
+                "spec": spec
+            }
+        }
+    }
+
+
 def serialize_affinity(service, topology):
     policy = {
         "nodeAffinity": {

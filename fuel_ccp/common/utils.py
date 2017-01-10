@@ -1,3 +1,4 @@
+import itertools
 import logging
 import os
 import pkg_resources
@@ -158,7 +159,8 @@ def get_deploy_components_info(rendering_context=None):
 def get_deployed_components():
     """Returns set of deployed components."""
     deployed_deployments = kubernetes.list_cluster_deployments()
-    deployed_components = set(
-        kubernetes.get_object_names(deployed_deployments)
+    deployed_statefulsets = kubernetes.list_cluster_statefulsets()
+    deployed_components = set(kubernetes.get_object_names(
+        itertools.chain(deployed_deployments, deployed_statefulsets))
     )
     return deployed_components
