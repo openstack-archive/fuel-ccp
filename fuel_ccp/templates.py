@@ -166,7 +166,7 @@ def serialize_daemon_container_spec(container):
 def serialize_job_container_spec(container, job):
     return {
         "name": job["name"],
-        "image": images.image_spec(container["image"]),
+        "image": images.image_spec(job.get('image') or container["image"]),
         "imagePullPolicy": CONF.kubernetes.image_pull_policy,
         "command": _get_start_cmd(job["name"]),
         "volumeMounts": serialize_volume_mounts(container, job),
