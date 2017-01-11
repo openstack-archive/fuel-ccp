@@ -227,6 +227,10 @@ def serialize_volumes(service, for_job=None):
 
     file_items = [{"key": f_name, "path": f_name} for f_name in sorted(files)]
     file_items.append({"key": "placeholder", "path": ".placeholder"})
+    exports_map = service['exports_ctx']['map']
+    exports_items = [{'key': cm_export_key,
+                      'path': exports_map[cm_export_key]['name']}
+                     for cm_export_key in sorted(exports_map)]
     vol_spec = [
         {
             "name": GLOBAL_CONFIG,
@@ -270,6 +274,7 @@ def serialize_volumes(service, for_job=None):
             "name": EXPORTS_CONFIG,
             "configMap": {
                 "name": EXPORTS_CONFIG,
+                "items": exports_items
             }
         }
     ]
