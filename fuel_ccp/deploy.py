@@ -308,16 +308,18 @@ def _create_globals_configmap(config):
     return kubernetes.process_object(cm)
 
 
-def _create_start_script_configmap():
+def get_start_script():
     start_scr_path = os.path.join(CONF.repositories.path,
                                   CONF.repositories.entrypoint_repo_name,
                                   "fuel_ccp_entrypoint",
                                   "start_script.py")
     with open(start_scr_path) as f:
-        start_scr_data = f.read()
+        return f.read()
 
+
+def create_start_script_configmap():
     data = {
-        templates.SCRIPT_CONFIG: start_scr_data
+        templates.SCRIPT_CONFIG: get_start_script()
     }
     cm = templates.serialize_configmap(templates.SCRIPT_CONFIG, data)
     return kubernetes.process_object(cm)
@@ -560,7 +562,7 @@ def deploy_components(components_map, components):
 
     _create_namespace(CONF.configs)
     _create_globals_configmap(CONF.configs)
-    start_script_cm = _create_start_script_configmap()
+    start_script_cm = create_start_script_configmap()
 
     # Create cm with jinja config templates shared across all repositories.
     templates_files = utils.get_repositories_exports()

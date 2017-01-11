@@ -17,7 +17,7 @@ ENTRYPOINT_PATH = "/opt/ccp_start_script/bin/start_script.py"
 PYTHON_PATH = "/usr/bin/python"
 
 
-def _get_start_cmd(role_name):
+def get_start_cmd(role_name):
     return ["dumb-init", PYTHON_PATH, ENTRYPOINT_PATH, "provision", role_name]
 
 
@@ -139,7 +139,7 @@ def serialize_daemon_container_spec(container):
         "name": container["name"],
         "image": images.image_spec(container["image"]),
         "imagePullPolicy": CONF.kubernetes.image_pull_policy,
-        "command": _get_start_cmd(container["name"]),
+        "command": get_start_cmd(container["name"]),
         "volumeMounts": serialize_volume_mounts(container),
         "readinessProbe": {
             "exec": {
@@ -168,7 +168,7 @@ def serialize_job_container_spec(container, job):
         "name": job["name"],
         "image": images.image_spec(container["image"]),
         "imagePullPolicy": CONF.kubernetes.image_pull_policy,
-        "command": _get_start_cmd(job["name"]),
+        "command": get_start_cmd(job["name"]),
         "volumeMounts": serialize_volume_mounts(container, job),
         "env": serialize_env_variables(container)
     }

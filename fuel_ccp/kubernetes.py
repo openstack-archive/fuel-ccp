@@ -157,11 +157,14 @@ def list_cluster_pods(service=None):
         selector=str(selector))
 
 
-def list_cluster_jobs():
+def list_cluster_jobs(selector=None):
+    ccp_selector = "ccp=true"
+    if selector:
+        ccp_selector += "," + selector
     client = get_client()
     return pykube.Job.objects(client).filter(
         namespace=CONF.kubernetes.namespace,
-        selector="ccp=true")
+        selector=ccp_selector)
 
 
 def list_cluster_services():

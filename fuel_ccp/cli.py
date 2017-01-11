@@ -8,8 +8,10 @@ from cliff import app
 from cliff import command
 from cliff import commandmanager
 from cliff import lister
+from cliff import show
 
 import fuel_ccp
+from fuel_ccp import action
 from fuel_ccp import build
 from fuel_ccp import cleanup
 from fuel_ccp.common import utils
@@ -248,6 +250,79 @@ class DomainsList(BaseCommand, lister.Lister):
         config.load_component_defaults()
         domains_list = utils.get_ingress_domains(parsed_args.components)
         return ('Ingress Domain',), zip(domains_list)
+
+
+# action commands
+
+class ActionList(BaseCommand, lister.Lister):
+    """Get list of available actions"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionList, self).get_parser(*args, **kwargs)
+        return parser
+
+    def take_action(self, parsed_args):
+        if CONF.repositories.clone:
+            do_fetch()
+        config.load_component_defaults()
+        actions = action.list_actions()
+        return ("Name", "Component"), [(a.name, a.component) for a in actions]
+
+
+class ActionShow(BaseCommand, show.ShowOne):
+    """Show action"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionShow, self).get_parser(*args, **kwargs)
+        parser.add_argument("action",
+                            help="Show details of the action")
+        return parser
+
+    def take_action(self, parsed_args):
+        action_obj = action.get_action(parsed_args.action)
+        return (
+            ("Name",
+             "Component",
+             "Image"),
+            (action_obj.name,
+             action_obj.component,
+             action_obj.image))
+
+
+class ActionStatus(BaseCommand, lister.Lister):
+    """Show list of executed actions"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionStatus, self).get_parser(*args, **kwargs)
+        parser.add_argument("action",
+                            nargs="?",
+                            help="Show action status")
+        return parser
+
+    def take_action(self, parsed_args):
+        return (
+            ("Name",
+             "Component",
+             "Date",
+             "Status",
+             "Restarts"),
+            ((a.name, a.component, a.date, a.status, a.restarts)
+             for a in action.list_action_status(parsed_args.action))
+        )
+
+
+class ActionRun(BaseCommand):
+    """Run action"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionRun, self).get_parser(*args, **kwargs)
+        parser.add_argument("action",
+                            help="Run action")
+        return parser
+
+    def take_action(self, parsed_args):
+        config.load_component_defaults()
+        action.run_action(parsed_args.action)
 
 
 def signal_handler(signo, frame):
