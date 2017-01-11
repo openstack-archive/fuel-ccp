@@ -72,6 +72,23 @@ def process_files(files, service_dir):
         f["content"] = content
 
 
+def _get_replicas(service, topology):
+    service_name = service["name"]
+    replicas = CONF.replicas.get(service_name)
+    if service.get("kind") == 'DaemonSet':
+        if replicas is not None:
+            LOG.error("Replicas was specified for %s, but it's implemented "
+                      "in DaemonSet-like way and will be deployed on "
+                      "all matching nodes (section 'nodes' in config file)",
+                      service_name)
+            raise RuntimeError("Replicas couldn't be specified for services "
+                               "implemented using Kubernetes DaemonSet")
+        replicas = len(set(topology[service_name]))
+    elif not replicas:
+        replicas = 1
+    return replicas
+
+
 def parse_role(component, topology, configmaps, jinja_imports):
     service_dir = component["service_dir"]
     role = component["service_content"]
@@ -80,12 +97,13 @@ def parse_role(component, topology, configmaps, jinja_imports):
     service_name = service["name"]
 
     LOG.info("Scheduling service %s deployment", service_name)
+    replicas = _get_replicas(service, topology)
     _expand_files(service, role.get("files"))
 
     process_files(role.get("files"), service_dir)
     files_cm = _create_files_configmap(service_name, role.get("files"),
                                        jinja_imports)
-    meta_cm = _create_meta_configmap(service)
+    meta_cm = _create_meta_configmap(service, replicas)
 
     workflows = _parse_workflows(service)
     workflow_cm = _create_workflow(workflows, service_name)
@@ -108,24 +126,13 @@ def parse_role(component, topology, configmaps, jinja_imports):
     cont_spec = templates.serialize_daemon_pod_spec(service)
     affinity = templates.serialize_affinity(service, topology)
 
-    replicas = CONF.replicas.get(service_name)
     strategy = {'type': service.get('strategy', 'RollingUpdate')}
     if service.get("kind") == 'DaemonSet':
         LOG.warning("Deployment is being used instead of DaemonSet to support "
                     "updates")
-        if replicas is not None:
-            LOG.error("Replicas was specified for %s, but it's implemented "
-                      "in DaemonSet-like way and will be deployed on "
-                      "all matching nodes (section 'nodes' in config file)",
-                      service_name)
-            raise RuntimeError("Replicas couldn't be specified for services "
-                               "implemented using Kubernetes DaemonSet")
-        replicas = len(set(topology[service_name]))
         if strategy['type'] == 'RollingUpdate':
             strategy['rollingUpdate'] = {'maxSurge': 0,
                                          'maxUnavailable': '50%'}
-    else:
-        replicas = replicas or 1
 
     annotations = service.get('annotations', {}).get('pod', {})
     same_keywords = set(annotations) & set(affinity)
@@ -343,13 +350,15 @@ def _create_files_configmap(service_name, files, macros_imports):
     return kubernetes.process_object(template)
 
 
-def _create_meta_configmap(service):
+def _create_meta_configmap(service, replicas=None):
     configmap_name = "%s-%s" % (service["name"], templates.META_CONFIG)
-    data = {
-        templates.META_CONFIG: json.dumps(
-            {"service-name": service["name"],
-             "host-net": service.get("hostNetwork", False)}, sort_keys=True)
+    content = {
+        "service-name": service["name"],
+        "host-net": service.get("hostNetwork", False),
     }
+    if replicas is not None:
+        content["replicas"] = replicas
+    data = {templates.META_CONFIG: json.dumps(content, sort_keys=True)}
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
 
