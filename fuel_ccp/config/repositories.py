@@ -8,6 +8,7 @@ DEFAULT_REPOS = [
     'fuel-ccp-entrypoint',
     'fuel-ccp-etcd',
     'fuel-ccp-glance',
+    'fuel-ccp-grafana',
     'fuel-ccp-heat',
     'fuel-ccp-horizon',
     'fuel-ccp-ironic',
