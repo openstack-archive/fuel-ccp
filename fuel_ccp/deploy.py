@@ -224,8 +224,12 @@ def _create_daemon(workflow, container):
     workflow["dependencies"] = []
     # TODO(sreshetniak): add files from job
     for cmd in container.get("pre", ()):
-        if cmd.get("type", "local") == "single":
+        if _is_single_job(cmd):
             workflow["dependencies"].append(cmd["name"])
+        else:
+            for dep in cmd.get("dependencies"):
+                if dep not in workflow["dependencies"]:
+                    workflow["dependencies"].append(dep)
     workflow["dependencies"].extend(daemon.get("dependencies", ()))
     workflow["daemon"] = {}
     _fill_cmd(workflow["daemon"], daemon)
