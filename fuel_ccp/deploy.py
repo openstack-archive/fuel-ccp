@@ -72,7 +72,8 @@ def process_files(files, service_dir):
         f["content"] = content
 
 
-def parse_role(component, topology, configmaps, jinja_imports):
+def parse_role(component, topology, configmaps):
+
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -80,11 +81,11 @@ def parse_role(component, topology, configmaps, jinja_imports):
     service_name = service["name"]
 
     LOG.info("Scheduling service %s deployment", service_name)
-    _expand_files(service, role.get("files"))
-
-    process_files(role.get("files"), service_dir)
-    files_cm = _create_files_configmap(service_name, role.get("files"),
-                                       jinja_imports)
+    files = role.get("files")
+    files_header = service['exports_ctx']['files_header']
+    _expand_files(service, files)
+    process_files(files, service_dir)
+    files_cm = _create_files_configmap(service_name, files, files_header)
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
@@ -95,7 +96,7 @@ def parse_role(component, topology, configmaps, jinja_imports):
         cm_version = 'dry-run'
     else:
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, role.get("files"), CONF.configs._dict)
+            configmaps, service_dir, files, CONF.configs._dict)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
@@ -346,10 +347,13 @@ def _create_meta_configmap(service):
     return kubernetes.process_object(template)
 
 
-def _create_jinja_templates_configmap(templates_files):
+def _create_exports_configmap(exports_map):
     """Create config map of files from fuel-ccp-repo/exports dirs."""
+    exported_files_content = {}
+    for key in exports_map:
+        exported_files_content[key] = exports_map[key]['body']
     serialized = templates.serialize_configmap(templates.EXPORTS_CONFIG,
-                                               templates_files)
+                                               exported_files_content)
     return kubernetes.process_object(serialized)
 
 
@@ -562,16 +566,20 @@ def deploy_components(components_map, components):
     _create_globals_configmap(CONF.configs)
     start_script_cm = _create_start_script_configmap()
 
-    # Create cm with jinja config templates shared across all repositories.
-    templates_files = utils.get_repositories_exports()
-    jinja_imports = jinja_utils.generate_jinja_imports(templates_files.keys())
-    templates_cm = _create_jinja_templates_configmap(templates_files)
-    configmaps = (start_script_cm, templates_cm)
+    # load exported j2 templates, which can be used across all repositories
+    exports_map = utils.get_repositories_exports()
+    j2_imports_files_header = jinja_utils.generate_jinja_imports(exports_map)
+
+    exports_cm = _create_exports_configmap(exports_map)
+    exports_ctx = {'files_header': j2_imports_files_header, 'map': exports_map}
+
+    configmaps = (start_script_cm, exports_cm)
 
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
-        objects_gen = parse_role(service, topology, configmaps, jinja_imports)
+        service["service_content"]['service']['exports_ctx'] = exports_ctx
+        objects_gen = parse_role(service, topology, configmaps)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
@@ -601,9 +609,8 @@ def deploy_components(components_map, components):
             upgrading_components[component_name][service_name] = objects
 
     for component_name, component_upg in upgrading_components.items():
-        create_upgrade_jobs(component_name, component_upg,
-                            configmaps, topology,
-                            jinja_imports)
+        create_upgrade_jobs(component_name, component_upg, configmaps,
+                            topology, j2_imports_files_header)
 
     if 'keystone' in components:
         _create_openrc(CONF.configs)
