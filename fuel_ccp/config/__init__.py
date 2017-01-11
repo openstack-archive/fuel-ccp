@@ -135,6 +135,9 @@ def load_component_defaults():
     new_config['configs'][
         'cluster_domain'] = _REAL_CONF.kubernetes.cluster_domain
     new_config._merge(_REAL_CONF)
+    # FIXME workaround to not deep merge 'sources' config
+    for k, v in _REAL_CONF.sources._items():
+        new_config['sources'][k] = v
     _REAL_CONF = new_config
 
 
