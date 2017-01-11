@@ -19,6 +19,7 @@ DEFAULT_REPOS = [
     'fuel-ccp-nova',
     'fuel-ccp-openstack-base',
     'fuel-ccp-rabbitmq',
+    'fuel-ccp-rally',
     'fuel-ccp-sahara',
     'fuel-ccp-searchlight',
     'fuel-ccp-stacklight',

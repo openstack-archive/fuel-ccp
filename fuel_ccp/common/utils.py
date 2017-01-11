@@ -105,6 +105,14 @@ def get_repositories_exports(repos_names=None):
     return exports
 
 
+def get_component_name_from_repo_path(path):
+    REPO_NAME_PREFIX = "fuel-ccp-"
+    name = os.path.basename(path)
+    if name.startswith(REPO_NAME_PREFIX):
+        name = name[len(REPO_NAME_PREFIX):]
+    return name
+
+
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
         rendering_context = CONF.configs._dict
@@ -114,10 +122,7 @@ def get_deploy_components_info(rendering_context=None):
         service_dir = os.path.join(repo, "service")
         if not os.path.isdir(service_dir):
             continue
-        component_name = os.path.basename(repo)
-        REPO_NAME_PREFIX = "fuel-ccp-"
-        if component_name.startswith(REPO_NAME_PREFIX):
-            component_name = component_name[len(REPO_NAME_PREFIX):]
+        component_name = get_component_name_from_repo_path(repo)
 
         component = {
             "name": component_name,
