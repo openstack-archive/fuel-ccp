@@ -38,6 +38,7 @@ Application definition template
                         - some-service
                         - some-other-service
                     type: single
+                    image: some_image
                     command: /tmp/bootstrap.sh
                     files:
                         - bootstrap.sh
@@ -263,9 +264,15 @@ command
    * - name
      - Name of the command. Required only for `pre` and `post` with type
        `single`.
-     - --
+     -
      - string
-     - --
+     -
+   * - image
+     - Image that will be used to run the command. Required only for `pre` and
+       `post` with type `single`.
+     - false
+     - string
+     - same as for daemon
    * - command
      - --
      - true
