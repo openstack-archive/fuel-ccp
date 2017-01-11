@@ -54,6 +54,7 @@ LOCAL_COMMAND_SCHEMA = {
 SINGLE_COMMAND_SCHEMA = copy.deepcopy(LOCAL_COMMAND_SCHEMA)
 SINGLE_COMMAND_SCHEMA["required"] = ["name", "command", "type"]
 SINGLE_COMMAND_SCHEMA["properties"]["type"]["enum"] = ["single"]
+SINGLE_COMMAND_SCHEMA["properties"]["image"] = NOT_EMPTY_STRING_SCHEMA
 
 COMMAND_SCHEMA = {
     "type": "object",
