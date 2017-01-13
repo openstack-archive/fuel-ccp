@@ -1,7 +1,7 @@
-import logging
-
 import jsonschema
 import os
+
+from oslo_log import log as logging
 
 from fuel_ccp.config import _yaml
 from fuel_ccp.config import builder

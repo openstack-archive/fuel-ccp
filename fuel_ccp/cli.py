@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os.path
 import signal
 import sys
@@ -8,6 +7,7 @@ from cliff import app
 from cliff import command
 from cliff import commandmanager
 from cliff import lister
+from oslo_log import log as logging
 
 import fuel_ccp
 from fuel_ccp import build
@@ -306,8 +306,7 @@ class CCPApp(app.App):
         if not CONF.debug:
             for level in CONF.default_log_levels:
                 mod, sep, level_name = level.partition("=")
-                logger = logging.getLogger(mod)
-                logger.setLevel(level_name)
+                logging.getLogger(mod)
 
 
 def main(argv=None):

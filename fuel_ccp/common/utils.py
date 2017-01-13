@@ -1,7 +1,7 @@
-import logging
 import os
 import pkg_resources
 
+from oslo_log import log as logging
 import yaml
 
 import fuel_ccp

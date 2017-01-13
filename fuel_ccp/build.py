@@ -1,7 +1,6 @@
 from concurrent import futures
 import contextlib
 import json
-import logging
 import os
 import re
 import shutil
@@ -10,6 +9,7 @@ import tempfile
 
 import docker
 import git
+from oslo_log import log as logging
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp import config

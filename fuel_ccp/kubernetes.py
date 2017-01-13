@@ -1,6 +1,6 @@
-import logging
 import os
 
+from oslo_log import log as logging
 import pykube.exceptions
 import yaml
 

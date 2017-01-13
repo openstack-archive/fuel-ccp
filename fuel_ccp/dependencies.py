@@ -12,9 +12,10 @@ Example:
         ccp --config-file=~/ccp.conf show-dep nova-api nova-compute
 """
 
-import logging
 import re
 import sys
+
+from oslo_log import log as logging
 
 from fuel_ccp.common import utils
 from fuel_ccp.validation import base as base_validation

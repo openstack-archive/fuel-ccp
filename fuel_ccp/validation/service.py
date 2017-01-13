@@ -1,6 +1,7 @@
 import copy
 from distutils import version
-import logging
+
+from oslo_log import log as logging
 
 import fuel_ccp
 from fuel_ccp.validation import base as validation_base

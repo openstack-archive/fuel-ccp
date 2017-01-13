@@ -1,9 +1,9 @@
 import json
-import logging
 import os
 import requests
 import time
 
+from oslo_log import log as logging
 from six.moves import _thread as thread
 
 from keystoneauth1 import loading

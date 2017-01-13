@@ -1,4 +1,3 @@
-import logging
 import time
 
 from glanceclient import client as glance_client
@@ -7,6 +6,7 @@ from keystoneauth1.identity import v3
 from keystoneauth1 import session as keystone_session
 from neutronclient.neutron import client as neutron_client
 from novaclient import client as nova_client
+from oslo_log import log as logging
 import pykube
 from swiftclient import client as swift_client
 

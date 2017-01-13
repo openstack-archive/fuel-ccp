@@ -1,4 +1,4 @@
-import logging
+from oslo_log import log as logging
 
 from fuel_ccp import build
 from fuel_ccp import config

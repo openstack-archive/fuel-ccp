@@ -1,8 +1,9 @@
 from __future__ import print_function
 
 import copy
-import logging
 import sys
+
+from oslo_log import log as logging
 
 from fuel_ccp import config
 from fuel_ccp import kubernetes

@@ -1,10 +1,10 @@
 import hashlib
 import itertools
 import json
-import logging
 import os
 import re
 
+from oslo_log import log as logging
 import six
 from six.moves import zip_longest
 
