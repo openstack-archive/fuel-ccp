@@ -50,10 +50,11 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
     return content
 
 
-def generate_jinja_imports(filenames):
-    """Generate str of jinja imports from list of filenames."""
+def generate_jinja_imports(exports_map):
+    """Generate a files header of jinja imports from exports map"""
     imports = []  # list of j2 imports: "{% import 'msg.j2' as msg %}"
-    for name in filenames:
+    for export_key in exports_map:
+        name = exports_map[export_key]['name']  # real filename
         import_as, extension = os.path.splitext(name)  # remove file extension
         if not re.match('[a-zA-Z_][a-zA-Z0-9_]*', import_as):
             raise RuntimeError('Wrong templates file naming: the %s cannot be '

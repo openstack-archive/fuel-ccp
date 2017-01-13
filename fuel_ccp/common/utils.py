@@ -85,23 +85,22 @@ def address(service, port=None, external=False, with_scheme=False):
     return addr
 
 
-def get_repositories_exports(repos_names=None):
-    """Load shared templates from ./export dirs of the repositories. """
+def get_repositories_exports():
+    """Load shared templates from ./exports dirs of the repositories. """
     exports = dict()
     for repo in get_repositories_paths():
         exports_dir = os.path.join(repo, 'exports')
         if os.path.exists(exports_dir) and os.path.isdir(exports_dir):
-            for export in os.listdir(exports_dir):
-                path = os.path.join(exports_dir, export)
+            for export_file in os.listdir(exports_dir):
+                # Due to k8s keys constraints we need to remove non-alpha
+                cm_key = ''.join([c for c in export_file if c.isalpha()])
+                path = os.path.join(exports_dir, export_file)
                 LOG.debug('Found shared jinja template file %s', path)
-                if export not in exports:
-                    exports[export] = list()
+                if cm_key not in exports:
+                    exports[cm_key] = {'name': export_file, 'body': ''}
+                # Merge the files with same name
                 with open(path) as f:
-                    exports[export].append(f.read())
-
-    for export in exports:
-        exports[export] = '\n'.join(exports[export])
-
+                    exports[cm_key]['body'] += f.read() + '\n'
     return exports
 
 
