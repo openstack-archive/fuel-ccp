@@ -102,7 +102,7 @@ service
    * - kind
      - Kind of k8s object to use for containers deployment.
      - false
-     - one of: ["Deployment", "DaemonSet"]
+     - one of: ["Deployment", "DaemonSet", "StatefulSet"]
      - Deployment
    * - containers
      - List of containers under multi-container pod.

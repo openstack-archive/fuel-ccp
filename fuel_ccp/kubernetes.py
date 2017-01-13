@@ -10,7 +10,13 @@ CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
 
-UPDATABLE_OBJECTS = ('ConfigMap', 'Deployment', 'Service', 'Ingress')
+UPDATABLE_OBJECTS = (
+    'ConfigMap',
+    'Deployment',
+    'Service',
+    'Ingress',
+    'StatefulSet',
+)
 
 
 def get_client(kube_apiserver=None, key_file=None, cert_file=None,
@@ -178,6 +184,13 @@ def list_cluster_ingress():
     client = get_client()
     return pykube.Ingress.objects(client).filter(
         namespace=CONF.kubernetes.namespace)
+
+
+def list_cluster_statefulsets():
+    client = get_client()
+    return pykube.StatefulSet.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true")
 
 
 def get_object_names(items):
