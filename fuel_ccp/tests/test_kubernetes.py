@@ -26,7 +26,9 @@ class TestKubernetesClient(base.TestCase):
             'name': 'ccp',
             'user': {
                 'client-certificate': 'test.cert',
-                'client-key': 'test.key'
+                'client-key': 'test.key',
+                'username': 'test-user',
+                'password': 'test-passwd'
             }
         }],
         'current-context': 'ccp'
@@ -39,6 +41,8 @@ class TestKubernetesClient(base.TestCase):
             key_file='test.key',
             ca_cert='ca.crt',
             cert_file='test.cert',
+            username='test-user',
+            password='test-passwd'
         )
 
         kubernetes.get_client()
@@ -50,7 +54,8 @@ class TestKubernetesClient(base.TestCase):
     def test_get_client(self, m_client, m_config):
         kubernetes.get_client(
             kube_apiserver='http://localhost:8080', key_file='test.key',
-            cert_file='test.cert', ca_cert='ca.crt')
+            cert_file='test.cert', ca_cert='ca.crt',
+            username='test-user', password='test-passwd')
         m_config.assert_called_once_with(self.config)
         m_client.assrt_called_once_with(m_config)
 
