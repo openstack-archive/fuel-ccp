@@ -477,7 +477,7 @@ def check_images_change(objects):
 
 
 def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
-                        jinja_imports):
+                        exports_ctx):
     from_version = upgrade_data['_meta']['from']
     to_version = upgrade_data['_meta']['to']
     component = upgrade_data['_meta']['component']
@@ -491,7 +491,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
             step['files'] = {f: files[f] for f in step['files']}
 
     process_files(files, component['service_dir'])
-    _create_files_configmap(prefix, files, jinja_imports)
+    _create_files_configmap(prefix, files, exports_ctx['files_header'])
     container = {
         "name": prefix,
         "pre": [],
@@ -501,6 +501,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
     service = {
         "name": prefix,
         "containers": [container],
+        "exports_ctx": exports_ctx,
     }
     _create_meta_configmap(service)
 
@@ -620,7 +621,7 @@ def deploy_components(components_map, components):
 
     for component_name, component_upg in upgrading_components.items():
         create_upgrade_jobs(component_name, component_upg, configmaps,
-                            topology, j2_imports_files_header)
+                            topology, exports_ctx)
 
     if 'keystone' in components:
         _create_openrc(CONF.configs)
