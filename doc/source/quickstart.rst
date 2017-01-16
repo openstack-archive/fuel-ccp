@@ -23,9 +23,9 @@ Current tested version of different components are:
 ===========   ===========  ===========  ======================================
 Component     Min Version  Max Version  Comment
 ===========   ===========  ===========  ======================================
-Kubernetes    1.4.0        1.4.x        v1.4.0_coreos.0 from quay.io wont work
-Docker        1.10.0       1.12.0
-Calico-node   0.20.0       0.21.0
+Kubernetes    1.5.1        1.5.x
+Docker        1.10.0       1.13.x
+Calico-node   0.20.0       1.0.x
 ===========   ===========  ===========  ======================================
 
 Additionaly, you will need to have working kube-proxy, kube-dns and docker
