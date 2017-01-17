@@ -6,10 +6,14 @@ DEFAULTS = {
         'key_file': None,
         'cert_file': None,
         'insecure': False,
+        'username': None,
+        'password': None,
         'cluster_domain': 'cluster.local',
         'image_pull_policy': None,
     },
 }
+
+STRING_OR_NULL = {'anyOf': [{'type': 'string'}, {'type': 'null'}]}
 
 SCHEMA = {
     'kubernetes': {
@@ -18,10 +22,12 @@ SCHEMA = {
         'properties': {
             'server': {'type': 'string'},
             'namespace': {'type': 'string'},
-            'ca_cert': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
-            'key_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
-            'cert_file': {'anyOf': [{'type': 'string'}, {'type': 'null'}]},
+            'ca_cert': STRING_OR_NULL,
+            'key_file': STRING_OR_NULL,
+            'cert_file': STRING_OR_NULL,
             'insecure': {'type': 'boolean'},
+            'username': STRING_OR_NULL,
+            'password': STRING_OR_NULL,
             'cluster_domain': {'type': 'string'},
             'image_pull_policy': {'oneOf': [
                 {'type': 'null'},

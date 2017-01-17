@@ -20,12 +20,14 @@ UPDATABLE_OBJECTS = (
 
 
 def get_client(kube_apiserver=None, key_file=None, cert_file=None,
-               ca_cert=None, insecure=None):
+               ca_cert=None, insecure=None, username=None, password=None):
     kube_apiserver = kube_apiserver or CONF.kubernetes.server
     key_file = key_file or CONF.kubernetes.key_file
     cert_file = cert_file or CONF.kubernetes.cert_file
     ca_cert = ca_cert or CONF.kubernetes.ca_cert
     insecure = insecure or CONF.kubernetes.insecure
+    username = username or CONF.kubernetes.username
+    password = password or CONF.kubernetes.password
 
     cluster = {"server": kube_apiserver}
     if ca_cert:
@@ -37,6 +39,10 @@ def get_client(kube_apiserver=None, key_file=None, cert_file=None,
     if cert_file and key_file:
         user["client-certificate"] = cert_file
         user["client-key"] = key_file
+    if username:
+        user["username"] = username
+    if password:
+        user["password"] = password
 
     config = {
         "clusters": [
