@@ -207,7 +207,7 @@ execution:
 
 Creation of the image is handled by glance post deployment job
 **glance-cirros-image-upload**, which uses Bash script from fuel-ccp-glance
-repository: *service/files/glance-cirros-image-upload.sh.j2*
+repository: ``service/files/glance-cirros-image-upload.sh.j2``.
 
 .. _flavors:
 
@@ -228,12 +228,52 @@ in the table below:
  m1.xlarge  5  16384  160  8
 ========== == ====== ===== =====
 
-Creation of the flavors is handled by nova post deployment job
-**nova-create-default-flavors**, which uses Bash script from fuel-ccp-nova
-repository: *service/files/create-default-flavors.sh.j2*
+The corresponding section in the config file looks like:
 
-Also the CCP allows to bootstrap custom flavors. Similarly previous sections
-it can be done by adding the following snippet to ~/.ccp.yaml:
+::
+
+ configs:
+   nova:
+     bootstrap:
+       enable: true
+       flavors:
+         - name: m1.test
+           id: 0
+           ram: 128
+           disk: 1
+           vcpus: 1
+         - name: m1.tiny
+           id: 1
+           ram: 512
+           disk: 1
+           vcpus: 1
+         - name: m1.small
+           id: 2
+           ram: 2048
+           disk: 20
+           vcpus: 1
+         - name: m1.medium
+           id: 3
+           ram: 4096
+           disk: 40
+           vcpus: 2
+         - name: m1.large
+           id: 4
+           ram: 8192
+           disk: 80
+           vcpus: 4
+         - name: m1.xlarge
+           id: 5
+           ram: 16384
+           disk: 160
+           vcpus: 8
+
+Creation of the flavors is handled by nova post deployment job
+**nova-bootstrap-flavors**, which uses Bash script from fuel-ccp-nova
+repository: ``service/files/create-flavors.sh.j2``.
+
+User also can specify to bootstrap custom flavors. Similar to previous
+sections it can be done by adding the following snippet to ~/.ccp.yaml:
 
 ::
 
@@ -253,9 +293,14 @@ it can be done by adding the following snippet to ~/.ccp.yaml:
            disk: 2
            vcpus: 2
 
-This snippet adds **bootstrap** section for nova service and enables it.
-Note, that by default **enable** option is False. So if user wants to use
-bootstrapping he should explicitly set it to True.
+.. WARNING:: New list of custom flavors will overwrite default flavors and
+             they will not be created. To avoid it, just copy paste definition
+             of default flavors to your config and then extend it by new custom
+             flavors.
+
+This snippet adds **bootstrap** section for nova service. Note, that by default
+**enable** option is True. So if user doesn't want to use bootstrapping he
+should explicitly set it to False.
 
 The last part of the snippet describes list of flavors with related options.
 All options should be specified, otherwise it will cause an error during job
@@ -283,6 +328,3 @@ execution:
    * - vcpus
      - Number of the vcpus for the current flavor.
      - --
-
-.. NOTE:: Default value for flavors is an empty list, so it means that
-          creation of custom flavors will be skipped.
