@@ -297,6 +297,13 @@ def serialize_volumes(service, for_job=None):
                     "name": v["name"],
                     "emptyDir": {}
                 })
+            elif v["type"] == "glusterfs":
+                vol_spec.append({
+                    "name": v["name"],
+                    "persistentVolumeClaim": {
+                        "claimName": "glusterfs"
+                    }
+                })
             else:
                 # TODO(sreshetniak): move it to validation
                 raise ValueError("Volume type \"%s\" not supported" %
@@ -490,4 +497,42 @@ def serialize_ingress(name, rules):
         "spec": {
             "rules": rules
         }
+    }
+
+
+def serialize_volume_claim(volume_type):
+    return {
+        "apiVersion": "v1",
+        "kind": "PersistentVolumeClaim",
+        "metadata": {
+            "name": volume_type,
+            "annotations": {
+                "volume.beta.kubernetes.io/storage-class": volume_type
+            }
+        },
+        "spec": {
+            "accessModes": ["ReadWriteMany"]
+        }
+    }
+
+
+def serialize_storage_class(volume_type):
+    return {
+        "apiVersion": "storage.k8s.io/v1beta1",
+        "kind": "StorageClass",
+        "metadata": {
+          "name": volume_type
+        }
+    }
+
+
+def serialize_secret(name, type, data):
+    return {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": name
+        },
+        "type": type,
+        "data": data
     }

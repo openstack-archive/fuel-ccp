@@ -12,6 +12,7 @@ from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp import kubernetes
+from fuel_ccp import storage
 from fuel_ccp import templates
 from fuel_ccp.validation import deploy as deploy_validation
 
@@ -574,6 +575,7 @@ def deploy_components(components_map, components):
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     _create_namespace(CONF.configs)
+    storage.init_storage()
     _create_globals_configmap(CONF.configs)
     start_script_cm = create_start_script_configmap()
 

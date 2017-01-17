@@ -13,6 +13,7 @@ from fuel_ccp.config import registry
 from fuel_ccp.config import replicas
 from fuel_ccp.config import repositories
 from fuel_ccp.config import sources
+from fuel_ccp.config import storage
 from fuel_ccp.config import url
 
 LOG = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ CONF = _Wrapper()
 
 CONFIG_MODULES = [
     builder, cli, images, kubernetes, registry, replicas, repositories,
-    sources, url, files,
+    sources, url, files, storage,
 ]
 
 
@@ -117,7 +118,7 @@ def load_component_defaults():
     from fuel_ccp.common import utils
 
     sections = ['versions', 'sources', 'configs', 'nodes', 'roles', 'replicas',
-                'url', 'files']
+                'url', 'files', 'storage']
     new_config = _yaml.AttrDict((k, _yaml.AttrDict()) for k in sections)
     for path in utils.get_config_paths():
         if not os.path.exists(path):
