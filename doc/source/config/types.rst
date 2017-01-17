@@ -438,6 +438,14 @@ Allowed content:
      - Explicitly allow **ccp** to perform "insecure SSL" (https) requests.
      - boolean
      - False
+   * - username
+     - Username for accessing of Kubernetes API
+     - string
+     - --
+   * - password
+     - Password for accessing of Kubernetes API
+     - string
+     - --
    * - cluster_domain
      - Name of the cluster domain.
      - string
