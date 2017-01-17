@@ -2,6 +2,7 @@ import logging
 import os
 
 import pykube.exceptions
+import pykube.objects
 import yaml
 
 from fuel_ccp import config
@@ -95,7 +96,12 @@ def get_pykube_object(object_dict, namespace=None, client=None):
     if client is None:
         client = get_client()
 
-    obj_class = getattr(pykube, object_dict["kind"], None)
+    # TODO(sreshetniak): remove when
+    # https://github.com/kelproject/pykube/pull/112 was merged
+    if object_dict["kind"] == "StorageClass":
+        obj_class = StorageClass
+    else:
+        obj_class = getattr(pykube, object_dict["kind"], None)
     if obj_class is None:
         raise RuntimeError('"%s" object is not supported, skipping.'
                            % object_dict['kind'])
@@ -204,3 +210,12 @@ def get_object_names(items):
     for item in items:
         names.append(item.name)
     return names
+
+
+# TOOD(sreshetniak): remove when
+# https://github.com/kelproject/pykube/pull/112 was merged
+class StorageClass(pykube.objects.APIObject):
+
+    version = "storage.k8s.io/v1beta1"
+    endpoint = "storageclasses"
+    kind = "StorageClass"
