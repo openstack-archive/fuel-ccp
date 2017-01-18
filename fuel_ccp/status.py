@@ -58,7 +58,7 @@ def get_pod_states(components=None):
 
     for job in kubernetes.list_cluster_jobs():
         app_name = job.obj["metadata"]["labels"].get("app")
-        if not app_name:
+        if not app_name or job.obj["metadata"]["labels"].get("ccp-action"):
             continue
         states.setdefault(app_name, copy.deepcopy(STATE_TEMPLATE))
         states[app_name]["job_total"] += job.obj["spec"]["completions"]
