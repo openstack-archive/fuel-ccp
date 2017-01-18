@@ -2,6 +2,7 @@ import logging
 import os
 
 import pykube.exceptions
+import requests.exceptions
 import yaml
 
 from fuel_ccp import config
@@ -194,9 +195,15 @@ def list_cluster_ingress():
 
 def list_cluster_statefulsets():
     client = get_client()
-    return pykube.StatefulSet.objects(client).filter(
-        namespace=CONF.kubernetes.namespace,
-        selector="ccp=true")
+    try:
+        gen = pykube.StatefulSet.objects(client).filter(
+            namespace=CONF.kubernetes.namespace,
+            selector="ccp=true")
+        for ss in gen:
+            yield ss
+    except requests.exceptions.HTTPError as ex:
+        if ex.response.status_code != 404:
+            raise
 
 
 def get_object_names(items):
