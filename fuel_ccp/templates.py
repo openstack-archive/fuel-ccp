@@ -112,6 +112,28 @@ def serialize_env_variables(container):
     return env
 
 
+def serialize_readiness_probe(readiness):
+    cont_spec = {}
+    if readiness.get("type") == "httpGet":
+        cont_spec["readinessProbe"] = {
+            "httpGet": {
+                "path": readiness["path"],
+                "port": readiness["port"]
+            },
+            "timeoutSeconds": readiness.get("timeout", 1),
+            "initialDelaySeconds": readiness.get("initialDelay", 10)
+        }
+    elif readiness.get("type") == "exec":
+        cont_spec["readinessProbe"] = {
+            "exec": {
+                "command": [readiness["command"]]
+            },
+            "timeoutSeconds": readiness.get("timeout", 1),
+            "initialDelaySeconds": readiness.get("initialDelay", 10)
+        }
+    return cont_spec
+
+
 def serialize_liveness_probe(liveness):
     cont_spec = {}
     if liveness.get("type") == "httpGet":
@@ -141,12 +163,6 @@ def serialize_daemon_container_spec(container):
         "imagePullPolicy": CONF.kubernetes.image_pull_policy,
         "command": get_start_cmd(container["name"]),
         "volumeMounts": serialize_volume_mounts(container),
-        "readinessProbe": {
-            "exec": {
-                "command": _get_readiness_cmd(container["name"])
-            },
-            "timeoutSeconds": 1
-        },
         "env": serialize_env_variables(container)
     }
     cont_spec['env'].append({
@@ -159,7 +175,18 @@ def serialize_daemon_container_spec(container):
         cont_spec.update(liveness_spec)
     cont_spec["securityContext"] = {"privileged":
                                     container.get("privileged", False)}
-
+    readiness = container.get("probes", {}).get("readiness", {})
+    if readiness:
+        readiness_spec = serialize_readiness_probe(readiness)
+        cont_spec.update(readiness_spec)
+    else:
+        # Preserve default behavior since we need readiness probes
+        cont_spec["readinessProbe"] = {
+            "exec": {
+                "command": _get_readiness_cmd(container["name"])
+            },
+            "timeoutSeconds": 1
+        }
     return cont_spec
 
 
