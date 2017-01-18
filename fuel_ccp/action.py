@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import uuid
@@ -24,6 +25,7 @@ class Action(object):
         self.command = kwargs.pop("command")
         self.dependencies = kwargs.pop("dependencies", ())
         self.files = kwargs.pop("files", ())
+        self.restart_policy = kwargs.pop("restart_policy", "never")
 
         if kwargs:
             key_names = ", ".join(kwargs.keys())
@@ -41,7 +43,7 @@ class Action(object):
 
     def run(self):
         self._create_configmap()
-        self._create_job()
+        self._create_action()
 
     # configmap methods
 
@@ -86,7 +88,7 @@ class Action(object):
 
     # job methods
 
-    def _create_job(self):
+    def _create_action(self):
         cont_spec = {
             "name": self.k8s_name,
             "image": config_images.image_spec(self.image),
@@ -150,6 +152,28 @@ class Action(object):
                 ]
             }
         }
+        if self.restart_policy == "never":
+            self._create_pod(pod_spec)
+        elif self.restart_policy == "always":
+            self._create_job(pod_spec)
+        else:
+            raise ValueError("Restart policy %s is not supported" % (
+                self.restart_policy))
+
+    def _create_pod(self, pod_spec):
+        spec = copy.deepcopy(pod_spec)
+        spec["metadata"].setdefault("labels", {})
+        spec["metadata"]["labels"].update({
+            "app": self.name,
+            "ccp": "true",
+            "ccp-action": "true",
+            "ccp-component": self.component})
+        spec.update({
+            "kind": "Pod",
+            "apiVersion": "v1"})
+        kubernetes.process_object(spec)
+
+    def _create_job(self, pod_spec):
         job_spec = templates.serialize_job(
             name=self.k8s_name,
             spec=pod_spec,
@@ -160,22 +184,31 @@ class Action(object):
 
 
 class ActionStatus(object):
+
     @classmethod
     def get_actions(cls, action_name):
         selector = "ccp-action=true"
         if action_name:
             selector += "," + "app=%s" % action_name
         actions = []
-        for job in kubernetes.list_cluster_jobs(selector):
+        for job in kubernetes.list_cluster_jobs(selector=selector):
             actions.append(cls(job))
+        for pod in kubernetes.list_cluster_pods(selector=selector):
+            actions.append(cls(pod))
         return actions
 
-    def __init__(self, k8s_job):
-        self.name = k8s_job.name
-        self.component = k8s_job.labels["ccp-component"]
-        self.date = k8s_job.obj["metadata"]["creationTimestamp"]
-        self.restarts = k8s_job.obj["status"].get("failed", 0)
-        self.active = k8s_job.obj["status"].get("active", 0)
+    def __init__(self, k8s_spec):
+        self.name = k8s_spec.name
+        self.component = k8s_spec.labels["ccp-component"]
+        self.date = k8s_spec.obj["metadata"]["creationTimestamp"]
+        if k8s_spec.kind == "Job":
+            self.restarts = k8s_spec.obj["status"].get("failed", 0)
+            self.active = k8s_spec.obj["status"].get("active", 0)
+        else:
+            self.restarts = 1 if (
+                k8s_spec.obj["status"]["phase"] == "Failed") else 0
+            self.active = 1 if (
+                k8s_spec.obj["status"]["phase"] != "Completed") else 0
 
     @property
     def status(self):
