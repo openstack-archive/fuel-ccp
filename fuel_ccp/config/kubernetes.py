@@ -10,10 +10,12 @@ DEFAULTS = {
         'password': None,
         'cluster_domain': 'cluster.local',
         'image_pull_policy': None,
+        'external_ips': {},
     },
 }
 
 STRING_OR_NULL = {'anyOf': [{'type': 'string'}, {'type': 'null'}]}
+STRING_ARRAY = {'type': 'array', 'item': {'type': 'string'}}
 
 SCHEMA = {
     'kubernetes': {
@@ -33,6 +35,13 @@ SCHEMA = {
                 {'type': 'null'},
                 {'enum': ['Always', 'IfNotPresent', 'Never']},
             ]},
+            'external_ips': {
+                'type': 'object',
+                'additionalProperties': {
+                    'type': 'array',
+                    'item': {'type': 'string'},
+                },
+            },
         },
     },
 }
