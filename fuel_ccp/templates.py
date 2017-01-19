@@ -462,6 +462,9 @@ def serialize_service(name, ports, headless=False, annotations=None):
     else:
         obj["spec"]["clusterIP"] = "None"
 
+    if name in CONF.kubernetes.external_ips:
+        obj["spec"]["externalIPs"] = CONF.kubernetes.external_ips[name]
+
     return obj
 
 
