@@ -1,5 +1,7 @@
+import base64
 import itertools
 import json
+import six
 
 from fuel_ccp import config
 from fuel_ccp.config import images
@@ -297,6 +299,11 @@ def serialize_volumes(service, for_job=None):
                     "name": v["name"],
                     "emptyDir": {}
                 })
+            elif v["type"] == "secret":
+                vol_spec.append({
+                    "name": v["name"],
+                    "secret": v["secret"]
+                })
             else:
                 # TODO(sreshetniak): move it to validation
                 raise ValueError("Volume type \"%s\" not supported" %
@@ -490,4 +497,20 @@ def serialize_ingress(name, rules):
         "spec": {
             "rules": rules
         }
+    }
+
+
+def serialize_secret(name, type="Opaque", data={}):
+    data = dict(
+        [(key, base64.b64encode(value.encode()).decode())
+            for (key, value) in six.iteritems(data)]
+    )
+    return {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": name
+        },
+        "type": type,
+        "data": data
     }

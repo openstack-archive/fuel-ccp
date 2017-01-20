@@ -1,4 +1,6 @@
+import copy
 import fixtures
+import jsonschema
 import mock
 import testscenarios
 
@@ -116,3 +118,58 @@ class TestServiceValidation(testscenarios.WithScenarios, base.TestCase):
             service_validation.validate_service_versions(
                 components_map, ['test']
             )
+
+
+class TestSchemaValidation(base.TestCase):
+    def test_secret_volume_mount_validation(self):
+        incorrect_secret_volume = {
+            "name": "keystone-fernet",
+            "path": "/etc/keystone/fernet-keys",
+            "type": "secret",
+            "secret": {}
+        }
+        correct_secret_volume = copy.deepcopy(incorrect_secret_volume)
+        correct_secret_volume["secret"] = {
+            "secretName": "fernet",
+            "defaultMode": "0777",
+            "items": [
+                {
+                    "key": "username",
+                    "path": "/specific/username/path",
+                    "mode": "0777"
+                },
+                {
+                    "key": "password",
+                    "path": "/specific/password/path",
+                    "mode": "0400"
+                }
+            ]
+        }
+        jsonschema.validate(correct_secret_volume,
+                            service_validation.SECRET_VOLUME_SCHEMA)
+        self.assertRaisesRegexp(
+            jsonschema.exceptions.ValidationError,
+            "'secretName' is a required property.*",
+            jsonschema.validate,
+            incorrect_secret_volume, service_validation.SECRET_VOLUME_SCHEMA)
+
+        incorrect_secret_volume["secret"] = {
+            "secretName": "fernet",
+            "defaultMode": "0778"
+        }
+        self.assertRaisesRegexp(
+            jsonschema.exceptions.ValidationError,
+            "'0778' does not match.*",
+            jsonschema.validate,
+            incorrect_secret_volume, service_validation.SECRET_VOLUME_SCHEMA)
+
+    def test_secret_definition_validation(self):
+        jsonschema.validate({"name": "a"}, service_validation.SECRET_SCHEMA)
+        correct_secret = {
+            "name": "the-secret",
+            "data": {
+                "item1": "value 1",
+                "2": "/path/file.ext"
+            }
+        }
+        jsonschema.validate(correct_secret, service_validation.SECRET_SCHEMA)
