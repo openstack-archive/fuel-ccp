@@ -71,16 +71,13 @@ NOT_EMPTY_COMMAND_ARRAY_SCHEMA = {
     "items": COMMAND_SCHEMA
 }
 
-EMPTY_DIR_VOLUME_SCHEMA = {
+BASE_VOLUME_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "required": ["name", "path"],
 
     "properties": {
         "name": NOT_EMPTY_STRING_SCHEMA,
-        "type": {
-            "enum": ["empty-dir"]
-        },
         "path": {
             "type": "string",
             "pattern": PATH_RE
@@ -89,21 +86,45 @@ EMPTY_DIR_VOLUME_SCHEMA = {
             "type": "string",
             "pattern": PATH_RE
         },
-        "readOnly": {
-            "type": "boolean"
+        "type": {
+            "enum": []
         }
     }
 }
+
+EMPTY_DIR_VOLUME_SCHEMA = copy.deepcopy(BASE_VOLUME_SCHEMA)
+EMPTY_DIR_VOLUME_SCHEMA["properties"].update({
+    "readOnly": {
+        "type": "boolean"
+    }
+})
+EMPTY_DIR_VOLUME_SCHEMA["properties"]["type"]["enum"] = ["empty-dir"]
 
 HOST_VOLUME_SCHEMA = copy.deepcopy(EMPTY_DIR_VOLUME_SCHEMA)
 HOST_VOLUME_SCHEMA["required"] = ["name", "path", "type"]
 HOST_VOLUME_SCHEMA["properties"]["type"]["enum"] = ["host"]
 
+SECRET_VOLUME_SCHEMA = copy.deepcopy(BASE_VOLUME_SCHEMA)
+SECRET_VOLUME_SCHEMA["required"] = ["name", "path", "type"]
+SECRET_VOLUME_SCHEMA["properties"].update({
+    "secret": {
+        "type": "object",
+        "additionalProperties": True,
+        "required": ["secretName"],
+        "properties": {
+            "secretName": NOT_EMPTY_STRING_SCHEMA
+        }
+    }
+})
+SECRET_VOLUME_SCHEMA["properties"]["type"]["enum"] = ["secret"]
+
+
 VOLUME_SCHEMA = {
     "type": "object",
     "oneOf": [
         EMPTY_DIR_VOLUME_SCHEMA,
-        HOST_VOLUME_SCHEMA
+        HOST_VOLUME_SCHEMA,
+        SECRET_VOLUME_SCHEMA
     ]
 }
 
