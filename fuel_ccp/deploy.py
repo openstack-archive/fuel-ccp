@@ -73,12 +73,14 @@ def process_files(files, service_dir):
 
 
 def parse_role(component, topology, configmaps):
-
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
     service = role["service"]
     service_name = service["name"]
+
+    if service_name not in topology:
+        raise ValueError('The %s is not defined in topology.' % service_name)
 
     LOG.info("Scheduling service %s deployment", service_name)
     files = role.get("files")
@@ -269,8 +271,12 @@ def _create_post_jobs(service, container, component_name, topology):
 
 def _get_job(service, container, job, component_name, topology):
     if 'topology_key' in job:
-        affinity = templates.serialize_affinity(
-            {"name": job['topology_key']}, topology)
+        key = job['topology_key']
+        if key not in topology:
+            raise ValueError('You must specify "%s" in topology to setup '
+                             'affinity for "%s" job of "%s" component' %
+                             (key, job['name'], component_name))
+        affinity = templates.serialize_affinity({"name": key}, topology)
     else:
         affinity = {}
     cont_spec = templates.serialize_job_container_spec(container, job)
@@ -567,6 +573,11 @@ def deploy_components(components_map, components):
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
     if not components:
         components = set(topology.keys()) & set(components_map.keys())
+    else:
+        diff = components - set(topology.keys())
+        if not diff:
+            raise ValueError('The next components are not '
+                             'defined in topology: %s' % list(diff))
 
     deploy_validation.validate_requested_components(components, components_map)
 
