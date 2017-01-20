@@ -1,3 +1,5 @@
+import base64
+
 from fuel_ccp import templates
 from fuel_ccp.tests import base
 
@@ -133,3 +135,22 @@ class TestDeploy(base.TestCase):
         }
         probe_spec = templates.serialize_liveness_probe(probe_definition)
         self.assertDictEqual(expected, probe_spec)
+
+    def test_serialize_secret(self):
+        name = "the-most-secret"
+        data = {"a": "value1", "b": " ./?+{}()[]|\\\'\""}
+        expected = {
+            "apiVersion": "v1",
+            "data": data,
+            "kind": "Secret",
+            "metadata": {
+                "name": name
+            },
+            "type": "Opaque"
+        }
+        serialized = templates.serialize_secret(name, data=data)
+        serialized["data"] = dict(
+            [(key, base64.b64decode(value))
+                for key, value in serialized["data"].iteritems()]
+        )
+        self.assertDictEqual(expected, serialized)

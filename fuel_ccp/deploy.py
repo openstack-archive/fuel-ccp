@@ -72,6 +72,14 @@ def process_files(files, service_dir):
         f["content"] = content
 
 
+def _process_secrets(secrets):
+    if secrets:
+        for secret in secrets:
+            type = secret.get("type", "Opaque")
+            data = secret.get("data", {})
+            yield templates.serialize_secret(secret["name"], type, data)
+
+
 def parse_role(component, topology, configmaps):
 
     service_dir = component["service_dir"]
@@ -87,6 +95,8 @@ def parse_role(component, topology, configmaps):
     process_files(files, service_dir)
     files_cm = _create_files_configmap(service_name, files, files_header)
     meta_cm = _create_meta_configmap(service)
+
+    yield _process_secrets(role.get("secrets"))
 
     workflows = _parse_workflows(service)
     workflow_cm = _create_workflow(workflows, service_name)

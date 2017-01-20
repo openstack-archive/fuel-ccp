@@ -1,3 +1,4 @@
+import base64
 import itertools
 import json
 
@@ -297,6 +298,11 @@ def serialize_volumes(service, for_job=None):
                     "name": v["name"],
                     "emptyDir": {}
                 })
+            elif v["type"] == "secret":
+                vol_spec.append({
+                    "name": v["name"],
+                    "secret": v["secret"]
+                })
             else:
                 # TODO(sreshetniak): move it to validation
                 raise ValueError("Volume type \"%s\" not supported" %
@@ -490,4 +496,20 @@ def serialize_ingress(name, rules):
         "spec": {
             "rules": rules
         }
+    }
+
+
+def serialize_secret(name, type="Opaque", data={}):
+    data = dict(
+        [(key, base64.b64encode(value))
+            for key, value in data.iteritems()]
+    )
+    return {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": name
+        },
+        "type": type,
+        "data": data
     }
