@@ -297,6 +297,11 @@ def serialize_volumes(service, for_job=None):
                     "name": v["name"],
                     "emptyDir": {}
                 })
+            elif v["type"] == "secret":
+                vol_spec.append({
+                    "name": v["name"],
+                    "secret": v["secret"]
+                })
             else:
                 # TODO(sreshetniak): move it to validation
                 raise ValueError("Volume type \"%s\" not supported" %

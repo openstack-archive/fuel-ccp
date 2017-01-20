@@ -1,4 +1,6 @@
+import copy
 import fixtures
+import jsonschema
 import mock
 import testscenarios
 
@@ -116,3 +118,24 @@ class TestServiceValidation(testscenarios.WithScenarios, base.TestCase):
             service_validation.validate_service_versions(
                 components_map, ['test']
             )
+
+
+class TestSchemaValidation(base.TestCase):
+    def test_volume_validation(self):
+        incorrect_secret_volume = {
+            "name": "keystone-fernet",
+            "path": "/etc/keystone/fernet-keys",
+            "type": "secret",
+            "secret": {
+                "custom": "value"
+            }
+        }
+        correct_secret_volume = copy.deepcopy(incorrect_secret_volume)
+        correct_secret_volume["secret"].update({"secretName": "fernet"})
+        jsonschema.validate(correct_secret_volume,
+                            service_validation.SECRET_VOLUME_SCHEMA)
+        self.assertRaisesRegexp(
+            jsonschema.exceptions.ValidationError,
+            "'secretName' is a required property.*",
+            jsonschema.validate,
+            incorrect_secret_volume, service_validation.SECRET_VOLUME_SCHEMA)
