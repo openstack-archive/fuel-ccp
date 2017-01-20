@@ -11,6 +11,8 @@ LOG = logging.getLogger(__name__)
 
 PATH_RE = r'^(/|((/[\w.-]+)+/?))$'
 FILE_PATH_RE = r'^(/|((/[\w.-]+)+))$'
+SECRET_PERMISSIONS_RE = r'^(0[0-7]{3})$'
+NOT_EMPTY_STRING_RE = r"^\s*\S.*$"
 
 
 class ServiceFormatChecker(jsonschema.FormatChecker):
@@ -24,7 +26,7 @@ class ServiceFormatChecker(jsonschema.FormatChecker):
 
 NOT_EMPTY_STRING_SCHEMA = {
     "type": "string",
-    "pattern": r"^\s*\S.*$"
+    "pattern": NOT_EMPTY_STRING_RE
 }
 
 NOT_EMPTY_STRING_ARRAY_SCHEMA = {
@@ -32,6 +34,16 @@ NOT_EMPTY_STRING_ARRAY_SCHEMA = {
     "minItems": 1,
 
     "items": NOT_EMPTY_STRING_SCHEMA
+}
+
+PERMISSION_SCHEMA = {
+    "type": "string",
+    "pattern": SECRET_PERMISSIONS_RE
+}
+
+PATH_SCHEMA = {
+    "type": "string",
+    "pattern": PATH_RE
 }
 
 LOCAL_COMMAND_SCHEMA = {
@@ -47,6 +59,7 @@ LOCAL_COMMAND_SCHEMA = {
             "enum": ["local"]
         },
         "files": NOT_EMPTY_STRING_ARRAY_SCHEMA,
+        "secrets": NOT_EMPTY_STRING_ARRAY_SCHEMA,
         "user": NOT_EMPTY_STRING_SCHEMA
     }
 }
@@ -81,14 +94,8 @@ EMPTY_DIR_VOLUME_SCHEMA = {
         "type": {
             "enum": ["empty-dir"]
         },
-        "path": {
-            "type": "string",
-            "pattern": PATH_RE
-        },
-        "mount-path": {
-            "type": "string",
-            "pattern": PATH_RE
-        },
+        "path": PATH_SCHEMA,
+        "mount-path": PATH_SCHEMA,
         "readOnly": {
             "type": "boolean"
         }
@@ -158,6 +165,44 @@ PROBE_SCHEMA = {
     ]
 }
 
+SECRET_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["secret", "path"],
+    "properties": {
+        "type": NOT_EMPTY_STRING_SCHEMA,
+        "data": {
+            "type": "object",
+            "patternProperties": {
+                NOT_EMPTY_STRING_RE: NOT_EMPTY_STRING_SCHEMA
+            }
+        },
+        "secret": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["secretName"],
+            "properties": {
+                "secretName": NOT_EMPTY_STRING_SCHEMA,
+                "defaultMode": PERMISSION_SCHEMA,
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["key", "path"],
+                        "properties": {
+                            "key": NOT_EMPTY_STRING_SCHEMA,
+                            "path": PATH_SCHEMA,
+                            "mode": PERMISSION_SCHEMA
+                        }
+                    }
+                }
+            }
+        },
+        "path": PATH_SCHEMA
+    }
+}
 
 SERVICE_SCHEMA = {
     "type": "object",
@@ -288,10 +333,7 @@ SERVICE_SCHEMA = {
                     "required": ["path", "content"],
 
                     "properties": {
-                        "path": {
-                            "type": "string",
-                            "pattern": FILE_PATH_RE
-                        },
+                        "path": PATH_SCHEMA,
                         "content": NOT_EMPTY_STRING_SCHEMA,
                         "perm": {
                             "type": "string",
@@ -300,6 +342,12 @@ SERVICE_SCHEMA = {
                         "user": NOT_EMPTY_STRING_SCHEMA
                     }
                 }
+            }
+        },
+        "secrets": {
+            "type": "object",
+            "patternProperties": {
+                NOT_EMPTY_STRING_RE: SECRET_SCHEMA
             }
         }
     }

@@ -25,10 +25,10 @@ YAML_FILE_RE = re.compile(r'\.yaml$')
 JOBS_ROLE = '_ccp_jobs'
 
 
-def _expand_files(service, files):
+def _expand_items(service, kind, items):
     def _expand(cmd):
-        if cmd.get("files"):
-            cmd["files"] = {f: files[f] for f in cmd["files"]}
+        if cmd.get(kind):
+            cmd[kind] = {f: items[f] for f in cmd[kind]}
 
     for cont in service["containers"]:
         _expand(cont["daemon"])
@@ -79,6 +79,15 @@ def serialize_workflows(workflows):
         workflows[k] = json.dumps(v, sort_keys=True)
 
 
+def _process_secrets(secrets):
+    if secrets:
+        for secret in six.itervalues(secrets):
+            type = secret.get("type", "Opaque")
+            data = secret.get("data", {})
+            yield templates.serialize_secret(secret["secret"]["secretName"],
+                                             type, data)
+
+
 def parse_role(component, topology, configmaps):
     service_dir = component["service_dir"]
     role = component["service_content"]
@@ -90,12 +99,17 @@ def parse_role(component, topology, configmaps):
         raise ValueError('The %s is not defined in topology.' % service_name)
 
     LOG.info("Scheduling service %s deployment", service_name)
-    files = role.get("files")
+
+    for kind in ["files", "secrets"]:
+        _expand_items(service, kind, role.get(kind))
+
     files_header = service['exports_ctx']['files_header']
-    _expand_files(service, files)
+    files = role.get("files")
     process_files(files, service_dir)
     files_cm = _create_files_configmap(service_name, files, files_header)
     meta_cm = _create_meta_configmap(service)
+
+    yield _process_secrets(role.get("secrets"))
 
     workflows = _parse_workflows(service)
     serialize_workflows(workflows)

@@ -29,7 +29,7 @@ class TestDeploy(base.TestCase):
         deploy._fill_cmd(workflow, cmd)
         self.assertDictEqual({"command": "ps"}, workflow)
 
-    def test_expand_files(self):
+    def test_expand_items(self):
         service = {
             "containers": [{
                 "daemon": {
@@ -58,7 +58,7 @@ class TestDeploy(base.TestCase):
                 "content": "bolik"
             }
         }
-        deploy._expand_files(service, files)
+        deploy._expand_items(service, "files", files)
         expected = {
             "containers": [{
                 "daemon": {

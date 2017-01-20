@@ -1,5 +1,7 @@
+import base64
 import itertools
 import json
+import six
 
 from fuel_ccp import config
 from fuel_ccp.config import images
@@ -85,6 +87,14 @@ def serialize_volume_mounts(container, for_job=None):
             "mountPath": v.get("mount-path", v["path"]),
             "readOnly": v.get("readOnly", False)
         })
+    if "daemon" in container:
+        for (name, secret) in six.iteritems(
+                container["daemon"].get("secrets", {})):
+            spec.append({
+                "name": name,
+                "mountPath": secret["path"]
+            })
+
     return spec
 
 
@@ -302,6 +312,20 @@ def serialize_volumes(service, for_job=None):
                 raise ValueError("Volume type \"%s\" not supported" %
                                  v["type"])
             volume_names.append(v["name"])
+
+    for cont in service["containers"]:
+        if "daemon" in cont:
+            for (name, secret) in six.iteritems(
+                    cont["daemon"].get("secrets", {})):
+                if name in volume_names:
+                    # TODO(dklenov): move to validation
+                    continue
+                vol_spec.append({
+                    "name": name,
+                    "secret": secret["secret"]
+                })
+                volume_names.append(name)
+
     return vol_spec
 
 
@@ -489,4 +513,20 @@ def serialize_ingress(name, rules):
         "spec": {
             "rules": rules
         }
+    }
+
+
+def serialize_secret(name, type="Opaque", data={}):
+    data = dict(
+        [(key, base64.b64encode(value.encode()).decode())
+            for (key, value) in six.iteritems(data)]
+    )
+    return {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": name
+        },
+        "type": type,
+        "data": data
     }
