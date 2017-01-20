@@ -11,6 +11,7 @@ LOG = logging.getLogger(__name__)
 
 PATH_RE = r'^(/|((/[\w.-]+)+/?))$'
 FILE_PATH_RE = r'^(/|((/[\w.-]+)+))$'
+PERMISSIONS_RE = r'^(0[0-7]{3})$'
 
 
 class ServiceFormatChecker(jsonschema.FormatChecker):
@@ -32,6 +33,16 @@ NOT_EMPTY_STRING_ARRAY_SCHEMA = {
     "minItems": 1,
 
     "items": NOT_EMPTY_STRING_SCHEMA
+}
+
+PERMISSION_SCHEMA = {
+    "type": "string",
+    "pattern": PERMISSIONS_RE
+}
+
+PATH_SCHEMA = {
+    "type": "string",
+    "pattern": PATH_RE
 }
 
 LOCAL_COMMAND_SCHEMA = {
@@ -71,39 +82,69 @@ NOT_EMPTY_COMMAND_ARRAY_SCHEMA = {
     "items": COMMAND_SCHEMA
 }
 
-EMPTY_DIR_VOLUME_SCHEMA = {
+BASE_VOLUME_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "required": ["name", "path"],
 
     "properties": {
         "name": NOT_EMPTY_STRING_SCHEMA,
+        "path": PATH_SCHEMA,
+        "mount-path": PATH_SCHEMA,
         "type": {
-            "enum": ["empty-dir"]
-        },
-        "path": {
-            "type": "string",
-            "pattern": PATH_RE
-        },
-        "mount-path": {
-            "type": "string",
-            "pattern": PATH_RE
-        },
-        "readOnly": {
-            "type": "boolean"
+            "enum": []
         }
     }
 }
+
+EMPTY_DIR_VOLUME_SCHEMA = copy.deepcopy(BASE_VOLUME_SCHEMA)
+EMPTY_DIR_VOLUME_SCHEMA["properties"].update({
+    "readOnly": {
+        "type": "boolean"
+    }
+})
+EMPTY_DIR_VOLUME_SCHEMA["properties"]["type"]["enum"] = ["empty-dir"]
 
 HOST_VOLUME_SCHEMA = copy.deepcopy(EMPTY_DIR_VOLUME_SCHEMA)
 HOST_VOLUME_SCHEMA["required"] = ["name", "path", "type"]
 HOST_VOLUME_SCHEMA["properties"]["type"]["enum"] = ["host"]
 
+SECRET_VOLUME_SCHEMA = copy.deepcopy(BASE_VOLUME_SCHEMA)
+SECRET_VOLUME_SCHEMA["required"] = ["name", "path", "type"]
+SECRET_VOLUME_SCHEMA["properties"].update({
+    "secret": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["secretName"],
+        "properties": {
+            "secretName": NOT_EMPTY_STRING_SCHEMA,
+            "defaultMode": PERMISSION_SCHEMA,
+            "items": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["key", "path"],
+                    "properties": {
+                        "key": NOT_EMPTY_STRING_SCHEMA,
+                        "path": PATH_SCHEMA,
+                        "mode": PERMISSION_SCHEMA
+                    }
+                }
+            }
+        }
+    }
+})
+SECRET_VOLUME_SCHEMA["properties"]["type"]["enum"] = ["secret"]
+
+
 VOLUME_SCHEMA = {
     "type": "object",
     "oneOf": [
         EMPTY_DIR_VOLUME_SCHEMA,
-        HOST_VOLUME_SCHEMA
+        HOST_VOLUME_SCHEMA,
+        SECRET_VOLUME_SCHEMA
     ]
 }
 
@@ -294,10 +335,7 @@ SERVICE_SCHEMA = {
                     "required": ["path", "content"],
 
                     "properties": {
-                        "path": {
-                            "type": "string",
-                            "pattern": FILE_PATH_RE
-                        },
+                        "path": PATH_SCHEMA,
                         "content": NOT_EMPTY_STRING_SCHEMA,
                         "perm": {
                             "type": "string",
