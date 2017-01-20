@@ -575,7 +575,7 @@ def deploy_components(components_map, components):
         components = set(topology.keys()) & set(components_map.keys())
     else:
         diff = components - set(topology.keys())
-        if not diff:
+        if diff:
             raise ValueError('The next components are not '
                              'defined in topology: %s' % list(diff))
 
