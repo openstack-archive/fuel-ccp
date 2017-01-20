@@ -7,3 +7,10 @@ configs:
       enabled: False
       domain: external
       port: 8443
+
+    security:
+      tls:
+        enabled: false
+        ca_cert: null
+        server_cert: null
+        client_cert: null
