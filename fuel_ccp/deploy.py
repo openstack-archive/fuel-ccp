@@ -381,6 +381,7 @@ def _make_topology(nodes, roles, replicas):
     # TODO(sreshetniak): add validation
     k8s_nodes = kubernetes.list_k8s_nodes()
     k8s_node_names = kubernetes.get_object_names(k8s_nodes)
+    deploy_validation.validate_topology(nodes, roles, k8s_node_names)
 
     def find_match(glob):
         matcher = re.compile(glob)

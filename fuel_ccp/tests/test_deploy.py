@@ -492,6 +492,43 @@ class TestDeployMakeTopology(base.TestCase):
             "foobar": 42
         }
 
-        nodes = {}
+        nodes = _yaml.AttrDict({})
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
+
+    def test_make_topology_with_wrong_node(self):
+        nodes = _yaml.AttrDict({
+            "127.0.0.1": {
+                "roles": ["controller", "compute"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, None)
+
+    def test_node_without_roles(self):
+        nodes = _yaml.AttrDict({
+            'node1': {}
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, None)
+
+    def test_node_with_non_existing_role(self):
+        nodes = _yaml.AttrDict({
+            "node1": {
+                "roles": ["rabbitmq"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, None)
+
+    def test_make_empty_topology(self):
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, _yaml.AttrDict(),
+                          _yaml.AttrDict(), None)
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, _yaml.AttrDict(),
+                          _yaml.AttrDict({"spam": "eggs"}), None)
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology,
+                          _yaml.AttrDict({"spam": "eggs"}),
+                          _yaml.AttrDict(), None)
