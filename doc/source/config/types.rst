@@ -44,7 +44,8 @@ of the microservices and credentials for connecting to Kubernetes cluster.
 - :ref:`configs`
 - :ref:`files`
 - :ref:`kubernetes`
-- :ref:`nodes_roles`
+- :ref:`nodes`
+- :ref:`roles`
 - :ref:`replicas`
 
 Other specific variables
@@ -469,10 +470,10 @@ For example:
  replicas:
    heat-engine: 3
 
-.. _nodes_roles:
+.. _nodes:
 
-nodes and roles key
--------------------
+nodes
+-----
 
 Isolation:
 
@@ -483,15 +484,54 @@ Allowed content:
 
 - This key contains a regular expression to match one or several nodes at once,
   example can be found in ``fuel-ccp`` git repository in
-  ``etc/topology-example.yaml`` file.
-  If your environment contains more than 9 nodes, you must explicitly specify
-  the "end-of-line", because expression like node([1-5]|10|11) will also match
-  node12, node13 etc. Example can be found in ``fuel-ccp`` git repository in
-  ``etc/topology-with-large-number-of-nodes.yaml`` file.
+  ``etc/topology-example.yaml`` file. If your environment contains more than 9
+  nodes, you must explicitly specify the "end-of-line", because expression like
+  node([1-5]|10|11) will also match node12, node13 etc. Example can be found in
+  ``fuel-ccp`` git repository in
+  ``etc/topology-with-large-number-of-nodes.yaml`` file. This key includes
+  next two sub-keys:
+
+  * *roles* sub-key, which contains a list of roles names. Example of such
+    definition can be found in `topology example file <https://github.com
+    /openstack/fuel-ccp/blob/master/etc/topology-example.yaml>`_.
+
+  * *configs* key, which defines dict of configs, specific for particular node
+    and service. Configs serve to override global config defaults, for example,
+    for variables, dependent on node hardware configuration. Example:
+
+    ::
+
+       nodes:
+         node[2-3]:
+           roles:
+             - openstack
+           configs:
+             nova:
+               logging_debug: true
+
+    .. NOTE:: It's very important: global configs merged with specific nodes
+    configs in lexicographic order, i.e. if you have override key *test* with
+    value *2* for `node[1-3]` and with value *4* `node[2-4]`, then `node2` will
+    have key-value pair *(test, 4)* in configs.
+
+.. _roles:
+
+roles
+-----
+
+Isolation:
+
+- Not used in any template file, only used by the CCP CLI to create a cluster
+  topology.
+
+Allowed content:
 
 - The roles specified in the 'roles' key for node will apply to all matched
   nodes. If a node matches several 'nodes' keys, each with different roles,
-  then roles from all keys will be added to node.
+  then roles from all keys will be added to node. Example can be found in the
+  `topology example file
+  <https://github.com/openstack/fuel-ccp/blob/master/etc/
+  topology-example.yaml>`_.
 
 .. _registry:
 
