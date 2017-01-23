@@ -33,6 +33,10 @@ class BaseCommand(command.Command):
         parser.set_defaults(**CONF.action._dict)
         return parser
 
+    def _fetch_repos(self):
+        if CONF.repositories.clone:
+            do_fetch()
+
 
 class Build(BaseCommand):
     """Build CCP docker images"""
@@ -47,8 +51,7 @@ class Build(BaseCommand):
     def take_action(self, parsed_args):
         if CONF.builder.push and not CONF.registry.address:
             raise RuntimeError('No registry specified, cannot push')
-        if CONF.repositories.clone:
-            do_fetch()
+        self._fetch_repos()
         config.load_component_defaults()
         build.build_components(components=parsed_args.components)
 
@@ -70,8 +73,7 @@ class Deploy(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
-        if CONF.repositories.clone:
-            do_fetch()
+        self._fetch_repos()
         config.load_component_defaults()
         # only these two are being implicitly passed
         CONF.action._update(
@@ -118,8 +120,7 @@ class Validate(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
-        if CONF.repositories.clone:
-            do_fetch()
+        self._fetch_repos()
         config.load_component_defaults()
 
         components = parsed_args.components
@@ -168,8 +169,7 @@ class ShowDep(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
-        if CONF.repositories.clone:
-            do_fetch()
+        self._fetch_repos()
         config.load_component_defaults()
         dependencies.show_dep(parsed_args.components)
 
@@ -182,8 +182,7 @@ class ConfigDump(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
-        if CONF.repositories.clone:
-            do_fetch()
+        self._fetch_repos()
         config.load_component_defaults()
         config.dump_yaml(self.app.stdout)
 
@@ -262,8 +261,7 @@ class ActionList(BaseCommand, lister.Lister):
         return parser
 
     def take_action(self, parsed_args):
-        if CONF.repositories.clone:
-            do_fetch()
+        self._fetch_repos()
         config.load_component_defaults()
         actions = action.list_actions()
         return ("Name", "Component"), [(a.name, a.component) for a in actions]
@@ -279,6 +277,7 @@ class ActionShow(BaseCommand, show.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
+        self._fetch_repos()
         action_obj = action.get_action(parsed_args.action)
         return (
             ("Name",
@@ -300,6 +299,7 @@ class ActionStatus(BaseCommand, lister.Lister):
         return parser
 
     def take_action(self, parsed_args):
+        self._fetch_repos()
         return (
             ("Name",
              "Component",
@@ -321,6 +321,7 @@ class ActionRun(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
+        self._fetch_repos()
         config.load_component_defaults()
         action.run_action(parsed_args.action)
 
