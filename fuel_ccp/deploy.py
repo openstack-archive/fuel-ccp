@@ -368,16 +368,6 @@ def _create_exports_configmap(exports_map):
 
 
 def _make_topology(nodes, roles, replicas):
-    failed = False
-    # TODO(sreshetniak): move it to validation
-    if not nodes:
-        LOG.error("Nodes section is not specified in configs")
-        failed = True
-    if not roles:
-        LOG.error("Roles section is not specified in configs")
-        failed = True
-    if failed:
-        raise RuntimeError("Failed to create topology for services")
 
     # Replicas are optional, 1 replica will deployed by default
     replicas = replicas or dict()
@@ -385,6 +375,7 @@ def _make_topology(nodes, roles, replicas):
     # TODO(sreshetniak): add validation
     k8s_nodes = kubernetes.list_k8s_nodes()
     k8s_node_names = kubernetes.get_object_names(k8s_nodes)
+    deploy_validation.validate_topology(nodes, roles, k8s_node_names)
 
     def find_match(glob):
         matcher = re.compile(glob)

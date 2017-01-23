@@ -503,3 +503,12 @@ class TestDeployMakeTopology(base.TestCase):
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
+
+    def test_make_topology_with_wrong_node(self):
+        nodes = {
+            "127.0.0.1": {
+                "roles": ["controller", "compute"]
+            }
+        }
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles, None)
