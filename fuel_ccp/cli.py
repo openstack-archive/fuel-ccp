@@ -279,6 +279,8 @@ class ActionShow(BaseCommand, show.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
+        if CONF.repositories.clone:
+            do_fetch()
         action_obj = action.get_action(parsed_args.action)
         return (
             ("Name",
@@ -300,6 +302,8 @@ class ActionStatus(BaseCommand, lister.Lister):
         return parser
 
     def take_action(self, parsed_args):
+        if CONF.repositories.clone:
+            do_fetch()
         return (
             ("Name",
              "Component",
@@ -321,6 +325,8 @@ class ActionRun(BaseCommand):
         return parser
 
     def take_action(self, parsed_args):
+        if CONF.repositories.clone:
+            do_fetch()
         config.load_component_defaults()
         action.run_action(parsed_args.action)
 
