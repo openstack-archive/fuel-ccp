@@ -8,7 +8,6 @@ import yaml
 from fuel_ccp.config import _yaml
 from fuel_ccp import deploy
 from fuel_ccp.tests import base
-from fuel_ccp.validation import deploy as deploy_validation
 
 
 class TestDeploy(base.TestCase):
@@ -412,11 +411,12 @@ class TestDeployMakeTopology(base.TestCase):
                           deploy._make_topology,
                           self.nested_dict_to_attrdict(
                               {"node1": {"configs": "because-cows"}}),
-                          _yaml.AttrDict({"spam": "eggs"}), None)
+                          _yaml.AttrDict({"spam": "eggs"}), _yaml.AttrDict())
 
     def test_nodes_configs_has_new_var(self):
         nodes = {
             'node1': {
+                "roles": ["controller"],
                 'configs': {
                     'heat': {
                         'stack_params': {
@@ -426,17 +426,11 @@ class TestDeployMakeTopology(base.TestCase):
                 }
             }
         }
-        configs = {
-            'heat': {
-                'stack_params': {
-                    'debug': True
-                }
-            }
-        }
         nodes = self.nested_dict_to_attrdict(nodes)
-        configs = self.nested_dict_to_attrdict(configs)
-        self.assertFalse(deploy_validation.validate_nodes_section(nodes,
-                                                                  configs))
+        self.assertRaisesRegexp(RuntimeError,
+                                "Failed to create topology for services",
+                                deploy._make_topology, nodes, self._roles,
+                                _yaml.AttrDict())
 
     def test_make_topology_without_replicas(self):
         nodes = _yaml.AttrDict({
@@ -539,3 +533,44 @@ class TestDeployMakeTopology(base.TestCase):
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
+
+    def test_make_topology_with_wrong_node(self):
+        nodes = _yaml.AttrDict({
+            "127.0.0.1": {
+                "roles": ["controller", "compute"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles,
+                          _yaml.AttrDict())
+
+    def test_make_topology_node_without_roles(self):
+        nodes = _yaml.AttrDict({
+            'node1': {}
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles,
+                          _yaml.AttrDict())
+
+    def test_make_topology_node_with_non_existing_role(self):
+        nodes = _yaml.AttrDict({
+            "node1": {
+                "roles": ["rabbitmq"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles,
+                          _yaml.AttrDict())
+
+    def test_make_topology_without_roles(self):
+        nodes = _yaml.AttrDict({
+            "node1": {
+                "roles": ["controller"]
+            },
+            "node[1-3]": {
+                "roles": ["compute"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, _yaml.AttrDict(),
+                          _yaml.AttrDict())
