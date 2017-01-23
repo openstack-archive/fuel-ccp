@@ -44,7 +44,8 @@ of the microservices and credentials for connecting to Kubernetes cluster.
 - :ref:`configs`
 - :ref:`files`
 - :ref:`kubernetes`
-- :ref:`nodes_roles`
+- :ref:`nodes`
+- :ref:`roles`
 - :ref:`replicas`
 
 Other specific variables
@@ -469,10 +470,10 @@ For example:
  replicas:
    heat-engine: 3
 
-.. _nodes_roles:
+.. _nodes:
 
-nodes and roles key
--------------------
+nodes
+-----
 
 Isolation:
 
@@ -481,8 +482,41 @@ Isolation:
 
 Allowed content:
 
-- This key has a restricted format, example of this format can be found in
-  ``fuel-ccp`` git repository in ``etc/topology-example.yaml`` file.
+- This key contains dicts with regexp name of nodes as keys, which contains
+  next two sub-keys:
+
+  * *roles* sub-key, which contains list of roles names. Example of such
+    definition can be found in ``fuel-ccp`` git repository in
+    ``etc/topology-example.yaml`` file.
+
+  * *configs* key, which defined dict of configs, specific for particular node.
+    Configs serve to override global config defaults, for example, for
+    variables, dependent on node hardware configuration. For example::
+
+       nodes:
+         node[2-3]:
+           roles:
+             - openstack
+           configs:
+             nova:
+               logging_debug: true
+
+.. _roles:
+
+roles
+-----
+
+Isolation:
+
+- Not used in any template file, only used by the CCP CLI to create a cluster
+  topology.
+
+Allowed content:
+
+- This key has a dict with roles names as keys. This dict should include
+  all roles names, defined in :ref:`nodes`. Each role key contains list
+  of services, designated on this role. Example can be found in ``fuel-ccp``
+  git repository in ``etc/topology-example.yaml`` file.
 
 .. _registry:
 
