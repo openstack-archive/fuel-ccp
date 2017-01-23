@@ -44,7 +44,8 @@ class TestDeploy(base.TestCase):
                 {'mountPath': '/opt/ccp_start_script/bin',
                  'name': 'start-script'},
                 {'mountPath': '/etc/ccp/exports', 'name': 'exports'},
-                {'mountPath': '/etc/ccp/files', 'name': 'files'}
+                {'mountPath': '/etc/ccp/files', 'name': 'files'},
+                {'mountPath': '/etc/ccp/nodes-config', 'name': 'nodes-config'}
             ],
             "readinessProbe": {
                 "exec": {
