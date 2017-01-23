@@ -508,3 +508,44 @@ class TestDeployMakeTopology(base.TestCase):
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
+
+    def test_make_topology_with_wrong_node(self):
+        nodes = _yaml.AttrDict({
+            "127.0.0.1": {
+                "roles": ["controller", "compute"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles,
+                          _yaml.AttrDict())
+
+    def test_make_topology_node_without_roles(self):
+        nodes = _yaml.AttrDict({
+            'node1': {}
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles,
+                          _yaml.AttrDict())
+
+    def test_make_topology_node_with_non_existing_role(self):
+        nodes = _yaml.AttrDict({
+            "node1": {
+                "roles": ["rabbitmq"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, self._roles,
+                          _yaml.AttrDict())
+
+    def test_make_topology_without_roles(self):
+        nodes = _yaml.AttrDict({
+            "node1": {
+                "roles": ["controller"]
+            },
+            "node[1-3]": {
+                "roles": ["compute"]
+            }
+        })
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, nodes, _yaml.AttrDict(),
+                          _yaml.AttrDict())
