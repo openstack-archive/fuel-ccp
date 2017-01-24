@@ -60,3 +60,22 @@ Component repositories have common structure:
    :doc:`config/index`.
 
 .. _link: https://github.com/openstack?q=fuel-ccp-
+
+4. Shared configurations templates
+----------------------------------
+   You can export and share across all `fuel-ccp-x` repositories the most common
+   parts of configs which are needed to use your service. In order to do this you
+   should locate a jinja macros with a config template in ``./exports/`` directory:
+
+   ::
+
+   ./exports/your_jinja_template.j2
+
+   and then use it in a config file of any other repository:
+
+   ::
+
+    file:nova.conf.j2
+    {{ your_jinja_template.your_macros() }}
+
+   Well known shared template is `oslo_messaging <https://github.com/openstack/fuel-ccp-rabbitmq/blob/master/exports/oslo_messaging.j2>`_
