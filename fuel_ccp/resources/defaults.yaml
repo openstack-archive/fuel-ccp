@@ -13,4 +13,6 @@ configs:
         enabled: false
         ca_cert: null
         server_cert: null
+        server_key: null
         client_cert: null
+        client_key: null
