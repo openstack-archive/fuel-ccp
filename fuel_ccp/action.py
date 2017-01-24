@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import uuid
 
@@ -13,6 +14,8 @@ from fuel_ccp import templates
 
 
 CONF = config.CONF
+
+LOG = logging.getLogger(__name__)
 
 
 class Action(object):
@@ -156,7 +159,9 @@ class Action(object):
             component_name=self.component,
             app_name=self.name)
         job_spec["metadata"]["labels"].update({"ccp-action": "true"})
-        kubernetes.process_object(job_spec)
+        if kubernetes.process_object(job_spec):
+            LOG.info('%s: action "%s" has been successfully run',
+                     self.component, self.k8s_name)
 
 
 class ActionStatus(object):
