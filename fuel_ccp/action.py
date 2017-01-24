@@ -172,7 +172,7 @@ class ActionStatus(object):
 
     def __init__(self, k8s_job):
         self.name = k8s_job.name
-        self.component = k8s_job.labels["ccp-component"]
+        self.component = k8s_job.obj["metadata"]["labels"]["ccp-component"]
         self.date = k8s_job.obj["metadata"]["creationTimestamp"]
         self.restarts = k8s_job.obj["status"].get("failed", 0)
         self.active = k8s_job.obj["status"].get("active", 0)
