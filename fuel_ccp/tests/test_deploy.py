@@ -5,6 +5,7 @@ import fixtures
 import mock
 import yaml
 
+from fuel_ccp.config import _yaml
 from fuel_ccp import deploy
 from fuel_ccp.tests import base
 
@@ -387,7 +388,7 @@ class TestDeployMakeTopology(base.TestCase):
         self.useFixture(fixtures.MockPatch(
             "fuel_ccp.kubernetes.get_object_names", return_value=node_list))
 
-        self._roles = {
+        self._roles = _yaml.AttrDict({
             "controller": [
                 "mysql",
                 "keystone"
@@ -396,25 +397,29 @@ class TestDeployMakeTopology(base.TestCase):
                 "nova-compute",
                 "libvirtd"
             ]
-        }
+        })
 
     def test_make_empty_topology(self):
         self.assertRaises(RuntimeError,
-                          deploy._make_topology, None, None, None)
+                          deploy._make_topology, _yaml.AttrDict(),
+                          _yaml.AttrDict(), _yaml.AttrDict())
         self.assertRaises(RuntimeError,
-                          deploy._make_topology, None, {"spam": "eggs"}, None)
+                          deploy._make_topology, _yaml.AttrDict(),
+                          _yaml.AttrDict({"spam": "eggs"}), _yaml.AttrDict())
         self.assertRaises(RuntimeError,
-                          deploy._make_topology, {"spam": "eggs"}, None, None)
+                          deploy._make_topology,
+                          _yaml.AttrDict({"spam": "eggs"}),
+                          _yaml.AttrDict(), _yaml.AttrDict())
 
     def test_make_topology_without_replicas(self):
-        nodes = {
+        nodes = _yaml.AttrDict({
             "node1": {
                 "roles": ["controller"]
             },
             "node[2-3]": {
                 "roles": ["compute"]
             }
-        }
+        })
 
         expected_topology = {
             "mysql": ["node1"],
@@ -423,33 +428,33 @@ class TestDeployMakeTopology(base.TestCase):
             "libvirtd": ["node2", "node3"]
         }
 
-        topology = deploy._make_topology(nodes, self._roles, None)
+        topology = deploy._make_topology(nodes, self._roles, _yaml.AttrDict())
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_without_replicas_unused_role(self):
-        nodes = {
+        nodes = _yaml.AttrDict({
             "node1": {
                 "roles": ["controller"]
             },
-        }
+        })
 
         expected_topology = {
             "mysql": ["node1"],
             "keystone": ["node1"]
         }
 
-        topology = deploy._make_topology(nodes, self._roles, None)
+        topology = deploy._make_topology(nodes, self._roles, _yaml.AttrDict())
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_without_replicas_twice_used_role(self):
-        nodes = {
+        nodes = _yaml.AttrDict({
             "node1": {
                 "roles": ["controller", "compute"]
             },
             "node[2-3]": {
                 "roles": ["compute"]
             }
-        }
+        })
 
         expected_topology = {
             "mysql": ["node1"],
@@ -457,18 +462,18 @@ class TestDeployMakeTopology(base.TestCase):
             "nova-compute": ["node1", "node2", "node3"],
             "libvirtd": ["node1", "node2", "node3"]
         }
-        topology = deploy._make_topology(nodes, self._roles, None)
+        topology = deploy._make_topology(nodes, self._roles, _yaml.AttrDict())
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_without_replicas_twice_used_node(self):
-        nodes = {
+        nodes = _yaml.AttrDict({
             "node1": {
                 "roles": ["controller"]
             },
             "node[1-3]": {
                 "roles": ["compute"]
             }
-        }
+        })
 
         expected_topology = {
             "mysql": ["node1"],
@@ -477,29 +482,29 @@ class TestDeployMakeTopology(base.TestCase):
             "libvirtd": ["node1", "node2", "node3"]
         }
 
-        topology = deploy._make_topology(nodes, self._roles, None)
+        topology = deploy._make_topology(nodes, self._roles, _yaml.AttrDict())
         self.assertDictEqual(expected_topology, topology)
 
     def test_make_topology_replicas_bigger_than_nodes(self):
-        replicas = {
+        replicas = _yaml.AttrDict({
             "keystone": 2
-        }
+        })
 
-        nodes = {
+        nodes = _yaml.AttrDict({
             "node1": {
                 "roles": ["controller"]
             }
-        }
+        })
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
 
     def test_make_topology_unspecified_service_replicas(self):
-        replicas = {
+        replicas = _yaml.AttrDict({
             "foobar": 42
-        }
+        })
 
-        nodes = {}
+        nodes = _yaml.AttrDict()
 
         self.assertRaises(RuntimeError,
                           deploy._make_topology, nodes, self._roles, replicas)
