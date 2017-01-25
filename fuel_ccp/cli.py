@@ -346,6 +346,20 @@ class ActionRun(BaseCommand, show.ShowOne):
              action_obj.status, action_obj.restarts))
 
 
+class ActionDelete(BaseCommand):
+    """Delete action"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionDelete, self).get_parser(*args, **kwargs)
+        parser.add_argument("actions",
+                            nargs='+',
+                            help="Delete actions")
+        return parser
+
+    def take_action(self, parsed_args):
+        action.delete_action(parsed_args.actions)
+
+
 def signal_handler(signo, frame):
     sys.exit(-signo)
 
