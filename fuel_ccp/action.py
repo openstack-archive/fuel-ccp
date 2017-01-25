@@ -2,6 +2,7 @@ import copy
 import json
 import logging
 import os
+from pykube import exceptions as pykube_exc
 import uuid
 
 import yaml
@@ -212,6 +213,8 @@ class ActionStatus(object):
         self.name = k8s_spec.name
         self.component = k8s_spec.labels["ccp-component"]
         self.date = k8s_spec.obj["metadata"]["creationTimestamp"]
+        self.terminating = k8s_spec.obj["metadata"].get("deletionTimestamp",
+                                                        False)
         if k8s_spec.kind == "Job":
             self.restarts = k8s_spec.obj["status"].get("failed", 0)
             self.active = k8s_spec.obj["status"].get("active", 0)
@@ -224,6 +227,8 @@ class ActionStatus(object):
 
     @property
     def status(self):
+        if self.terminating:
+            return "terminating"
         if self.failed:
             return "fail"
         if self.active:
@@ -239,7 +244,58 @@ class ActionStatus(object):
             for pod in pods:
                 if pod.obj['status']['phase'] == "Failed":
                     continue
-                return pod.logs()
+                return pod.logs()\
+
+
+    @classmethod
+    def delete(cls, action_name):
+        delete_configmap_status = False
+        delete_action_status = cls.delete_action(action_name)
+        if delete_action_status:
+            delete_configmap_status = cls.delete_configmap(action_name)
+        return {'action_status': delete_action_status,
+                'configmap_status': delete_configmap_status}
+
+    @staticmethod
+    def delete_action(action_name):
+        job_pods = []
+        try:
+            action = kubernetes.list_cluster_jobs(name=action_name)
+            selector = "job-name=%s" % action_name
+            job_pods = kubernetes.list_cluster_pods(raw_selector=selector)
+        except pykube_exc.ObjectDoesNotExist:
+            try:
+                action = kubernetes.list_cluster_pods(name=action_name)
+            except pykube_exc.ObjectDoesNotExist:
+                LOG.error('Action with name %s not found', action_name)
+                return False
+        try:
+            action.delete()
+            for pod in job_pods:
+                pod.delete()
+        except pykube_exc.HTTPError as ex:
+            LOG.error(ex.message)
+            return False
+        LOG.info('Action %s is terminating', action_name)
+        return True
+
+    @staticmethod
+    def delete_configmap(action_name):
+        if CONF.action.export_dir:
+            file_name = '%s-%s.yaml' % (action_name, 'configmap')
+            file_path = os.path.join(CONF.action.export_dir, 'configmaps',
+                                     file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        try:
+            configmap = kubernetes.get_configmap(action_name)
+            configmap.delete()
+        except pykube_exc.ObjectDoesNotExist:
+            pass
+        except pykube_exc.HTTPError as ex:
+            LOG.error(ex.message)
+            return False
+        return True
 
 
 def list_actions():
@@ -298,3 +354,28 @@ def get_action_status_by_name(action_name):
             return action
     raise exceptions.NotFoundException("Action with name \"%s\" not found" % (
                                        action_name))
+
+
+def delete_action(action_names):
+    """Delete action.
+
+    :raises: fuel_ccp.exceptions.NotFoundException
+    """
+    not_removed = []
+    configmap_not_removed = []
+    for action_name in action_names:
+        action_status = ActionStatus.delete(action_name)
+        if not action_status.get('action_status'):
+            not_removed.append(action_name)
+        if not action_status.get('configmap_status'):
+            configmap_not_removed.append(action_name)
+    if not_removed:
+        raise exceptions.NotFoundException(
+            'The following actions were not removed: %s'
+            % ','.join(not_removed)
+        )
+    if configmap_not_removed:
+        raise exceptions.NotFoundException(
+            'Configmaps for the following actions were not removed: %s'
+            % ','.join(configmap_not_removed)
+        )
