@@ -33,7 +33,7 @@ function usage {
     Usage: $0 [-o LOG_DIR] [-n NAMESPACE]
 
     -h|--help        Print this help
-    -l|--log-dir     Logs output directory (optional - default /tmp/ccp-diag)
+    -o|--output-dir     Logs output directory (optional - default /tmp/ccp-diag)
     -n|--namespace   Kubernetes namespace  (optional - default ccp)
 EOF
     exit
@@ -94,7 +94,7 @@ function ccp_data {
 
 
 # Parse command line arguments:
-OPTS=`getopt -o 'hl:n:' --long help,log-dir:,namespace: -n 'parse-options' -- ${@}`
+OPTS=`getopt -o 'ho:n:' --long help,output-dir:,namespace: -n 'parse-options' -- ${@}`
 if [ ${?} != 0 ] ; then
     echo "Failed parsing options."
     exit 1
@@ -104,8 +104,8 @@ eval set -- ${OPTS}
 while [ -n "${1}" ]; do
     case ${1} in
         -h|--help ) usage; shift ;;
-        -l|--log-dir ) LOG_DIR=${2}; shift; shift ;;
-        -n|--namespace ) NAMESPACE=${2}; shift ;;
+        -o|--output-dir ) LOG_DIR=${2}; shift; shift ;;
+        -n|--namespace ) NAMESPACE=${2}; shift; shift ;;
         -- ) shift; break ;;
         * ) break ;;
     esac
