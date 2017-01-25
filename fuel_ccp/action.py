@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pykube import exceptions as pykube_exc
 import uuid
 
 import yaml
@@ -164,16 +165,16 @@ class Action(object):
                      self.component, self.k8s_name)
 
 
-class ActionStatus(object):
+class ActionJobs(object):
     @classmethod
-    def get_actions(cls, action_name):
+    def get_jobs(cls, action_name):
         selector = "ccp-action=true"
         if action_name:
             selector += "," + "app=%s" % action_name
-        actions = []
+        jobs = []
         for job in kubernetes.list_cluster_jobs(selector):
-            actions.append(cls(job))
-        return actions
+            jobs.append(cls(job))
+        return jobs
 
     def __init__(self, k8s_job):
         self.name = k8s_job.name
@@ -189,6 +190,28 @@ class ActionStatus(object):
         if self.active:
             return "wip"
         return "ok"
+
+    @staticmethod
+    def delete(job_name):
+        try:
+            job = kubernetes.get_job(job_name)
+            configmap = kubernetes.get_configmap(job_name)
+        except pykube_exc.ObjectDoesNotExist:
+            LOG.error('Job with name %s not found', job_name)
+            return False
+        job.delete()
+
+        if CONF.action.export_dir:
+            file_name = '%s-%s.yaml' % (
+                configmap.obj['metadata']['name'],
+                configmap.obj['kind'].lower())
+            file_path = os.path.join(CONF.action.export_dir, 'configmaps',
+                                     file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        configmap.delete()
+        LOG.info('Job with name %s has been deleted', job_name)
+        return True
 
 
 def list_actions():
@@ -237,4 +260,19 @@ def run_action(action_name):
 
 
 def list_action_status(action_name=None):
-    return ActionStatus.get_actions(action_name)
+    return ActionJobs.get_jobs(action_name)
+
+
+def delete_action(job_names):
+    """Delete action.
+
+    :raises: fuel_ccp.exceptions.NotFoundException
+    """
+    not_found = []
+    for job_name in job_names:
+        if not ActionJobs.delete(job_name):
+            not_found.append(job_name)
+    if not_found:
+        raise exceptions.NotFoundException(
+            'Jobs with names not found: %s' % ','.join(not_found)
+        )

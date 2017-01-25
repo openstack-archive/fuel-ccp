@@ -179,6 +179,20 @@ def list_cluster_jobs(selector=None):
         selector=ccp_selector)
 
 
+def get_job(name):
+    client = get_client()
+    return pykube.Job.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true").get_by_name(name)
+
+
+def get_configmap(name):
+    client = get_client()
+    return pykube.ConfigMap.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true").get_by_name(name)
+
+
 def list_cluster_services():
     client = get_client()
     return pykube.Service.objects(client).filter(
