@@ -147,6 +147,19 @@ def process_object(object_dict, namespace=None, client=None):
     return obj
 
 
+def delete_action(selector, job_names=None):
+    deleted_jobs = []
+    for job in list_cluster_jobs(selector):
+        if not job_names or job.name in job_names:
+            deleted_jobs.append(job.name)
+            job.delete()
+            LOG.debug('"%s" has been deleted', job.name)
+    difference = []
+    if job_names:
+        difference = list(set(job_names) - set(deleted_jobs))
+    return {'deleted': deleted_jobs, 'not_founded': difference}
+
+
 def list_k8s_nodes():
     client = get_client()
     return pykube.Node.objects(client).all()

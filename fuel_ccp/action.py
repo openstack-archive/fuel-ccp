@@ -46,6 +46,16 @@ class Action(object):
         self._create_configmap()
         self._create_job()
 
+    def delete(self, job_names=None):
+        selector = "ccp-action=true"
+        selector += "," + "app=%s" % self.name
+        result = kubernetes.delete_action(selector, job_names)
+        deleted_jobs = ', '.join(result['deleted'])
+        LOG.info('Jobs have been deleted: %s', deleted_jobs)
+        if result['not_founded']:
+            raise exceptions.NotFoundException(
+                "Job(s) with name(s) '%s' not found" % result['not_founded'])
+
     # configmap methods
 
     def _create_configmap(self):
@@ -238,3 +248,12 @@ def run_action(action_name):
 
 def list_action_status(action_name=None):
     return ActionStatus.get_actions(action_name)
+
+
+def delete_action(action_name, job_names):
+    """Delete action.
+
+    :raises: fuel_ccp.exceptions.NotFoundException
+    """
+    action = get_action(action_name)
+    action.delete(job_names)
