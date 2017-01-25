@@ -17,8 +17,7 @@ LOG = logging.getLogger(__name__)
 
 
 def get_ingress_host(ingress_name):
-    return '.'.join((
-        ingress_name, CONF.kubernetes.namespace, CONF.configs.ingress.domain))
+    return '.'.join((ingress_name, CONF.configs.ingress.domain))
 
 
 def get_ingress_domains(components=None):
