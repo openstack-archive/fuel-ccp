@@ -138,7 +138,7 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
          {'address': 'service.ccp.svc.cluster.local:1234', 'external': True,
           'ingress': False, 'port': {'cont': 1234, 'ingress': 'test'}}),
         ('external_with_ingress_enabled',
-         {'address': 'test.ccp.external:8443', 'external': True,
+         {'address': 'test.external:8443', 'external': True,
           'ingress': True, 'port': {'cont': 1234, 'ingress': 'test'}}),
         ('external_with_ingress_not_provided',
          {'address': '1.1.1.1:30000', 'external': True, 'ingress': True,
@@ -150,7 +150,7 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
             {'address': 'http://service.ccp.svc.cluster.local',
              'with_scheme': True}),
         ('external_with_ingress_with_scheme',
-         {'address': 'https://test.ccp.external:8443', 'external': True,
+         {'address': 'https://test.external:8443', 'external': True,
           'ingress': True, 'port': {'cont': 1234, 'ingress': 'test'},
           'with_scheme': True}),
     )
