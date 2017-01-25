@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 
+from pykube import exceptions as pykube_exc
 import yaml
 
 from fuel_ccp.common import utils
@@ -217,6 +218,8 @@ class ActionStatus(object):
         self.name = k8s_spec.name
         self.component = k8s_spec.labels["ccp-component"]
         self.date = k8s_spec.obj["metadata"]["creationTimestamp"]
+        self.terminating = k8s_spec.obj["metadata"].get("deletionTimestamp",
+                                                        False)
         if k8s_spec.kind == "Job":
             self.restarts = k8s_spec.obj["status"].get("failed", 0)
             self.active = k8s_spec.obj["status"].get("active", 0)
@@ -229,6 +232,8 @@ class ActionStatus(object):
 
     @property
     def status(self):
+        if self.terminating:
+            return "terminating"
         if self.failed:
             return "fail"
         if self.active:
@@ -244,7 +249,47 @@ class ActionStatus(object):
             for pod in pods:
                 if pod.obj['status']['phase'] == "Failed":
                     continue
-                return pod.logs()
+                return pod.logs()\
+
+
+    @classmethod
+    def delete(cls, action_name):
+        delete_configmap_status = False
+        delete_action_status = cls.delete_action(action_name)
+        if delete_action_status:
+            delete_configmap_status = cls.delete_configmap(action_name)
+        return {'action_status': delete_action_status,
+                'configmap_status': delete_configmap_status}
+
+    @staticmethod
+    def delete_action(action_name):
+        try:
+            action = kubernetes.list_cluster_jobs(name=action_name)
+        except pykube_exc.ObjectDoesNotExist:
+            try:
+                action = kubernetes.list_cluster_pods(name=action_name)
+            except pykube_exc.ObjectDoesNotExist:
+                LOG.error('Action with name %s not found', action_name)
+                return False
+        try:
+            action.delete()
+        except pykube_exc.HTTPError as ex:
+            LOG.error(ex.message)
+            return False
+        LOG.info('Action %s is terminating', action_name)
+        return True
+
+    @staticmethod
+    def delete_configmap(action_name):
+        try:
+            configmap = kubernetes.get_configmap(action_name)
+            configmap.delete()
+        except pykube_exc.ObjectDoesNotExist:
+            pass
+        except pykube_exc.HTTPError as ex:
+            LOG.error(ex.message)
+            return False
+        return True
 
 
 def list_actions():
@@ -317,3 +362,28 @@ def get_action_statuses_by_names(action_names):
             "Action(s) with name(s) %s not found" % (
                 ", ".join(action_names)))
     return actions
+
+
+def delete_action(action_names):
+    """Delete action.
+
+    :raises: fuel_ccp.exceptions.NotFoundException
+    """
+    not_removed = []
+    configmap_not_removed = []
+    for action_name in action_names:
+        action_status = ActionStatus.delete(action_name)
+        if not action_status.get('action_status'):
+            not_removed.append(action_name)
+        if not action_status.get('configmap_status'):
+            configmap_not_removed.append(action_name)
+    if not_removed:
+        raise exceptions.NotFoundException(
+            'The following actions were not removed: %s'
+            % ','.join(not_removed)
+        )
+    if configmap_not_removed:
+        raise exceptions.NotFoundException(
+            'Configmaps for the following actions were not removed: %s'
+            % ','.join(configmap_not_removed)
+        )

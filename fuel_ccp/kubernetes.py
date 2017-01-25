@@ -162,7 +162,8 @@ def list_cluster_deployments(selector=None):
         selector=ccp_selector)
 
 
-def list_cluster_pods(service=None, selector=None, raw_selector=None):
+def list_cluster_pods(service=None, selector=None, raw_selector=None,
+                      name=None):
     if raw_selector is not None:
         ccp_selector = raw_selector
     else:
@@ -172,19 +173,25 @@ def list_cluster_pods(service=None, selector=None, raw_selector=None):
         if selector:
             ccp_selector += "," + selector
     client = get_client()
-    return pykube.Pod.objects(client).filter(
+    pods = pykube.Pod.objects(client).filter(
         namespace=CONF.kubernetes.namespace,
         selector=str(ccp_selector))
+    if name:
+        return pods.get_by_name(name)
+    return pods
 
 
-def list_cluster_jobs(selector=None):
+def list_cluster_jobs(selector=None, name=None):
     ccp_selector = "ccp=true"
     if selector:
         ccp_selector += "," + selector
     client = get_client()
-    return pykube.Job.objects(client).filter(
+    jobs = pykube.Job.objects(client).filter(
         namespace=CONF.kubernetes.namespace,
         selector=ccp_selector)
+    if name:
+        return jobs.get_by_name(name)
+    return jobs
 
 
 def list_cluster_services():
@@ -212,3 +219,10 @@ def get_object_names(items):
     for item in items:
         names.append(item.name)
     return names
+
+
+def get_configmap(name):
+    client = get_client()
+    return pykube.ConfigMap.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector="ccp=true").get_by_name(name)
