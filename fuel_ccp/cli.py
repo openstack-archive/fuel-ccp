@@ -326,6 +326,20 @@ class ActionRun(BaseCommand):
         action.run_action(parsed_args.action)
 
 
+class ActionDelete(BaseCommand):
+    """Delete action"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionDelete, self).get_parser(*args, **kwargs)
+        parser.add_argument("jobs",
+                            nargs='+',
+                            help="Delete jobs")
+        return parser
+
+    def take_action(self, parsed_args):
+        action.delete_action(parsed_args.jobs)
+
+
 def signal_handler(signo, frame):
     sys.exit(-signo)
 

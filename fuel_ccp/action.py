@@ -2,6 +2,7 @@ import copy
 import json
 import logging
 import os
+from pykube import exceptions as pykube_exc
 import uuid
 
 import yaml
@@ -228,6 +229,49 @@ class ActionStatus(object):
             return "wip"
         return "ok"
 
+    @classmethod
+    def delete(cls, action_name):
+        delete_action_status = cls.delete_action(action_name)
+        if delete_action_status:
+            cls.delete_configmap(action_name)
+        return delete_action_status
+
+    @staticmethod
+    def delete_action(action_name):
+        try:
+            action = kubernetes.list_cluster_jobs(name=action_name)
+        except pykube_exc.ObjectDoesNotExist:
+            try:
+                action = kubernetes.list_cluster_pods(name=action_name)
+            except pykube_exc.ObjectDoesNotExist:
+                LOG.error('Action with name %s not found', action_name)
+                return False
+        try:
+            action.delete()
+        except pykube_exc.HTTPError as ex:
+            LOG.error(ex.message)
+            return False
+        LOG.info('Action with name %s has been deleted', action_name)
+        return True
+
+    @staticmethod
+    def delete_configmap(action_name):
+        if CONF.action.export_dir:
+            file_name = '%s-%s.yaml' % (action_name, 'configmap')
+            file_path = os.path.join(CONF.action.export_dir, 'configmaps',
+                                     file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        try:
+            configmap = kubernetes.get_configmap(action_name)
+            configmap.delete()
+        except pykube_exc.ObjectDoesNotExist:
+            pass
+        except pykube_exc.HTTPError as ex:
+            LOG.error(ex.message)
+            return False
+        return True
+
 
 def list_actions():
     """List of available actions.
@@ -276,3 +320,18 @@ def run_action(action_name):
 
 def list_action_status(action_name=None):
     return ActionStatus.get_actions(action_name)
+
+
+def delete_action(action_names):
+    """Delete action.
+
+    :raises: fuel_ccp.exceptions.NotFoundException
+    """
+    not_found = []
+    for action_name in action_names:
+        if not ActionStatus.delete(action_name):
+            not_found.append(action_name)
+    if not_found:
+        raise exceptions.NotFoundException(
+            'Actions with names not found: %s' % ','.join(not_found)
+        )
