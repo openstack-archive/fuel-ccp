@@ -147,6 +147,11 @@ def process_object(object_dict, namespace=None, client=None):
     return obj
 
 
+def delete_job(job):
+    job.delete()
+    LOG.debug('"%s" has been deleted', job.name)
+
+
 def list_k8s_nodes():
     client = get_client()
     return pykube.Node.objects(client).all()
