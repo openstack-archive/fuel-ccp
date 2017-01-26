@@ -99,6 +99,13 @@ class TestDeploy(base.TestCase):
     def test_create_openrc(self):
         namespace = self.namespace
         self.conf.configs._merge({'ingress': {'enabled': False}})
+        # Do it three times, because after first merge tls is just a dict, but
+        # should be a AttrDict class.
+        for i in range(3):
+            conf = {"security": {"tls": {"openstack": {"enabled": False}}},
+                    "etcd": {"tls": {"enabled": True}}}
+            self.conf.configs._merge(conf)
+
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
         openrc_test_file = 'openrc-%s' % namespace
         config = {

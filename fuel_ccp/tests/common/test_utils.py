@@ -165,5 +165,12 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
                                               'domain': 'external',
                                               'port': 8443},
                                   'k8s_external_ip': '1.1.1.1'})
+        # Do it three times, because after first merge tls is just a dict, but
+        # should be a AttrDict class.
+        for i in range(3):
+            conf = {"security": {"tls": {"openstack": {"enabled": False}}},
+                    "etcd": {"tls": {"enabled": True}}}
+            self.conf.configs._merge(conf)
+
         self.assertEqual(self.address, utils.address(
             'service', self.port, self.external, self.with_scheme))
