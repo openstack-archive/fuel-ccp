@@ -165,5 +165,10 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
                                               'domain': 'external',
                                               'port': 8443},
                                   'k8s_external_ip': '1.1.1.1'})
+        conf_dict = {"security": {"tls": {"openstack": {"enabled": False}}},
+                     "etcd": {"tls": {"enabled": True}}}
+        prepared_conf = self.nested_dict_to_attrdict(conf_dict)
+        self.conf.configs._merge(prepared_conf)
+
         self.assertEqual(self.address, utils.address(
             'service', self.port, self.external, self.with_scheme))
