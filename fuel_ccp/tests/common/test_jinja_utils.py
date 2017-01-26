@@ -2,11 +2,22 @@ from jinja2 import exceptions
 
 from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
+from fuel_ccp import config
 from fuel_ccp.tests import base
 
 
 class TestJinjaUtils(base.TestCase):
     filename = utils.get_resource_path('tests/common/example.j2')
+
+    def setUp(self):
+        super(TestJinjaUtils, self).setUp()
+        conf = config._yaml.AttrDict()
+        # do it twice, because after first merge tls is just a dict, but
+        # should be a AttrDict class.
+        self.conf.configs._merge({"security": {"tls": {"enabled": False}}})
+        self.conf.configs._merge({"security": {"tls": {"enabled": False}}})
+        conf._merge(config._REAL_CONF)
+        config._REAL_CONF = conf
 
     def test_jinja_render_strict(self):
         context = {
@@ -15,6 +26,7 @@ class TestJinjaUtils(base.TestCase):
             "maintainer": "some maintainer",
             "duck": {"egg": "needle"}
         }
+
         content = jinja_utils.jinja_render(self.filename, context,
                                            functions=[utils.address])
         self.assertEqual(

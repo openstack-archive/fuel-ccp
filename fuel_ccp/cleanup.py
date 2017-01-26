@@ -130,8 +130,14 @@ def _cleanup_openstack_environment(configs, auth_url=None, verify=True):
                            'Run with --skip-os-cleanup flag if OpenStack '
                            'is not deployed')
 
+    if configs['security']['tls']['enabled'] and verify is True:
+        # Ensure that keystone configs are provided. Assume that it is not an
+        # OpenStack deployment otherwise
+        raise RuntimeError('TLS is enabled. Run with --insecure flag or '
+                           'specify path to certificate via --ca-cert option.')
+
     configs['auth_url'] = auth_url or '%s/v3' % utils.address(
-        'keystone', configs['keystone']['public_port'], True, True)
+        'keystone', configs['keystone']['public_port'], True, True, True)
 
     session = _get_session(
         configs['auth_url'], configs['openstack']['user_name'],
