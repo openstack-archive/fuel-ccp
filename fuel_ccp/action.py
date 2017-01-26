@@ -18,7 +18,6 @@ CONF = config.CONF
 RESTART_POLICY_ALWAYS = "always"
 RESTART_POLICY_NEVER = "never"
 
-
 class Action(object):
     def __init__(self, **kwargs):
         self.name = kwargs.pop("name")
@@ -190,7 +189,7 @@ class Action(object):
 class ActionStatus(object):
 
     @classmethod
-    def get_actions(cls, action_name):
+    def get_actions(cls, action_name=None):
         selector = "ccp-action=true"
         if action_name:
             selector += "," + "app=%s" % action_name
@@ -202,6 +201,7 @@ class ActionStatus(object):
         return actions
 
     def __init__(self, k8s_spec):
+        self._spec = k8s_spec
         self.name = k8s_spec.name
         self.component = k8s_spec.labels["ccp-component"]
         self.date = k8s_spec.obj["metadata"]["creationTimestamp"]
@@ -222,6 +222,17 @@ class ActionStatus(object):
         if self.active:
             return "wip"
         return "ok"
+
+    def log(self):
+        if self._spec.kind == "Pod":
+            return self._spec.logs()
+        else:
+            pod_selector = "job-name=%s" % self._spec.name
+            pods = kubernetes.list_cluster_pods(raw_selector=pod_selector)
+            for pod in pods:
+                if pod.obj['status']['phase'] == "Failed":
+                    continue
+                return pod.logs()
 
 
 def list_actions():
@@ -269,5 +280,13 @@ def run_action(action_name):
     action.run()
 
 
-def list_action_status(action_name=None):
-    return ActionStatus.get_actions(action_name)
+def list_action_status(action_type=None):
+    return ActionStatus.get_actions(action_type)
+
+
+def get_action_status_by_name(action_name):
+    for action in list_action_status():
+        if action.name == action_name:
+            return action
+    raise exceptions.NotFoundException("Action with name \"%s\" not found" % (
+                                       action_name))

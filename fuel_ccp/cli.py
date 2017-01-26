@@ -267,6 +267,21 @@ class ActionList(BaseCommand, lister.Lister):
         return ("Name", "Component"), [(a.name, a.component) for a in actions]
 
 
+class ActionLog(BaseCommand):
+    """Show action container stdout"""
+
+    def get_parser(self, *args, **kwargs):
+        parser = super(ActionLog, self).get_parser(*args, **kwargs)
+        parser.add_argument("action",
+                            help="Show action comtainer stdout")
+        return parser
+
+    def take_action(self, parsed_args):
+        self._fetch_repos()
+        action_obj = action.get_action_status_by_name(parsed_args.action)
+        print(action_obj.log())
+
+
 class ActionShow(BaseCommand, show.ShowOne):
     """Show action"""
 
