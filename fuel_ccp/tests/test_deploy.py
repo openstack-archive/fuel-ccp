@@ -251,7 +251,7 @@ spec:
             'kind': 'Ingress',
             'spec': {
                 'rules': [{
-                    'host': 'bar.ccp.test',
+                    'host': 'bar.test',
                     'http': {
                         'paths': [{
                             'backend': {
@@ -260,7 +260,7 @@ spec:
                         }]
                     }
                 }, {
-                    'host': 'eggs.ccp.test',
+                    'host': 'eggs.test',
                     'http': {
                         'paths': [{
                             'backend': {
