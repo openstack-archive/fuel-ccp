@@ -1,0 +1,19 @@
+{
+    "CN": "*.ccp.svc.cluster.local",
+    "hosts": [
+        "*.ccp.svc.cluster.local",
+        "cluster.local"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "ST": "CA",
+            "L": "San Francisco"
+        }
+    ]
+}
+
