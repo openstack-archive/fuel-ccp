@@ -23,6 +23,7 @@ DEFAULT_REPOS = [
     'fuel-ccp-sahara',
     'fuel-ccp-searchlight',
     'fuel-ccp-stacklight',
+    'fuel-ccp-nginx',
 ]
 
 DEFAULTS = {
