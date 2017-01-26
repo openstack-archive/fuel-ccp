@@ -463,7 +463,7 @@ def _create_openrc(config):
         "export OS_IDENTITY_API_VERSION=3",
         "export OS_AUTH_URL=%s/v3" %
         utils.address('keystone', config['keystone']['public_port'], True,
-                      True)
+                      True, True)
     ]
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))

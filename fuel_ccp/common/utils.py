@@ -60,9 +60,12 @@ def get_config_paths():
     return paths
 
 
-def address(service, port=None, external=False, with_scheme=False):
+def address(service, port=None, external=False, with_scheme=False, tls=False):
     addr = None
     scheme = 'http'
+    if tls:
+        if CONF.configs.security.tls.enabled:
+            scheme = 'https'
     if external:
         if not port:
             raise RuntimeError('Port config is required for external address')
