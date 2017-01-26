@@ -101,6 +101,11 @@ class TestDeploy(base.TestCase):
     def test_create_openrc(self):
         namespace = self.namespace
         self.conf.configs._merge({'ingress': {'enabled': False}})
+        conf_dict = {"security": {"tls": {"openstack": {"enabled": False}}},
+                     "etcd": {"tls": {"enabled": True}}}
+        prepared_conf = self.nested_dict_to_attrdict(conf_dict)
+        self.conf.configs._merge(prepared_conf)
+
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
         openrc_test_file = 'openrc-%s' % namespace
         config = {
