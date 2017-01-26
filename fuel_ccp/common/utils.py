@@ -63,6 +63,11 @@ def get_config_paths():
 def address(service, port=None, external=False, with_scheme=False):
     addr = None
     scheme = 'http'
+    TLS_SERVICES = ('keystone', 'glance', 'cinder', 'horizon', 'nova',
+                    'neutron', 'heat')
+    if ((CONF.configs.security.tls.enabled and
+         service.split('-')[0] in TLS_SERVICES)):
+        scheme = 'https'
     if external:
         if not port:
             raise RuntimeError('Port config is required for external address')
