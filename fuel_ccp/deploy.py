@@ -21,6 +21,8 @@ CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
 YAML_FILE_RE = re.compile(r'\.yaml$')
+# This role is added to execute k8s Jobs only on nodes affected by deployment
+JOBS_ROLE = '_ccp_jobs'
 
 
 def _expand_files(service, files):
@@ -278,7 +280,7 @@ def _get_job(service, container, job, component_name, topology):
                              (key, job['name'], component_name))
         affinity = templates.serialize_affinity({"name": key}, topology)
     else:
-        affinity = {}
+        affinity = templates.serialize_affinity({"name": JOBS_ROLE}, topology)
     cont_spec = templates.serialize_job_container_spec(container, job)
     pod_spec = templates.serialize_job_pod_spec(service, job, cont_spec,
                                                 affinity)
@@ -404,7 +406,7 @@ def _make_topology(nodes, roles, replicas):
     roles_to_node = {}
     for node in sorted(nodes):
         matched_nodes = find_match(node)
-        for role in nodes[node]["roles"]:
+        for role in nodes[node]["roles"] + [JOBS_ROLE]:
             roles_to_node.setdefault(role, [])
             roles_to_node[role].extend(matched_nodes)
     service_to_node = {}
@@ -434,8 +436,8 @@ def _make_topology(nodes, roles, replicas):
         LOG.error("Replicas defined for unspecified service(s): %s",
                   ", ".join(replicas.keys()))
         raise RuntimeError("Replicas defined for unspecified service(s)")
-
-    return service_to_node
+    service_to_node[JOBS_ROLE] = roles_to_node[JOBS_ROLE]
+    return {k: sorted(set(v)) for k,v in service_to_node.items()}
 
 
 def _create_namespace(configs):
