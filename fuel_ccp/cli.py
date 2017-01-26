@@ -28,6 +28,8 @@ from fuel_ccp.validation import service as validation_service
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
 
+ACTION_FIELDS = ("name", "component", "date", "status", "restarts")
+
 
 class BaseCommand(command.Command):
     def get_parser(self, *args, **kwargs):
@@ -318,17 +320,13 @@ class ActionStatus(BaseCommand, lister.Lister):
     def take_action(self, parsed_args):
         self._fetch_repos()
         return (
-            ("Name",
-             "Component",
-             "Date",
-             "Status",
-             "Restarts"),
+            ACTION_FIELDS,
             ((a.name, a.component, a.date, a.status, a.restarts)
              for a in action.list_action_status(parsed_args.action))
         )
 
 
-class ActionRun(BaseCommand):
+class ActionRun(BaseCommand, show.ShowOne):
     """Run action"""
 
     def get_parser(self, *args, **kwargs):
@@ -340,7 +338,12 @@ class ActionRun(BaseCommand):
     def take_action(self, parsed_args):
         self._fetch_repos()
         config.load_component_defaults()
-        action.run_action(parsed_args.action)
+        action_name = action.run_action(parsed_args.action)
+        action_obj = action.get_action_status_by_name(action_name)
+        return (
+            ACTION_FIELDS,
+            (action_obj.name, action_obj.component, action_obj.date,
+             action_obj.status, action_obj.restarts))
 
 
 def signal_handler(signo, frame):

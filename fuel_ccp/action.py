@@ -48,6 +48,7 @@ class Action(object):
     def run(self):
         self._create_configmap()
         self._create_action()
+        return self.k8s_name
 
     # configmap methods
 
@@ -274,11 +275,12 @@ def get_action(action_name):
 def run_action(action_name):
     """Run action.
 
+    :returns: str -- action name
     :raises: fuel_ccp.exceptions.NotFoundException
     """
     action = get_action(action_name)
     action.validate()
-    action.run()
+    return action.run()
 
 
 def list_action_status(action_type=None):
