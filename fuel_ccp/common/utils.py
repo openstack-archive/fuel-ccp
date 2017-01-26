@@ -62,7 +62,25 @@ def get_config_paths():
 
 def address(service, port=None, external=False, with_scheme=False):
     addr = None
-    scheme = 'http'
+    service_name = service.split('-')[0]
+    TLS_SERVICES = ('keystone', 'glance', 'cinder', 'horizon', 'nova',
+                    'neutron', 'heat')
+
+    # TODO(skraynev): move this to separate config options and remove
+    #                 this check from the code.
+    try
+        openstack_tls = CONF.configs.security.tls.openstack.enabled
+    except AttributeError:
+        openstack_tls = False
+
+    if service_name == 'etcd':
+        etcd_tls = CONF.configs.etcd.tls.enabled
+
+    if (openstack_tls and service_name in TLS_SERVICES) or etcd_tls:
+        scheme = 'https'
+    else:
+        scheme = 'http'
+
     if external:
         if not port:
             raise RuntimeError('Port config is required for external address')
