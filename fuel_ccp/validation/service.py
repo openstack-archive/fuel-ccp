@@ -134,12 +134,6 @@ PORT_SCHEMA = {
     "maximum": 65535
 }
 
-NODE_PORT_SCHEMA = {
-    "type": "integer",
-    "minimum": 30000,
-    "maximum": 32767
-}
-
 PROBE_SCHEMA_HTTP = {
     "type": "object",
     "additionalProperties": False,
@@ -199,7 +193,7 @@ SERVICE_SCHEMA = {
                         "required": ["cont"],
                         "properties": {
                             "cont": PORT_SCHEMA,
-                            'node': NODE_PORT_SCHEMA,
+                            'node': PORT_SCHEMA,
                             "ingress": {
                                 "type": "string"
                             }
