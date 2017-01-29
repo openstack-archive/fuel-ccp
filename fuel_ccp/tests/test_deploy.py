@@ -272,8 +272,7 @@ spec:
             },
             'apiVersion': 'extensions/v1beta1',
             'metadata': {
-                'name': 'foo',
-                'ccp': 'true'
+                'name': 'foo'
             }
         }
 
