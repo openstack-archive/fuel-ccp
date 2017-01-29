@@ -307,18 +307,25 @@ def serialize_volumes(service, for_job=None):
 
 def serialize_job(name, spec, component_name, app_name):
     return {
-        "apiVersion": "batch/v1",
-        "kind": "Job",
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Definition",
         "metadata": {
-            "name": name,
-            "labels": {
-                "app": app_name,
-                "ccp": "true",
-                "ccp-component": component_name
-            }
+            "name": "job-%s" % name
         },
-        "spec": {
-            "template": spec
+        "job": {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "name": name,
+                "labels": {
+                    "app": app_name,
+                    "ccp": "true",
+                    "ccp-component": component_name
+                }
+            },
+            "spec": {
+                "template": spec
+            }
         }
     }
 
@@ -332,24 +339,31 @@ def serialize_deployment(name, spec, annotations, replicas, component_name,
         })
 
     deployment = {
-        "apiVersion": "extensions/v1beta1",
-        "kind": "Deployment",
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Definition",
         "metadata": {
-            "name": name
+            "name": "deployment-%s" % name
         },
-        "spec": {
-            "replicas": replicas,
-            "strategy": strategy,
-            "template": {
-                "metadata": {
-                    "annotations": annotations,
-                    "labels": {
-                        "app": name,
-                        "ccp": "true",
-                        "ccp-component": component_name
-                    }
-                },
-                "spec": spec
+        "deployment":{
+            "apiVersion": "extensions/v1beta1",
+            "kind": "Deployment",
+            "metadata": {
+                "name": name
+            },
+            "spec": {
+                "replicas": replicas,
+                "strategy": strategy,
+                "template": {
+                    "metadata": {
+                        "annotations": annotations,
+                        "labels": {
+                            "app": name,
+                            "ccp": "true",
+                            "ccp-component": component_name
+                        }
+                    },
+                    "spec": spec
+                }
             }
         }
     }
@@ -359,24 +373,31 @@ def serialize_deployment(name, spec, annotations, replicas, component_name,
 
 def serialize_statefulset(name, spec, annotations, replicas, component_name):
     return {
-        "apiVersion": "apps/v1beta1",
-        "kind": "StatefulSet",
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Definition",
         "metadata": {
-            "name": name
+            "name": "statefulset-%s" % name
         },
-        "spec": {
-            "serviceName": name,
-            "replicas": replicas,
-            "template": {
-                "metadata": {
-                    "annotations": annotations,
-                    "labels": {
-                        "ccp": "true",
-                        "app": name,
-                        "ccp-component": component_name
-                    }
-                },
-                "spec": spec
+        "statefulset": {
+            "apiVersion": "apps/v1beta1",
+            "kind": "StatefulSet",
+            "metadata": {
+                "name": name
+            },
+            "spec": {
+                "serviceName": name,
+                "replicas": replicas,
+                "template": {
+                    "metadata": {
+                        "annotations": annotations,
+                        "labels": {
+                            "ccp": "true",
+                            "app": name,
+                            "ccp-component": component_name
+                        }
+                    },
+                    "spec": spec
+                }
             }
         }
     }
@@ -489,4 +510,16 @@ def serialize_ingress(name, rules):
         "spec": {
             "rules": rules
         }
+    }
+
+
+def serialize_dependency(name, parent, child):
+    return {
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Dependency",
+        "metadata": {
+            "name": name
+        },
+        "parent": parent,
+        "child": child
     }
