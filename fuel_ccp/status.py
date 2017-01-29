@@ -49,17 +49,16 @@ def get_pod_states(components=None):
     ext_ip = CONF.configs.get("k8s_external_ip", "")
 
     states = {}
-    for dp in kubernetes.list_cluster_deployments():
+    selector = "app in (%s)" % ','.join(components) if components else None
+    for dp in kubernetes.list_cluster_deployments(selector):
         states.setdefault(dp.name, copy.deepcopy(STATE_TEMPLATE))
         dp_st = dp.obj["status"]
         states[dp.name]["pod_total"] = dp.obj["spec"]["replicas"]
         states[dp.name]["pod_running"] = min(
             dp_st.get("availableReplicas", 0), dp_st.get("updatedReplicas", 0))
 
-    for job in kubernetes.list_cluster_jobs():
+    for job in kubernetes.list_cluster_jobs(selector):
         app_name = job.obj["metadata"]["labels"].get("app")
-        if not app_name or job.obj["metadata"]["labels"].get("ccp-action"):
-            continue
         states.setdefault(app_name, copy.deepcopy(STATE_TEMPLATE))
         states[app_name]["job_total"] += job.obj["spec"]["completions"]
         states[app_name]["job_completed"] += (
@@ -70,18 +69,21 @@ def get_pod_states(components=None):
         if CONF.configs.ingress.get("port"):
             url_template += ":%d" % CONF.configs.ingress.port
         for ing in kubernetes.list_cluster_ingress():
+            if components and ing.name not in components:
+                continue
             states.setdefault(ing.name, copy.deepcopy(STATE_TEMPLATE))
             for rule in ing.obj['spec']['rules']:
                 states[ing.name]['links'].append(url_template % rule['host'])
     else:
         for svc in kubernetes.list_cluster_services():
             svc_name = svc.obj["metadata"]["name"]
+            if components and svc_name not in components:
+                continue
             states.setdefault(svc_name, copy.deepcopy(STATE_TEMPLATE))
             for port in svc.obj["spec"]["ports"]:
                 states[svc_name]["links"].append(EXT_LINK_TEMPLATE.format(
                     ext_ip=ext_ip,
                     port=port["nodePort"]))
-
     return states
 
 
@@ -92,19 +94,18 @@ def show_long_status(components=None):
     formatted_states = []
 
     for state in sorted(states):
-        if not components or state in components:
-            formatted_states.append((
-                state,
-                "{pod_running}/{pod_total}".format(**states[state]),
-                "{job_completed}/{job_total}".format(**states[state]),
-                repr_state(states[state]),
-                "\n".join(states[state]["links"])))
+        formatted_states.append((
+            state,
+            "{pod_running}/{pod_total}".format(**states[state]),
+            "{job_completed}/{job_total}".format(**states[state]),
+            repr_state(states[state]),
+            "\n".join(states[state]["links"])))
 
     return columns, formatted_states
 
 
-def show_short_status():
-    states = get_pod_states()
+def show_short_status(components=None):
+    states = get_pod_states(components)
     if not states:
         status = "no cluster"
     else:

@@ -214,7 +214,7 @@ class ShowStatus(lister.Lister):
         if parsed_args.long:
             return status.show_long_status()
         elif parsed_args.short:
-            return status.show_short_status()
+            return status.show_short_status(parsed_args.components)
         else:
             return status.show_long_status(parsed_args.components)
 
