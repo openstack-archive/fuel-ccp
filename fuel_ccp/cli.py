@@ -198,22 +198,17 @@ class ShowStatus(lister.Lister):
         parser = super(ShowStatus, self).get_parser(*args, **kwargs)
         parser.set_defaults(**CONF.action._dict)
 
-        parser.add_argument("-l", "--long",
-                            action="store_true",
-                            help="show all components status")
         parser.add_argument("-s", "--short",
                             action="store_true",
-                            help="show cluster status (ready or not)")
+                            help="show only state (ok/wip/not deployed)")
         parser.add_argument("components",
                             nargs="*",
-                            help="CCP conponents to show status")
+                            help="CCP components to show status")
         return parser
 
     def take_action(self, parsed_args):
         config.load_component_defaults()
-        if parsed_args.long:
-            return status.show_long_status()
-        elif parsed_args.short:
+        if parsed_args.short:
             return status.show_short_status(parsed_args.components)
         else:
             return status.show_long_status(parsed_args.components)
