@@ -2,6 +2,7 @@ import logging
 import os
 
 import pykube.exceptions
+import pykube.objects
 import yaml
 
 from fuel_ccp import config
@@ -95,7 +96,8 @@ def get_pykube_object(object_dict, namespace=None, client=None):
     if client is None:
         client = get_client()
 
-    obj_class = getattr(pykube, object_dict["kind"], None)
+    obj_class = getattr(pykube, object_dict["kind"], None) or getattr(
+        globals(), object_dict["kind"], None)
     if obj_class is None:
         raise RuntimeError('"%s" object is not supported, skipping.'
                            % object_dict['kind'])
@@ -209,3 +211,17 @@ def get_object_names(items):
     for item in items:
         names.append(item.name)
     return names
+
+
+class Dependency(pykube.objects.APIObject):
+
+    version = "appcontroller.k8s/v1alpha1"
+    endpoint = "dependencies"
+    kind = "Dependency"
+
+
+class Definition(pykube.objects.APIObject):
+
+    version = "appcontroller.k8s/v1alpha1"
+    endpoint = "definitions"
+    kind = "Definition"

@@ -74,7 +74,7 @@ def process_files(files, service_dir):
         f["content"] = content
 
 
-def parse_role(component, topology, configmaps):
+def parse_role(component, topology, configmaps, components_map):
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -302,6 +302,7 @@ def _create_job_wf(job, post=False, service_name=None):
     wrk["dependencies"] = job.get("dependencies", [])
     if post:
         wrk["dependencies"].append(service_name)
+    create_dependencies(job["name"], wrk["dependencies"])
     wrk["job"] = {}
     _fill_cmd(wrk["job"], job)
     _push_files_to_workflow(wrk, job.get("files"))
@@ -603,7 +604,7 @@ def deploy_components(components_map, components):
     for service_name in components:
         service = components_map[service_name]
         service["service_content"]['service']['exports_ctx'] = exports_ctx
-        objects_gen = parse_role(service, topology, configmaps)
+        objects_gen = parse_role(service, topology, configmaps, components_map)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
