@@ -74,6 +74,11 @@ def process_files(files, service_dir):
         f["content"] = content
 
 
+def serialize_workflows(workflows):
+    for k, v in six.iteritems(workflows):
+        workflows[k] = json.dumps(v, sort_keys=True)
+
+
 def parse_role(component, topology, configmaps):
     service_dir = component["service_dir"]
     role = component["service_content"]
@@ -93,6 +98,8 @@ def parse_role(component, topology, configmaps):
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
+    print(workflows)
+    serialize_workflows(workflows)
     workflow_cm = _create_workflow(workflows, service_name)
     configmaps = configmaps + (files_cm, meta_cm, workflow_cm)
 
@@ -164,8 +171,7 @@ def _parse_workflows(service):
         _create_pre_commands(wf, cont)
         _create_daemon(wf, cont)
         _create_post_commands(wf, cont)
-        workflows.update({cont["name"]: json.dumps(
-            {"workflow": wf}, sort_keys=True)})
+        workflows.update({cont["name"]: {"workflow": wf}})
     return workflows
 
 
@@ -305,7 +311,7 @@ def _create_job_wf(job, post=False, service_name=None):
     wrk["job"] = {}
     _fill_cmd(wrk["job"], job)
     _push_files_to_workflow(wrk, job.get("files"))
-    return {job["name"]: json.dumps({"workflow": wrk}, sort_keys=True)}
+    return {job["name"]: {"workflow": wrk}}
 
 
 def _push_files_to_workflow(workflow, files):
