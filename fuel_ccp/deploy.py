@@ -79,7 +79,7 @@ def serialize_workflows(workflows):
         workflows[k] = json.dumps(v, sort_keys=True)
 
 
-def parse_role(component, topology, configmaps):
+def parse_role(component, topology, configmaps, components_map):
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -98,6 +98,7 @@ def parse_role(component, topology, configmaps):
     meta_cm = _create_meta_configmap(service)
 
     workflows = _parse_workflows(service)
+    create_dependencies(workflows, components_map)
     serialize_workflows(workflows)
     workflow_cm = _create_workflow(workflows, service_name)
     configmaps = configmaps + (files_cm, meta_cm, workflow_cm)
@@ -575,6 +576,19 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
+def create_dependencies(workflows, components_map):
+    for name, wf in six.iteritems(workflows):
+        # FIXME Assuming that we have only 2 types for now - job and deployment
+        child = ("deployment/%s" % name if name in components_map
+                 else "job/%s" % name)
+        for dep in wf['workflow']['dependencies']:
+            parent = ("deployment/%s" % dep if dep in components_map
+                      else "job/%s" % dep)
+            dep_name = "%s-%s" % (name, dep)
+            template = templates.serialize_dependency(dep_name, parent, child)
+            yield template
+
+
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
@@ -608,7 +622,7 @@ def deploy_components(components_map, components):
     for service_name in components:
         service = components_map[service_name]
         service["service_content"]['service']['exports_ctx'] = exports_ctx
-        objects_gen = parse_role(service, topology, configmaps)
+        objects_gen = parse_role(service, topology, configmaps, components_map)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
