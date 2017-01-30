@@ -325,8 +325,6 @@ class TestDeployParseWorkflow(base.TestCase):
             }
         ]
         workflow = deploy._parse_workflows(service)
-        for k in workflow.keys():
-            workflow[k] = yaml.load(workflow[k])
         expected_workflows = {
             "kenny": {
                 "workflow": {
