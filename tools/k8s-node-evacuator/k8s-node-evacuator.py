@@ -40,7 +40,7 @@ def nova_live_migrate(node):
 
 def get_http_header(TOKEN_FILE):
     try:
-        token = file(TOKEN_FILE, 'r').read()
+        token = open(TOKEN_FILE, 'r').read()
     except IOError:
         exit('Unable to open token file')
     header = {'Authorization': "Bearer {}".format(token)}
