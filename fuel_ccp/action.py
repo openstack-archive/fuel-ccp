@@ -138,7 +138,13 @@ class Action(object):
             })
         pod_spec = {
             "metadata": {
-                "name": self.k8s_name
+                "name": self.k8s_name,
+                "labels": {
+                    "app": self.name,
+                    "ccp": "true",
+                    "ccp-action": "true",
+                    "ccp-component": self.component
+                }
             },
             "spec": {
                 "containers": [cont_spec],
@@ -177,11 +183,6 @@ class Action(object):
     def _create_pod(self, pod_spec):
         spec = copy.deepcopy(pod_spec)
         spec["metadata"].setdefault("labels", {})
-        spec["metadata"]["labels"].update({
-            "app": self.name,
-            "ccp": "true",
-            "ccp-action": "true",
-            "ccp-component": self.component})
         spec.update({
             "kind": "Pod",
             "apiVersion": "v1"})
@@ -207,15 +208,23 @@ class ActionStatus(object):
         if action_name:
             selector += "," + "app=%s" % action_name
         actions = []
+        job_names = []
         for job in kubernetes.list_cluster_jobs(selector=selector):
             actions.append(cls(job))
+            job_names.append(job.name)
         for pod in kubernetes.list_cluster_pods(selector=selector):
-            actions.append(cls(pod))
+            job_name = pod.labels.get("job-name")
+            if job_name and job_name not in job_names:
+                actions.append(cls(pod, job_name))
+            elif not job_name:
+                actions.append(cls(pod))
         return actions
 
-    def __init__(self, k8s_spec):
+    def __init__(self, k8s_spec, overridden_name=None):
         self._spec = k8s_spec
         self.name = k8s_spec.name
+        if overridden_name:
+            self.name = overridden_name
         self.component = k8s_spec.labels["ccp-component"]
         self.date = k8s_spec.obj["metadata"]["creationTimestamp"]
         self.terminating = k8s_spec.obj["metadata"].get("deletionTimestamp",
