@@ -152,11 +152,14 @@ def list_k8s_nodes():
     return pykube.Node.objects(client).all()
 
 
-def list_cluster_deployments():
+def list_cluster_deployments(selector=None):
+    ccp_selector = "ccp=true"
+    if selector:
+        ccp_selector += "," + selector
     client = get_client()
     return pykube.Deployment.objects(client).filter(
         namespace=CONF.kubernetes.namespace,
-        selector="ccp=true")
+        selector=ccp_selector)
 
 
 def list_cluster_pods(service=None, selector=None, raw_selector=None):
