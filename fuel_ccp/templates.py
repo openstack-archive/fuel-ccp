@@ -484,8 +484,7 @@ def serialize_ingress(name, rules):
         "apiVersion": "extensions/v1beta1",
         "kind": "Ingress",
         "metadata": {
-            "name": name,
-            "ccp": "true"
+            "name": name
         },
         "spec": {
             "rules": rules
