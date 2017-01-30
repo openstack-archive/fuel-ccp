@@ -146,9 +146,20 @@ class TestDeploy(TestParser):
 
 class TestFetch(TestParser):
     cmd = 'fetch'
-    scenarios = [('empty', {'argv': []})]
+    scenarios = [
+        ('empty', {
+            'argv': [],
+            'margs': {'force': False}
+        }),
+        ('force', {
+            'argv': ['--force'],
+            'margs': {'force': True}
+        })
+    ]
 
     def test_parser(self):
+        self.useFixture(fixtures.MockPatch('os.path.exists',
+                                           return_value=False))
         self._run_app()
         self.fetch_mock.assert_called_once_with()
 

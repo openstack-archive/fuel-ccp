@@ -3,6 +3,7 @@ from __future__ import print_function
 import argparse
 import logging
 import os.path
+import shutil
 import signal
 import sys
 
@@ -104,7 +105,19 @@ def do_fetch():
 class Fetch(BaseCommand):
     """Fetch all repos with components definitions"""
 
+    def get_parser(self, *args, **kwargs):
+        parser = super(Fetch, self).get_parser(*args, **kwargs)
+        parser.add_argument("-f", "--force",
+                            action="store_true",
+                            help="Cleanup component directory before fetching")
+        return parser
+
     def take_action(self, parsed_args):
+        if parsed_args.force:
+            comp_dir = CONF.repositories.path
+            if os.path.exists(comp_dir):
+                LOG.info("Delete directory %s", comp_dir)
+                shutil.rmtree(comp_dir)
         do_fetch()
 
 
