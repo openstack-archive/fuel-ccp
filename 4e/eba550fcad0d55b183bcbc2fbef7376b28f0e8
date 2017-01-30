@@ -1,0 +1,10 @@
+Code-Review+1: sryabin <sryabin@mirantis.com>
+Code-Review+2: Sergey Reshetnyak <sreshetniak@mirantis.com>
+Code-Review+2: Artur Zarzycki <azarzycki@mirantis.com>
+Workflow+1: Artur Zarzycki <azarzycki@mirantis.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 30 Jan 2017 07:57:37 +0000
+Reviewed-on: https://review.openstack.org/426652
+Project: openstack/fuel-ccp
+Branch: refs/heads/master
