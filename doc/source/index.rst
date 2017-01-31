@@ -27,6 +27,7 @@ Advanced topics
    deploying_multiple_parallel_environments
    ceph
    ceph_cluster
+   enable_neutron_dvr
    using_calico_instead_of_ovs
    ironic
    known_issues
