@@ -481,8 +481,16 @@ Isolation:
 
 Allowed content:
 
-- This key has a restricted format, example of this format can be found in
-  ``fuel-ccp`` git repository in ``etc/topology-example.yaml`` file.
+- This key contains a regular expression to match one or several nodes at once,
+  example can be found in ``fuel-ccp`` git repository in
+  ``etc/topology-example.yaml`` file.
+  If your environment contains more then 9 nodes, you must specify the
+  "end-of-line", because expression like node([1-5]| 10| 11)
+  will also match node12, node13 etc. Example can be found in ``fuel-ccp``
+  git repository in ``etc/topology-with-large-number-of-nodes.yaml`` file.
+
+- The roles specified for the key will apply to all matched nodes.
+
 
 .. _registry:
 
