@@ -12,14 +12,12 @@ from fuel_ccp.config import images as config_images
 from fuel_ccp import exceptions
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
+from fuel_ccp.validation import action as validation_action
 
 
 CONF = config.CONF
 
 LOG = logging.getLogger(__name__)
-
-RESTART_POLICY_ALWAYS = "always"
-RESTART_POLICY_NEVER = "never"
 
 
 class Action(object):
@@ -32,21 +30,14 @@ class Action(object):
         self.dependencies = kwargs.pop("dependencies", ())
         self.files = kwargs.pop("files", ())
         self.restart_policy = kwargs.pop("restart_policy",
-                                         RESTART_POLICY_NEVER)
-
-        if kwargs:
-            key_names = ", ".join(kwargs.keys())
-            raise ValueError("Invalid keys '%s' for '%s' action" % (
-                             key_names, self.name))
+                                         validation_action.RESTART_POLICY_NEVER
+                                         )
 
     @property
     def k8s_name(self):
         if not hasattr(self, "_k8s_name"):
             self._k8s_name = "%s-%s" % (self.name, str(uuid.uuid4())[:8])
         return self._k8s_name
-
-    def validate(self):
-        pass
 
     def run(self):
         self._create_configmap()
@@ -160,13 +151,10 @@ class Action(object):
                 ]
             }
         }
-        if self.restart_policy == RESTART_POLICY_NEVER:
+        if self.restart_policy == validation_action.RESTART_POLICY_NEVER:
             self._create_pod(pod_spec)
-        elif self.restart_policy == RESTART_POLICY_ALWAYS:
+        elif self.restart_policy == validation_action.RESTART_POLICY_ALWAYS:
             self._create_job(pod_spec)
-        else:
-            raise ValueError("Restart policy %s is not supported" % (
-                self.restart_policy))
 
     def _create_pod(self, pod_spec):
         spec = copy.deepcopy(pod_spec)
@@ -258,6 +246,7 @@ def list_actions():
                 with open(os.path.join(action_path, filename)) as f:
                     data = yaml.load(f)
                     for action_dict in data.get("actions", ()):
+                        validation_action.validate_action(action_dict)
                         actions.append(Action(component=component_name,
                                               component_dir=repo,
                                               **action_dict))
@@ -284,7 +273,6 @@ def run_action(action_name):
     :raises: fuel_ccp.exceptions.NotFoundException
     """
     action = get_action(action_name)
-    action.validate()
     return action.run()
 
 
