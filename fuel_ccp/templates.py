@@ -7,6 +7,7 @@ from fuel_ccp.config import images
 CONF = config.CONF
 
 GLOBAL_CONFIG = "globals"
+NODES_CONFIG = "nodes-config"
 SCRIPT_CONFIG = "start-script"
 FILES_CONFIG = "files"
 META_CONFIG = "meta"
@@ -76,6 +77,10 @@ def serialize_volume_mounts(container, for_job=None):
         {
             "name": FILES_CONFIG,
             "mountPath": "/etc/ccp/%s" % FILES_CONFIG
+        },
+        {
+            "name": NODES_CONFIG,
+            "mountPath": "/etc/ccp/%s" % NODES_CONFIG
         }
     ]
     for v in itertools.chain(container.get("volumes", ()),
@@ -276,10 +281,18 @@ def serialize_volumes(service, for_job=None):
                 "name": EXPORTS_CONFIG,
                 "items": exports_items
             }
+        },
+        {
+            "name": NODES_CONFIG,
+            "configMap": {
+                "name": NODES_CONFIG,
+                "items": [{"key": NODES_CONFIG,
+                           "path": "nodes-config.json"}]
+            }
         }
     ]
     volume_names = [GLOBAL_CONFIG, META_CONFIG, ROLE_CONFIG, SCRIPT_CONFIG,
-                    FILES_CONFIG, EXPORTS_CONFIG]
+                    FILES_CONFIG, EXPORTS_CONFIG, NODES_CONFIG]
     for cont in itertools.chain(service["containers"], [for_job]):
         for v in cont.get("volumes", ()):
             if v["name"] in volume_names:

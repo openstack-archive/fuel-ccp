@@ -330,6 +330,16 @@ def _create_globals_configmap(config):
     return kubernetes.process_object(cm)
 
 
+def _create_nodes_configmap(nodes):
+    nodes_config = config._yaml.AttrDict()
+    for node in sorted(nodes):
+        if 'configs' in nodes[node]:
+            nodes_config[node] = nodes[node]['configs']
+    data = {templates.NODES_CONFIG: nodes_config._json(sort_keys=True)}
+    cm = templates.serialize_configmap(templates.NODES_CONFIG, data)
+    return kubernetes.process_object(cm)
+
+
 def get_start_script():
     start_scr_path = os.path.join(CONF.repositories.path,
                                   CONF.repositories.entrypoint_repo_name,
@@ -593,6 +603,7 @@ def deploy_components(components_map, components):
 
     _create_namespace(CONF.configs)
     _create_globals_configmap(CONF.configs)
+    _create_nodes_configmap(CONF.nodes)
     start_script_cm = create_start_script_configmap()
 
     # load exported j2 templates, which can be used across all repositories
