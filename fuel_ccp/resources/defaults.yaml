@@ -14,3 +14,4 @@ configs:
         ca_cert: null
         server_cert: null
         server_key: null
+        ciphers: "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH"
