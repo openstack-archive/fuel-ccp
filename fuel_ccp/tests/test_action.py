@@ -58,6 +58,14 @@ class TestActionFunctions(testscenarios.WithScenarios, base.TestCase):
         self.list_dir_mock = self.useFixture(fixture).mock
         self.list_dir_mock.return_value = self.data
 
+    def test_validate(self):
+        data = {
+            "name": "test",
+            "image": "test_image",
+            "test": "test"
+        }
+        self.assertRaises(ValueError, action.Action.validate, data)
+
     def test_action_list(self):
         actions = action.list_actions()
         if self.true_scenario:
