@@ -3,6 +3,7 @@ import mock
 import testscenarios
 
 from fuel_ccp.tests import base
+from fuel_ccp.validation import action
 from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
 from fuel_ccp.validation import service as service_validation
@@ -116,3 +117,30 @@ class TestServiceValidation(testscenarios.WithScenarios, base.TestCase):
             service_validation.validate_service_versions(
                 components_map, ['test']
             )
+
+
+class TestValidateAction(base.TestCase):
+    def setUp(self):
+        super(TestValidateAction, self).setUp()
+        self.action = {
+            "name": "test_action",
+            "image": "keystone",
+            "command": "test_command",
+        }
+
+    def test_validate_successful(self):
+        action.validate_action(self.action)
+
+    def test_validate_error_field(self):
+        self.action["test"] = "test"
+        self.assertRaisesRegexp(
+            RuntimeError,
+            "Validation of action definition test_action is not passed",
+            action.validate_action, self.action)
+
+    def test_validate_error_type(self):
+        self.action["command"] = ["echo", "Hello World"]
+        self.assertRaisesRegexp(
+            RuntimeError,
+            "Validation of action definition test_action is not passed",
+            action.validate_action, self.action)
