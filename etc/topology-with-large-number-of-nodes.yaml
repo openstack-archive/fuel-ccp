@@ -1,0 +1,38 @@
+nodes:
+  node[1-3]$:
+    roles:
+      - controller
+      - openvswitch
+  node([4-9]|10|11|12)$:
+    roles:
+      - compute
+      - openvswitch
+roles:
+  controller:
+    - etcd
+    - glance-api
+    - glance-registry
+    - heat-api-cfn
+    - heat-api
+    - heat-engine
+    - horizon
+    - keystone
+    - mariadb
+    - memcached
+    - neutron-dhcp-agent
+    - neutron-l3-agent
+    - neutron-metadata-agent
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+    - rabbitmq
+  compute:
+    - nova-compute
+    - nova-libvirt
+  openvswitch:
+    - neutron-openvswitch-agent
+    - openvswitch-db
+    - openvswitch-vswitchd
