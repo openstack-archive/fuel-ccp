@@ -26,3 +26,11 @@ class TestCase(base.BaseTestCase):
     def setUp(self):
         super(TestCase, self).setUp()
         self.conf = self.useFixture(conf_fixture.Config()).conf
+
+    def assertRaisesWithMessageIn(self, exc, msg, func, *args, **kwargs):
+        try:
+            func(*args, **kwargs)
+            self.fail('Exception "{0}" raised.'.format(exc))
+        except Exception as inst:
+            self.assertIsInstance(inst, exc)
+            self.assertIn(msg, str(inst))
