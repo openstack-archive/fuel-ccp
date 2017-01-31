@@ -481,7 +481,7 @@ Isolation:
 
 Allowed content:
 
-- This key has a restricted format, example of this format can be found in
+- This key contain regex expression, example of this format can be found in
   ``fuel-ccp`` git repository in ``etc/topology-example.yaml`` file.
 
 .. _registry:

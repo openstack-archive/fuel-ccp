@@ -1,9 +1,9 @@
 nodes:
-  node1:
+  node1$:
     roles:
       - controller
       - openvswitch
-  node[2-3]:
+  node[2-3]$:
     roles:
       - compute
       - openvswitch
