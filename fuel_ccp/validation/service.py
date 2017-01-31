@@ -3,16 +3,11 @@ from distutils import version
 import logging
 
 import fuel_ccp
-from fuel_ccp.validation import base as validation_base
+from fuel_ccp.validation import base
 import jsonschema
 
 
 LOG = logging.getLogger(__name__)
-
-PATH_RE = r'^(/|((/[\w.-]+)+/?))$'
-FILE_PATH_RE = r'^(/|((/[\w.-]+)+))$'
-SECRET_PERMISSIONS_RE = r'^(0[0-7]{3})$'
-NOT_EMPTY_STRING_RE = r"^\s*\S.*$"
 
 
 class ServiceFormatChecker(jsonschema.FormatChecker):
@@ -24,26 +19,14 @@ class ServiceFormatChecker(jsonschema.FormatChecker):
         return version.StrictVersion(entry) is not None
 
 
-NOT_EMPTY_STRING_SCHEMA = {
-    "type": "string",
-    "pattern": NOT_EMPTY_STRING_RE
-}
-
-NOT_EMPTY_STRING_ARRAY_SCHEMA = {
-    "type": "array",
-    "minItems": 1,
-
-    "items": NOT_EMPTY_STRING_SCHEMA
-}
-
 PERMISSION_SCHEMA = {
     "type": "string",
-    "pattern": SECRET_PERMISSIONS_RE
+    "pattern": base.SECRET_PERMISSIONS_RE
 }
 
 PATH_SCHEMA = {
     "type": "string",
-    "pattern": PATH_RE
+    "pattern": base.PATH_RE
 }
 
 LOCAL_COMMAND_SCHEMA = {
@@ -52,22 +35,23 @@ LOCAL_COMMAND_SCHEMA = {
     "required": ["command"],
 
     "properties": {
-        "name": NOT_EMPTY_STRING_SCHEMA,
-        "command": NOT_EMPTY_STRING_SCHEMA,
-        "dependencies": NOT_EMPTY_STRING_ARRAY_SCHEMA,
+        "name": base.NOT_EMPTY_STRING_SCHEMA,
+        "command": base.NOT_EMPTY_STRING_SCHEMA,
+        "dependencies": base.NOT_EMPTY_STRING_ARRAY_SCHEMA,
         "type": {
             "enum": ["local"]
         },
-        "files": NOT_EMPTY_STRING_ARRAY_SCHEMA,
-        "secrets": NOT_EMPTY_STRING_ARRAY_SCHEMA,
-        "user": NOT_EMPTY_STRING_SCHEMA
+        "files": base.NOT_EMPTY_STRING_ARRAY_SCHEMA,
+        "secrets": base.NOT_EMPTY_STRING_ARRAY_SCHEMA,
+        "user": base.NOT_EMPTY_STRING_SCHEMA
     }
 }
 
 SINGLE_COMMAND_SCHEMA = copy.deepcopy(LOCAL_COMMAND_SCHEMA)
 SINGLE_COMMAND_SCHEMA["required"] = ["name", "command", "type"]
 SINGLE_COMMAND_SCHEMA["properties"]["type"]["enum"] = ["single"]
-SINGLE_COMMAND_SCHEMA["properties"]["image"] = NOT_EMPTY_STRING_SCHEMA
+SINGLE_COMMAND_SCHEMA["properties"]["image"] = \
+    base.NOT_EMPTY_STRING_SCHEMA
 
 COMMAND_SCHEMA = {
     "type": "object",
@@ -90,7 +74,7 @@ EMPTY_DIR_VOLUME_SCHEMA = {
     "required": ["name", "path"],
 
     "properties": {
-        "name": NOT_EMPTY_STRING_SCHEMA,
+        "name": base.NOT_EMPTY_STRING_SCHEMA,
         "type": {
             "enum": ["empty-dir"]
         },
@@ -129,7 +113,7 @@ PROBE_SCHEMA_EXEC = {
         "type": {
             "enum": ["exec"]
         },
-        "command": NOT_EMPTY_STRING_SCHEMA,
+        "command": base.NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
         "timeout": TIMEOUT_SCHEMA
     }
@@ -151,7 +135,7 @@ PROBE_SCHEMA_HTTP = {
             "enum": ["httpGet"]
         },
         "port": PORT_SCHEMA,
-        "path": NOT_EMPTY_STRING_SCHEMA,
+        "path": base.NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
         "timeout": TIMEOUT_SCHEMA
     }
@@ -170,11 +154,11 @@ SECRET_SCHEMA = {
     "additionalProperties": False,
     "required": ["secret", "path"],
     "properties": {
-        "type": NOT_EMPTY_STRING_SCHEMA,
+        "type": base.NOT_EMPTY_STRING_SCHEMA,
         "data": {
             "type": "object",
             "patternProperties": {
-                NOT_EMPTY_STRING_RE: NOT_EMPTY_STRING_SCHEMA
+                base.NOT_EMPTY_STRING_RE: base.NOT_EMPTY_STRING_SCHEMA
             }
         },
         "secret": {
@@ -182,7 +166,7 @@ SECRET_SCHEMA = {
             "additionalProperties": False,
             "required": ["secretName"],
             "properties": {
-                "secretName": NOT_EMPTY_STRING_SCHEMA,
+                "secretName": base.NOT_EMPTY_STRING_SCHEMA,
                 "defaultMode": PERMISSION_SCHEMA,
                 "items": {
                     "type": "array",
@@ -192,7 +176,7 @@ SECRET_SCHEMA = {
                         "additionalProperties": False,
                         "required": ["key", "path"],
                         "properties": {
-                            "key": NOT_EMPTY_STRING_SCHEMA,
+                            "key": base.NOT_EMPTY_STRING_SCHEMA,
                             "path": PATH_SCHEMA,
                             "mode": PERMISSION_SCHEMA
                         }
@@ -227,7 +211,7 @@ SERVICE_SCHEMA = {
             },
 
             "properties": {
-                "name": NOT_EMPTY_STRING_SCHEMA,
+                "name": base.NOT_EMPTY_STRING_SCHEMA,
                 "ports": {
                     "type": "array",
                     "minItems": 1,
@@ -278,8 +262,8 @@ SERVICE_SCHEMA = {
                         "required": ["name", "image", "daemon"],
 
                         "properties": {
-                            "name": NOT_EMPTY_STRING_SCHEMA,
-                            "image": NOT_EMPTY_STRING_SCHEMA,
+                            "name": base.NOT_EMPTY_STRING_SCHEMA,
+                            "image": base.NOT_EMPTY_STRING_SCHEMA,
                             "privileged": {
                                 "type": "boolean"
                             },
@@ -289,7 +273,7 @@ SERVICE_SCHEMA = {
 
                                 "properties": {
                                     "readiness": {"oneOf": [
-                                        NOT_EMPTY_STRING_SCHEMA,
+                                        base.NOT_EMPTY_STRING_SCHEMA,
                                         PROBE_SCHEMA,
                                     ]},
                                     "liveness": PROBE_SCHEMA
@@ -313,8 +297,8 @@ SERVICE_SCHEMA = {
                                     "required": ["name"],
 
                                     "properties": {
-                                        "name": NOT_EMPTY_STRING_SCHEMA,
-                                        "value": NOT_EMPTY_STRING_SCHEMA,
+                                        "name": base.NOT_EMPTY_STRING_SCHEMA,
+                                        "value": base.NOT_EMPTY_STRING_SCHEMA,
                                         "valueFrom": {"type": "object"}
                                     }
                                 }
@@ -324,30 +308,11 @@ SERVICE_SCHEMA = {
                 }
             }
         },
-        "files": {
-            "type": "object",
-            "patternProperties": {
-                r"^[\w][\w.-]*$": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["path", "content"],
-
-                    "properties": {
-                        "path": PATH_SCHEMA,
-                        "content": NOT_EMPTY_STRING_SCHEMA,
-                        "perm": {
-                            "type": "string",
-                            "pattern": "[0-7]{3,4}"
-                        },
-                        "user": NOT_EMPTY_STRING_SCHEMA
-                    }
-                }
-            }
-        },
+        "files": base.FILES_SCHEMA,
         "secrets": {
             "type": "object",
             "patternProperties": {
-                NOT_EMPTY_STRING_RE: SECRET_SCHEMA
+                base.NOT_EMPTY_STRING_RE: SECRET_SCHEMA
             }
         }
     }
@@ -358,7 +323,7 @@ def validate_service_definitions(components_map, components=None):
     if not components:
         components = components_map.keys()
     else:
-        validation_base.validate_components_names(components, components_map)
+        base.validate_components_names(components, components_map)
 
     not_passed_components = set()
 

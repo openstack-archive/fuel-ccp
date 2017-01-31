@@ -5,6 +5,7 @@ import mock
 import testscenarios
 
 from fuel_ccp.tests import base
+from fuel_ccp.validation import action
 from fuel_ccp.validation import base as base_validation
 from fuel_ccp.validation import deploy as deploy_validation
 from fuel_ccp.validation import service as service_validation
@@ -173,3 +174,40 @@ class TestSchemaValidation(base.TestCase):
             "2": "/path/file.ext"
         }
         jsonschema.validate(correct_secret, service_validation.SECRET_SCHEMA)
+
+
+class TestValidateAction(base.TestCase):
+    def setUp(self):
+        super(TestValidateAction, self).setUp()
+        self.action = {
+            "name": "test_action",
+            "image": "keystone",
+            "command": "test_command",
+            "files": [
+                {
+                    "path": "/etc/keystone/keystone.conf",
+                    "content": "keystone.conf.j2"
+                },
+                {
+                    "path": "/etc/path2",
+                    "content": "file2.j2"
+                }
+            ]
+        }
+
+    def test_validate_successful(self):
+        action.validate_action(self.action)
+
+    def test_validate_error_field(self):
+        self.action["test"] = "test"
+        self.assertRaisesRegexp(
+            RuntimeError,
+            "Validation of action definition test_action is not passed",
+            action.validate_action, self.action)
+
+    def test_validate_error_type(self):
+        self.action["command"] = ["echo", "Hello World"]
+        self.assertRaisesRegexp(
+            RuntimeError,
+            "Validation of action definition test_action is not passed",
+            action.validate_action, self.action)
