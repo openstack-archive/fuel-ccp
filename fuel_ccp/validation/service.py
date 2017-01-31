@@ -3,14 +3,11 @@ from distutils import version
 import logging
 
 import fuel_ccp
-from fuel_ccp.validation import base as validation_base
+from fuel_ccp.validation import base
 import jsonschema
 
 
 LOG = logging.getLogger(__name__)
-
-PATH_RE = r'^(/|((/[\w.-]+)+/?))$'
-FILE_PATH_RE = r'^(/|((/[\w.-]+)+))$'
 
 
 class ServiceFormatChecker(jsonschema.FormatChecker):
@@ -21,40 +18,28 @@ class ServiceFormatChecker(jsonschema.FormatChecker):
     def valid_version(self, entry):
         return version.StrictVersion(entry) is not None
 
-
-NOT_EMPTY_STRING_SCHEMA = {
-    "type": "string",
-    "pattern": r"^\s*\S.*$"
-}
-
-NOT_EMPTY_STRING_ARRAY_SCHEMA = {
-    "type": "array",
-    "minItems": 1,
-
-    "items": NOT_EMPTY_STRING_SCHEMA
-}
-
 LOCAL_COMMAND_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "required": ["command"],
 
     "properties": {
-        "name": NOT_EMPTY_STRING_SCHEMA,
-        "command": NOT_EMPTY_STRING_SCHEMA,
-        "dependencies": NOT_EMPTY_STRING_ARRAY_SCHEMA,
+        "name": base.NOT_EMPTY_STRING_SCHEMA,
+        "command": base.NOT_EMPTY_STRING_SCHEMA,
+        "dependencies": base.NOT_EMPTY_STRING_ARRAY_SCHEMA,
         "type": {
             "enum": ["local"]
         },
-        "files": NOT_EMPTY_STRING_ARRAY_SCHEMA,
-        "user": NOT_EMPTY_STRING_SCHEMA
+        "files": base.NOT_EMPTY_STRING_ARRAY_SCHEMA,
+        "user": base.NOT_EMPTY_STRING_SCHEMA
     }
 }
 
 SINGLE_COMMAND_SCHEMA = copy.deepcopy(LOCAL_COMMAND_SCHEMA)
 SINGLE_COMMAND_SCHEMA["required"] = ["name", "command", "type"]
 SINGLE_COMMAND_SCHEMA["properties"]["type"]["enum"] = ["single"]
-SINGLE_COMMAND_SCHEMA["properties"]["image"] = NOT_EMPTY_STRING_SCHEMA
+SINGLE_COMMAND_SCHEMA["properties"]["image"] = \
+    base.NOT_EMPTY_STRING_SCHEMA
 
 COMMAND_SCHEMA = {
     "type": "object",
@@ -77,17 +62,17 @@ EMPTY_DIR_VOLUME_SCHEMA = {
     "required": ["name", "path"],
 
     "properties": {
-        "name": NOT_EMPTY_STRING_SCHEMA,
+        "name": base.NOT_EMPTY_STRING_SCHEMA,
         "type": {
             "enum": ["empty-dir"]
         },
         "path": {
             "type": "string",
-            "pattern": PATH_RE
+            "pattern": base.PATH_RE
         },
         "mount-path": {
             "type": "string",
-            "pattern": PATH_RE
+            "pattern": base.PATH_RE
         },
         "readOnly": {
             "type": "boolean"
@@ -122,7 +107,7 @@ PROBE_SCHEMA_EXEC = {
         "type": {
             "enum": ["exec"]
         },
-        "command": NOT_EMPTY_STRING_SCHEMA,
+        "command": base.NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
         "timeout": TIMEOUT_SCHEMA
     }
@@ -144,7 +129,7 @@ PROBE_SCHEMA_HTTP = {
             "enum": ["httpGet"]
         },
         "port": PORT_SCHEMA,
-        "path": NOT_EMPTY_STRING_SCHEMA,
+        "path": base.NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
         "timeout": TIMEOUT_SCHEMA
     }
@@ -182,7 +167,7 @@ SERVICE_SCHEMA = {
             },
 
             "properties": {
-                "name": NOT_EMPTY_STRING_SCHEMA,
+                "name": base.NOT_EMPTY_STRING_SCHEMA,
                 "ports": {
                     "type": "array",
                     "minItems": 1,
@@ -233,8 +218,8 @@ SERVICE_SCHEMA = {
                         "required": ["name", "image", "daemon"],
 
                         "properties": {
-                            "name": NOT_EMPTY_STRING_SCHEMA,
-                            "image": NOT_EMPTY_STRING_SCHEMA,
+                            "name": base.NOT_EMPTY_STRING_SCHEMA,
+                            "image": base.NOT_EMPTY_STRING_SCHEMA,
                             "privileged": {
                                 "type": "boolean"
                             },
@@ -244,7 +229,7 @@ SERVICE_SCHEMA = {
 
                                 "properties": {
                                     "readiness": {"oneOf": [
-                                        NOT_EMPTY_STRING_SCHEMA,
+                                        base.NOT_EMPTY_STRING_SCHEMA,
                                         PROBE_SCHEMA,
                                     ]},
                                     "liveness": PROBE_SCHEMA
@@ -268,8 +253,8 @@ SERVICE_SCHEMA = {
                                     "required": ["name"],
 
                                     "properties": {
-                                        "name": NOT_EMPTY_STRING_SCHEMA,
-                                        "value": NOT_EMPTY_STRING_SCHEMA,
+                                        "name": base.NOT_EMPTY_STRING_SCHEMA,
+                                        "value": base.NOT_EMPTY_STRING_SCHEMA,
                                         "valueFrom": {"type": "object"}
                                     }
                                 }
@@ -279,29 +264,7 @@ SERVICE_SCHEMA = {
                 }
             }
         },
-        "files": {
-            "type": "object",
-            "patternProperties": {
-                r"^[\w][\w.-]*$": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["path", "content"],
-
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "pattern": FILE_PATH_RE
-                        },
-                        "content": NOT_EMPTY_STRING_SCHEMA,
-                        "perm": {
-                            "type": "string",
-                            "pattern": "[0-7]{3,4}"
-                        },
-                        "user": NOT_EMPTY_STRING_SCHEMA
-                    }
-                }
-            }
-        }
+        "files": base.FILES_SCHEMA
     }
 }
 
@@ -310,7 +273,7 @@ def validate_service_definitions(components_map, components=None):
     if not components:
         components = components_map.keys()
     else:
-        validation_base.validate_components_names(components, components_map)
+        base.validate_components_names(components, components_map)
 
     not_passed_components = set()
 
