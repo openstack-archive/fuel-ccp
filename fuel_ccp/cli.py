@@ -313,17 +313,25 @@ class ActionStatus(BaseCommand, lister.Lister):
     def get_parser(self, *args, **kwargs):
         parser = super(ActionStatus, self).get_parser(*args, **kwargs)
         parser.add_argument("action",
-                            nargs="?",
-                            help="Show action status")
+                            help="Show action status"
+                                 "Select 'all' for show all statuses"
+                            )
         return parser
 
     def take_action(self, parsed_args):
         self._fetch_repos()
-        return (
-            ACTION_FIELDS,
-            ((a.name, a.component, a.date, a.status, a.restarts)
-             for a in action.list_action_status(parsed_args.action))
-        )
+        if not parsed_args.action or parsed_args.action == "all":
+            return (
+                ACTION_FIELDS,
+                ((a.name, a.component, a.date, a.status, a.restarts)
+                 for a in action.list_action_status(parsed_args.action))
+            )
+        else:
+            action_obj = action.get_action_status_by_name(parsed_args.action)
+            return (
+                ACTION_FIELDS,
+                (action_obj.name, action_obj.component, action_obj.date,
+                 action_obj.status, action_obj.restarts))
 
 
 class ActionRun(BaseCommand, show.ShowOne):
