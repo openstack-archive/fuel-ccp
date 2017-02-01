@@ -25,6 +25,7 @@ Advanced topics
    :maxdepth: 1
 
    deploying_multiple_parallel_environments
+   galera
    ceph
    ceph_cluster
    using_calico_instead_of_ovs
