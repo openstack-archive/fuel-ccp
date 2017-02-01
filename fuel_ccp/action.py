@@ -298,3 +298,16 @@ def get_action_status_by_name(action_name):
             return action
     raise exceptions.NotFoundException("Action with name \"%s\" not found" % (
                                        action_name))
+
+
+def get_action_statuses_by_names(action_names):
+    actions = []
+    for action in list_action_status():
+        if action.name in action_names:
+            action_names.remove(action.name)
+            actions.append(action)
+    if action_names:
+        raise exceptions.NotFoundException(
+            "Action(s) with name(s) %s not found" % (
+                ", ".join(action_names)))
+    return actions
