@@ -313,17 +313,17 @@ class ActionStatus(BaseCommand, lister.Lister):
     def get_parser(self, *args, **kwargs):
         parser = super(ActionStatus, self).get_parser(*args, **kwargs)
         parser.add_argument("action",
-                            nargs="?",
+                            nargs='*',
                             help="Show action status")
         return parser
 
     def take_action(self, parsed_args):
         self._fetch_repos()
-        return (
-            ACTION_FIELDS,
-            ((a.name, a.component, a.date, a.status, a.restarts)
-             for a in action.list_action_status(parsed_args.action))
-        )
+        if not parsed_args.action:
+            return get_statuses_for_actions(action.list_action_status())
+        else:
+            return get_statuses_for_actions(
+                action.get_action_statuses_by_names(parsed_args.action))
 
 
 class ActionRun(BaseCommand, show.ShowOne):
@@ -340,10 +340,22 @@ class ActionRun(BaseCommand, show.ShowOne):
         config.load_component_defaults()
         action_name = action.run_action(parsed_args.action)
         action_obj = action.get_action_status_by_name(action_name)
-        return (
-            ACTION_FIELDS,
-            (action_obj.name, action_obj.component, action_obj.date,
-             action_obj.status, action_obj.restarts))
+        return get_status_for_single_action(action_obj)
+
+
+def get_status_for_single_action(action_obj):
+    return (
+        ACTION_FIELDS,
+        (action_obj.name, action_obj.component, action_obj.date,
+         action_obj.status, action_obj.restarts))
+
+
+def get_statuses_for_actions(action_objects):
+    return (
+        ACTION_FIELDS,
+        ((a.name, a.component, a.date, a.status, a.restarts)
+         for a in action_objects)
+    )
 
 
 def signal_handler(signo, frame):
