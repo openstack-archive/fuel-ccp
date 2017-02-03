@@ -84,6 +84,7 @@ def create_rendered_dockerfile(dockerfile, tmp_path, config):
     src_dir = os.path.dirname(dockerfile['path'])
     dest_dir = os.path.join(tmp_path, dockerfile['name'])
     os.makedirs(dest_dir)
+    os.makedirs(dest_dir)
     dockerfilename = os.path.join(dest_dir, 'Dockerfile')
     with open(dockerfilename, 'w') as f:
         f.write(dockerfile['content'])
