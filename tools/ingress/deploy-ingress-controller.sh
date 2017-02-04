@@ -12,11 +12,11 @@ function usage {
     echo "  $base_name -n <namespace>"
     echo "  $base_name -k <path to tls key>"
     echo "  $base_name -c <path to tls cert>"
-    echo "  $base_name -d <ingress domain (default: ccp.external)>"
+    echo "  $base_name -d <ingress domain (default: external)>"
 }
 
 NAMESPACE=" --namespace kube-system"
-DOMAIN="ccp.external"
+DOMAIN="external"
 WEBUI_PORT=8088
 HTTP_PORT=80
 HTTPS_PORT=8443
