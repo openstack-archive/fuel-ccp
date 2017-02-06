@@ -9,7 +9,7 @@ function usage {
     echo "  $base_name -p <http port (default: 80)>"
     echo "  $base_name -s <https port (default: 8443)>"
     echo "  $base_name -w <webui port (default: 8088)>"
-    echo "  $base_name -n <namespace>"
+    echo "  $base_name -n <namespace> (default: kube-system)"
     echo "  $base_name -k <path to tls key>"
     echo "  $base_name -c <path to tls cert>"
     echo "  $base_name -d <ingress domain (default: external)>"
@@ -80,9 +80,11 @@ if [ -z $TLS_KEY ] || [ -z $TLS_CERT ]; then
 fi
 
 kube_cmd create secret generic traefik-cert --from-file=$TLS_CERT --from-file=$TLS_KEY
-sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" $workdir/traefik-conf.yaml | kube_cmd create -f -
+sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" \
+    -e "s/TLS_KEY/$TLS_KEY/g" -e "s/TLS_CERT/$TLS_CERT/g" $workdir/traefik-conf.yaml | kube_cmd create -f -
 sleep 1
-sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" -e "s/EXTERNAL_IP/$EXTERNAL_IP/g" $workdir/controller.yaml | kube_cmd create -f -
+sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" \
+    -e "s/EXTERNAL_IP/$EXTERNAL_IP/g" $workdir/controller.yaml | kube_cmd create -f -
 
 if [ -n $CLEANUP ]; then
     rm $TLS_KEY $TLS_CERT
