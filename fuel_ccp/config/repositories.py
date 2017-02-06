@@ -17,6 +17,7 @@ DEFAULT_REPOS = [
     'fuel-ccp-memcached',
     'fuel-ccp-murano',
     'fuel-ccp-neutron',
+    'fuel-ccp-nginx',
     'fuel-ccp-nova',
     'fuel-ccp-openstack-base',
     'fuel-ccp-rabbitmq',
