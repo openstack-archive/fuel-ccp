@@ -331,11 +331,8 @@ def _create_globals_configmap(config):
 
 
 def _create_nodes_configmap(nodes):
-    nodes_config = config._yaml.AttrDict()
-    for node in sorted(nodes):
-        if 'configs' in nodes[node]:
-            nodes_config[node] = nodes[node]['configs']
-    data = {templates.NODES_CONFIG: nodes_config._json(sort_keys=True)}
+    nodes_config = utils.get_nodes_config(nodes)
+    data = {templates.NODES_CONFIG: nodes_config}
     cm = templates.serialize_configmap(templates.NODES_CONFIG, data)
     return kubernetes.process_object(cm)
 

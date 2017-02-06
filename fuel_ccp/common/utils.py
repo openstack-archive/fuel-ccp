@@ -167,3 +167,11 @@ def get_deployed_components():
         itertools.chain(deployed_deployments, deployed_statefulsets))
     )
     return deployed_components
+
+
+def get_nodes_config(nodes):
+    nodes_config = config._yaml.AttrDict()
+    for node in sorted(nodes):
+        if 'configs' in nodes[node]:
+            nodes_config[node] = nodes[node]['configs']
+    return nodes_config._json(sort_keys=True)

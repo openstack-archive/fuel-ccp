@@ -58,6 +58,7 @@ class Action(object):
     def _create_configmap(self):
         data = {
             "config": CONF.configs._json(sort_keys=True),
+            "nodes-config": utils.get_nodes_config(CONF.nodes),
             "workflow": self._get_workflow()
         }
         data.update(self._get_file_templates())
@@ -119,6 +120,10 @@ class Action(object):
             {
                 "key": "config",
                 "path": "globals/globals.json"
+            },
+            {
+                "key": "nodes-config",
+                "path": "nodes-config/nodes-config.json"
             },
             {
                 "key": "workflow",
