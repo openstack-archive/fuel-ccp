@@ -1,0 +1,10 @@
+Code-Review+2: Proskurin Kirill <kproskurin@mirantis.com>
+Verified+1: Mirantis CCP CI <mirantis-fuel-ccp-ci@mirantis.com>
+Code-Review+2: Andrey Pavlov <apavlov@mirantis.com>
+Workflow+1: Andrey Pavlov <apavlov@mirantis.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 06 Feb 2017 15:33:19 +0000
+Reviewed-on: https://review.openstack.org/429711
+Project: openstack/fuel-ccp
+Branch: refs/heads/master
