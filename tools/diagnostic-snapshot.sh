@@ -8,7 +8,7 @@ set +e
 : ${NAMESPACE:="ccp"}
 CCP_LOG="ccp-diag.log"
 DIVIDER=`printf '%40s\n' | tr ' ' -`
-
+DEFAULT_LOCATIONS=( ~/.ccp.yaml ~/.ccp/ccp.yaml /etc/ccp.yaml /etc/ccp/ccp.yaml )
 
 shell_tests=('top -bn1 -c| head -n 15'
             'docker images'
@@ -35,6 +35,7 @@ function usage {
     -h|--help        Print this help
     -o|--output-dir  Logs output directory (optional - default /tmp/ccp-diag)
     -n|--namespace   Kubernetes namespace  (optional - default ccp)
+    -c|--config      Fuel-ccp config file
 EOF
     exit
 }
@@ -43,6 +44,19 @@ function filename_escape {
     echo ${1} | sed s'#[ |/]#_#g'
 }
 
+
+function config_dump {
+    cp ${CONFIG_FILE} ${LOG_DIR}/provided_ccp.yaml
+
+    for cf in ${DEFAULT_LOCATIONS[@]}; do
+        if [ -e "${cf}" ]; then
+            fname=$(filename_escape "${cf}")
+            cp ${cf} ${LOG_DIR}/${fname}
+        fi
+    done
+    ccp --config-file ${CONFIG_FILE} config dump > $LOG_DIR/ccp_config_dump.yaml
+
+}
 
 
 function get_shell {
@@ -94,7 +108,7 @@ function ccp_data {
 
 
 # Parse command line arguments:
-OPTS=`getopt -o 'ho:n:' --long help,output-dir:,namespace: -n 'parse-options' -- ${@}`
+OPTS=`getopt -o 'ho:n:c:' --long help,output-dir:,namespace: -n 'parse-options' -- ${@}`
 if [ ${?} != 0 ] ; then
     echo "Failed parsing options."
     exit 1
@@ -106,13 +120,21 @@ while [ -n "${1}" ]; do
         -h|--help ) usage; shift ;;
         -o|--output-dir ) LOG_DIR=${2}; shift; shift ;;
         -n|--namespace ) NAMESPACE=${2}; shift; shift ;;
+        -c|--config ) CONFIG_FILE=${2}; shift; shift ;;
         -- ) shift; break ;;
         * ) break ;;
     esac
 done
 
+if [ -z ${CONFIG_FILE} ]; then
+    echo "Please provide config file for fuel-ccp"
+    usage
+    exit 1
+fi
+
 mkdir -p "${LOG_DIR}"/{logs,system,k8s} | exit 1
 
+config_dump
 get_shell
 k8s_data
 ccp_data > "${LOG_DIR}/${CCP_LOG}"
