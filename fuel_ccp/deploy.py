@@ -393,6 +393,10 @@ def _make_topology(nodes, roles, replicas):
     if not nodes:
         LOG.error("Nodes section is not specified in configs")
         failed = True
+    elif 'configs' in nodes and not isinstance(nodes['configs'], dict):
+        LOG.error("Nodes configs should be a dict, found "
+                  "%s" % type(nodes['configs']))
+        failed = True
     if not roles:
         LOG.error("Roles section is not specified in configs")
         failed = True
