@@ -32,6 +32,7 @@ Advanced topics
    using_calico_instead_of_ovs
    ironic
    known_issues
+   neutron_configuration
 
 Service plugins docs
 --------------------
