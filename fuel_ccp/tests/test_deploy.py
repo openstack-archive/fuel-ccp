@@ -7,6 +7,7 @@ import yaml
 
 from fuel_ccp import deploy
 from fuel_ccp.tests import base
+from fuel_ccp.validation import deploy as deploy_validation
 
 
 class TestDeploy(base.TestCase):
@@ -395,13 +396,38 @@ class TestDeployMakeTopology(base.TestCase):
             ]
         }
 
-    def test_make_empty_topology(self):
+    def test_make_topology_failed(self):
         self.assertRaises(RuntimeError,
                           deploy._make_topology, None, None, None)
         self.assertRaises(RuntimeError,
                           deploy._make_topology, None, {"spam": "eggs"}, None)
         self.assertRaises(RuntimeError,
                           deploy._make_topology, {"spam": "eggs"}, None, None)
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology, {"configs": "because-cows"},
+                          {"spam": "eggs"}, None)
+
+    def test_nodes_configs_has_new_var(self):
+        nodes = {
+            'node1': {
+                'configs': {
+                    'heat': {
+                        'stack_params': {
+                            'converge_resources': 'True',
+                        }
+                    }
+                }
+            }
+        }
+        configs = {
+            'heat': {
+                'stack_params': {
+                    'debug': True
+                }
+            }
+        }
+        self.assertFalse(deploy_validation.validate_nodes_config(nodes,
+                                                                 configs))
 
     def test_make_topology_without_replicas(self):
         nodes = {
