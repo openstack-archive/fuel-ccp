@@ -8,6 +8,7 @@ import yaml
 from fuel_ccp.config import _yaml
 from fuel_ccp import deploy
 from fuel_ccp.tests import base
+from fuel_ccp.validation import deploy as deploy_validation
 
 
 class TestDeploy(base.TestCase):
@@ -396,7 +397,7 @@ class TestDeployMakeTopology(base.TestCase):
             ]
         })
 
-    def test_make_empty_topology(self):
+    def test_make_topology_failed(self):
         self.assertRaises(RuntimeError,
                           deploy._make_topology, _yaml.AttrDict(),
                           _yaml.AttrDict(), _yaml.AttrDict())
@@ -407,6 +408,35 @@ class TestDeployMakeTopology(base.TestCase):
                           deploy._make_topology,
                           _yaml.AttrDict({"spam": "eggs"}),
                           _yaml.AttrDict(), _yaml.AttrDict())
+        self.assertRaises(RuntimeError,
+                          deploy._make_topology,
+                          self.nested_dict_to_attrdict(
+                              {"node1": {"configs": "because-cows"}}),
+                          _yaml.AttrDict({"spam": "eggs"}), None)
+
+    def test_nodes_configs_has_new_var(self):
+        nodes = {
+            'node1': {
+                'configs': {
+                    'heat': {
+                        'stack_params': {
+                            'converge_resources': 'True',
+                        }
+                    }
+                }
+            }
+        }
+        configs = {
+            'heat': {
+                'stack_params': {
+                    'debug': True
+                }
+            }
+        }
+        nodes = self.nested_dict_to_attrdict(nodes)
+        configs = self.nested_dict_to_attrdict(configs)
+        self.assertFalse(deploy_validation.validate_nodes_section(nodes,
+                                                                  configs))
 
     def test_make_topology_without_replicas(self):
         nodes = _yaml.AttrDict({

@@ -16,7 +16,9 @@
 # under the License.
 
 from oslotest import base
+import six
 
+from fuel_ccp.config import _yaml
 from fuel_ccp.tests import conf_fixture
 
 
@@ -26,3 +28,12 @@ class TestCase(base.BaseTestCase):
     def setUp(self):
         super(TestCase, self).setUp()
         self.conf = self.useFixture(conf_fixture.Config()).conf
+
+    def nested_dict_to_attrdict(self, d):
+        if isinstance(d, dict):
+            return _yaml.AttrDict({k: self.nested_dict_to_attrdict(v)
+                                   for k, v in six.iteritems(d)})
+        elif isinstance(d, list):
+            return list(map(self.nested_dict_to_attrdict, d))
+        else:
+            return d
