@@ -1,20 +1,9 @@
 import io
 import jsonschema
-import six
 
 from fuel_ccp import config
 from fuel_ccp.config import _yaml
 from fuel_ccp.tests import base
-
-
-def nested_dict_to_attrdict(d):
-    if isinstance(d, dict):
-        return _yaml.AttrDict({k: nested_dict_to_attrdict(v)
-                               for k, v in six.iteritems(d)})
-    elif isinstance(d, list):
-        return list(map(nested_dict_to_attrdict, d))
-    else:
-        return d
 
 
 class TestConfigSchema(base.TestCase):

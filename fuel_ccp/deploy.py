@@ -389,10 +389,9 @@ def _create_exports_configmap(exports_map):
 
 def _make_topology(nodes, roles, replicas):
     failed = False
-    # TODO(sreshetniak): move it to validation
-    if not nodes:
-        LOG.error("Nodes section is not specified in configs")
+    if not deploy_validation.validate_nodes_section(nodes, CONF.configs):
         failed = True
+    # TODO(sreshetniak): move it to validation
     if not roles:
         LOG.error("Roles section is not specified in configs")
         failed = True
