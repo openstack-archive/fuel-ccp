@@ -17,6 +17,7 @@ User docs
    config/index
    config/types
    bootstrapping
+   external_access
 
 Advanced topics
 ---------------
