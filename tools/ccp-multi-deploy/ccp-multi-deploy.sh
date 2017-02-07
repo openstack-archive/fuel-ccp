@@ -46,7 +46,7 @@ function ccp_wait_for_deployment_to_finish {
         if [ ${cnt} -eq 300 ]; then
             echo "Max time exceeded"
             if [ -n "${DEBUG}" ]; then
-                ./tools/diagnostic-snapshot.sh -n "${1}"
+                ./tools/diagnostic-snapshot.sh -c ${CONFIG_DIR}/ccp-cli-${VERSION}-config-1.yaml -n "${1}"
             fi
             exit 1
         fi
