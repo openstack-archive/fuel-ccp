@@ -107,7 +107,7 @@ def show_long_status(components=None):
 def show_short_status(components=None):
     states = get_pod_states(components)
     if not states:
-        status = "no cluster"
+        status = "not deployed"
     else:
         status = ST_OK if all(map(is_app_ready, states.values())) else ST_WIP
     return ("status",), ((status,),)
