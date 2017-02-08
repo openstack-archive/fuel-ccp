@@ -8,8 +8,8 @@ data:
     [web]
     address = ":WEBUI_PORT"
     ReadOnly = true
-    CertFile = "/ssl/tls.crt"
-    KeyFile = "/ssl/tls.key"
+    CertFile = "/ssl/TLS_CERT"
+    KeyFile = "/ssl/TLS_KEY"
     [entryPoints]
       [entryPoints.http]
       address = ":HTTP_PORT"
