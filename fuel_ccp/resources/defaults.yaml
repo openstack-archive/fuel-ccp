@@ -87,4 +87,13 @@ configs:
           A8IAdlzYL2jlaeSi2GdP5lBmOQgwP/0KTeKnaGiDQUtvxs4Xd6nYua8aui0xu47G
           dd2zmogI+UOaa2VCz0W/thqx23zui8kmUf6v7kD3N78tTN6xjNBrbQ==
           -----END RSA PRIVATE KEY-----
+        dhparam: |
+          -----BEGIN DH PARAMETERS-----
+          MIIBCAKCAQEAvEQY4IYOUazAAdyx+Ejb6pWbOpFwsou1Jg0WSa648/QHtkPgKGCg
+          W3mY3nbbYFKxVJ954Wm5OVv0wxSZVVu74Zvypw4tr1wwGiUbjq0sWgdedPPTQ8iR
+          DYOg3S/3HgKGn9m4fMDK18hzofNhNEamHmNuOm2x3cljOAeMR/hkfcp+YV7gOCWQ
+          vNAc/pTCpsrmcnbZwUp8SqzRsBKO08YIva4BKy6Yx2NJrmgdqWFPjlpDTVb7BmFy
+          j44cnTAdWbn6EDrPOiJkm/uPv67a8jBWNGZwkWi8H6jIt05HPMivYvtyHucFhORT
+          Jh3t5tPNIJw5JBev4SAfaObVtm30tFSvOwIBAg==
+          -----END DH PARAMETERS-----
 
