@@ -107,7 +107,7 @@ def parse_role(component, topology, configmaps):
         cm_version = 'dry-run'
     else:
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, files, CONF.configs)
+            configmaps, service_dir, files, CONF.configs._dict)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
