@@ -11,6 +11,7 @@ from six.moves import zip_longest
 from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import config
+from fuel_ccp.config import _yaml
 from fuel_ccp import kubernetes
 from fuel_ccp import templates
 from fuel_ccp.validation import deploy as deploy_validation
@@ -106,7 +107,7 @@ def parse_role(component, topology, configmaps):
         cm_version = 'dry-run'
     else:
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, files, CONF.configs._dict)
+            configmaps, service_dir, files, CONF.configs)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
@@ -400,7 +401,7 @@ def _make_topology(nodes, roles, replicas):
         raise RuntimeError("Failed to create topology for services")
 
     # Replicas are optional, 1 replica will deployed by default
-    replicas = replicas or dict()
+    replicas = replicas or _yaml.AttrDict()
 
     # TODO(sreshetniak): add validation
     k8s_nodes = kubernetes.list_k8s_nodes()
@@ -430,7 +431,7 @@ def _make_topology(nodes, roles, replicas):
         else:
             LOG.warning("Role '%s' defined, but unused", role)
 
-    replicas = replicas.copy()
+    replicas = replicas._dict.copy()
     for svc, svc_hosts in six.iteritems(service_to_node):
         svc_replicas = replicas.pop(svc, None)
 
@@ -584,7 +585,7 @@ def version_diff(from_image, to_image):
 
 def deploy_components(components_map, components):
 
-    topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas._dict)
+    topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas)
     if not components:
         components = set(topology.keys()) & set(components_map.keys())
     else:

@@ -74,6 +74,9 @@ class AttrDict(object):
     def __str__(self):
         return self._json(sort_keys=True)
 
+    def __len__(self):
+        return len(self._dict)
+
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
