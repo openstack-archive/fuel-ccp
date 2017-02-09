@@ -115,7 +115,7 @@ def get_component_name_from_repo_path(path):
 
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
-        rendering_context = CONF.configs._dict
+        rendering_context = CONF.configs
     components_map = {}
 
     for repo in get_repositories_paths():

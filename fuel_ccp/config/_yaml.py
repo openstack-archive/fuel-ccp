@@ -74,6 +74,9 @@ class AttrDict(object):
     def __str__(self):
         return self._json(sort_keys=True)
 
+    def keys(self):
+        return self._dict.keys()
+
     def __len__(self):
         return len(self._dict)
 

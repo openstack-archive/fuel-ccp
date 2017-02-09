@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 class BaseCommand(command.Command):
     def get_parser(self, *args, **kwargs):
         parser = super(BaseCommand, self).get_parser(*args, **kwargs)
-        parser.set_defaults(**CONF.action._dict)
+        parser.set_defaults(**CONF.action)
         return parser
 
 
@@ -193,7 +193,7 @@ class ShowStatus(lister.Lister):
 
     def get_parser(self, *args, **kwargs):
         parser = super(ShowStatus, self).get_parser(*args, **kwargs)
-        parser.set_defaults(**CONF.action._dict)
+        parser.set_defaults(**CONF.action)
 
         parser.add_argument("-l", "--long",
                             action="store_true",
