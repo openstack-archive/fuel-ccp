@@ -13,7 +13,7 @@ DEFAULT_REPOS = [
     'fuel-ccp-horizon',
     'fuel-ccp-ironic',
     'fuel-ccp-keystone',
-    'fuel-ccp-mariadb',
+    'fuel-ccp-galera',
     'fuel-ccp-memcached',
     'fuel-ccp-murano',
     'fuel-ccp-neutron',

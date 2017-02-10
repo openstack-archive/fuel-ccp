@@ -1,6 +1,8 @@
 nodes:
   node[1-3]$:
     roles:
+      - db
+      - messaging
       - controller
       - openvswitch
   node([4-9]|10|11|12)$:
@@ -8,6 +10,10 @@ nodes:
       - compute
       - openvswitch
 roles:
+  db:
+    - galera
+  messaging:
+    - rabbitmq
   controller:
     - etcd
     - glance-api
@@ -17,7 +23,6 @@ roles:
     - heat-engine
     - horizon
     - keystone
-    - mariadb
     - memcached
     - neutron-dhcp-agent
     - neutron-l3-agent
@@ -28,7 +33,6 @@ roles:
     - nova-consoleauth
     - nova-novncproxy
     - nova-scheduler
-    - rabbitmq
   compute:
     - nova-compute
     - nova-libvirt

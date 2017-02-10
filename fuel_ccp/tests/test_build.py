@@ -194,7 +194,7 @@ class TestBuild(base.TestCase):
 
     def test_match_not_ready_base_dockerfiles(self):
         dockerfile = {
-            'name': 'mariadb',
+            'name': 'galera',
             'match': True,
             'parent': {
                 'name': 'base-tools',
