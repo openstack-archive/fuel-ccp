@@ -150,6 +150,19 @@ your environment may be different.
 For the additional info about bootstrapping configuration please read the
 :doc:`bootstrapping`.
 
+Append replicas configuration:
+
+::
+
+    cat >> ~/.ccp.yaml << EOF
+    replicas:
+      galera: 3
+      rabbitmq: 3
+    EOF
+
+This will sets the number of replicas to create for each service. We need 3
+replicas for galera and rabbitmq cluster.
+
 Fetch CCP components repos:
 
 ::
@@ -178,7 +191,7 @@ For example:
 
 ::
 
-    ccp deploy -c etcd mariadb keystone
+    ccp deploy -c etcd galera keystone memcached
 
 Check deploy status
 -------------------

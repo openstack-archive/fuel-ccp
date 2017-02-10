@@ -1,13 +1,21 @@
 nodes:
   node1:
     roles:
+      - db
+      - messaging
       - controller
       - neutron-agents
   node[2-3]:
     roles:
+      - db
+      - messaging
       - compute
       - calico
 roles:
+  db:
+    - galera
+  messaging:
+    - rabbitmq
   controller:
     - etcd
     - glance-api
@@ -17,7 +25,6 @@ roles:
     - heat-engine
     - horizon
     - keystone
-    - mariadb
     - memcached
     - neutron-server
     - nova-api
@@ -25,7 +32,6 @@ roles:
     - nova-consoleauth
     - nova-novncproxy
     - nova-scheduler
-    - rabbitmq
   neutron-agents:
     - neutron-metadata-agent
   compute:

@@ -20,10 +20,10 @@ service:
           command: "sudo /bin/chown {{ service_name }}:{{ service_name }} /var/log/ccp/{{ service_name }}"
         - name: {{ service_name }}-db-create
           dependencies:
-            - mariadb
+            - galera
           type: single
           command:
-            mysql -u root -p{{ db_root_password }} -h mariadb -e "create database {{ keystone_db_name }};
+            mysql -u root -p{{ db_root_password }} -h galera -e "create database {{ keystone_db_name }};
             grant all privileges on {{ keystone_db_name }}.* to '{{ keystone_db_username }}'@'%' identified by '{{ keystone_db_password }}'"
         - name: {{ service_name }}-db-sync
           files:
