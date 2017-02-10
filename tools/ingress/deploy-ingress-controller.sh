@@ -81,11 +81,10 @@ fi
 
 kube_cmd create secret generic traefik-cert --from-file=$TLS_CERT --from-file=$TLS_KEY
 sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" \
-    -e "s/TLS_KEY/$TLS_KEY/g" -e "s/TLS_CERT/$TLS_CERT/g" $workdir/traefik-conf.yaml | kube_cmd create -f -
+    -e "s/TLS_KEY/$(basename "$TLS_KEY")/g" -e "s/TLS_CERT/$(basename "$TLS_CERT")/g" $workdir/traefik-conf.yaml | kube_cmd create -f -
 sleep 1
 sed -e "s/HTTP_PORT/$HTTP_PORT/g" -e "s/HTTPS_PORT/$HTTPS_PORT/g" -e "s/WEBUI_PORT/$WEBUI_PORT/g" \
     -e "s/EXTERNAL_IP/$EXTERNAL_IP/g" $workdir/controller.yaml | kube_cmd create -f -
-
-if [ -n $CLEANUP ]; then
+if [ -n "$CLEANUP" ]; then
     rm $TLS_KEY $TLS_CERT
 fi
