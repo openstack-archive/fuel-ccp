@@ -169,7 +169,7 @@ def _parse_workflows(service):
 
         wf = {}
         _create_pre_commands(wf, cont)
-        _create_daemon(wf, cont)
+        _create_daemon(wf, cont, service['name'])
         _create_post_commands(wf, cont)
         workflows.update({cont["name"]: {"workflow": wf}})
     return workflows
@@ -179,10 +179,10 @@ def _create_job_wfs(container, service_name):
     wfs = {}
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            wfs.update(_create_job_wf(job))
+            wfs.update(_create_job_wf(job, service_name))
     for job in container.get("post", ()):
         if _is_single_job(job):
-            wfs.update(_create_job_wf(job, True, service_name))
+            wfs.update(_create_job_wf(job, service_name, True))
     return wfs
 
 
@@ -237,14 +237,15 @@ def _create_pre_commands(workflow, container):
         _create_command(workflow["pre"], cmd)
 
 
-def _create_daemon(workflow, container):
-    workflow["name"] = container["name"]
+def _create_daemon(workflow, container, service_name):
+    workflow["name"] = "%s/%s" % (service_name, container["name"])
     daemon = container["daemon"]
     workflow["dependencies"] = []
     # TODO(sreshetniak): add files from job
     for cmd in container.get("pre", ()):
         if cmd.get("type", "local") == "single":
-            workflow["dependencies"].append(cmd["name"])
+            workflow["dependencies"].append("%s/%s" % (
+                service_name, cmd["name"]))
     workflow["dependencies"].extend(daemon.get("dependencies", ()))
     workflow["daemon"] = {}
     _fill_cmd(workflow["daemon"], daemon)
@@ -302,9 +303,9 @@ def _create_command(workflow, cmd):
         workflow.append(cmd_flow)
 
 
-def _create_job_wf(job, post=False, service_name=None):
+def _create_job_wf(job, service_name, post=False):
     wrk = {}
-    wrk["name"] = job["name"]
+    wrk["name"] = "%s/%s" % (service_name, job["name"])
     wrk["dependencies"] = job.get("dependencies", [])
     if post:
         wrk["dependencies"].append(service_name)
@@ -582,6 +583,17 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
+def process_dependencies(service, deps_map):
+    containers = service['service_content']['service']['containers']
+    for cont in containers:
+        for cmd in itertools.chain(
+                cont.get('pre', []), [cont.get('daemon', [])],
+                cont.get('post', [])):
+            cmd['dependencies'] = ["%s/%s" % (
+                deps_map[dep.split(':')[0]], dep) for dep in cmd.get(
+                'dependencies', [])]
+
+
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas)
@@ -610,11 +622,14 @@ def deploy_components(components_map, components):
     exports_cm = _create_exports_configmap(exports_map)
     exports_ctx = {'files_header': j2_imports_files_header, 'map': exports_map}
 
+    deps_map = utils.get_dependencies_map(components_map)
+
     configmaps = (start_script_cm, exports_cm)
 
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
+        process_dependencies(service, deps_map)
         service["service_content"]['service']['exports_ctx'] = exports_ctx
         objects_gen = parse_role(service, topology, configmaps)
         objects = list(itertools.chain.from_iterable(objects_gen))
