@@ -169,7 +169,7 @@ def _parse_workflows(service):
 
         wf = {}
         _create_pre_commands(wf, cont)
-        _create_daemon(wf, cont)
+        _create_daemon(wf, cont, service['name'])
         _create_post_commands(wf, cont)
         workflows.update({cont["name"]: {"workflow": wf}})
     return workflows
@@ -179,10 +179,10 @@ def _create_job_wfs(container, service_name):
     wfs = {}
     for job in container.get("pre", ()):
         if _is_single_job(job):
-            wfs.update(_create_job_wf(job))
+            wfs.update(_create_job_wf(job, service_name))
     for job in container.get("post", ()):
         if _is_single_job(job):
-            wfs.update(_create_job_wf(job, True, service_name))
+            wfs.update(_create_job_wf(job, service_name, True))
     return wfs
 
 
@@ -237,8 +237,8 @@ def _create_pre_commands(workflow, container):
         _create_command(workflow["pre"], cmd)
 
 
-def _create_daemon(workflow, container):
-    workflow["name"] = container["name"]
+def _create_daemon(workflow, container, service_name):
+    workflow["name"] = "%s:%s" % (service_name, container["name"])
     daemon = container["daemon"]
     workflow["dependencies"] = []
     # TODO(sreshetniak): add files from job
@@ -302,9 +302,9 @@ def _create_command(workflow, cmd):
         workflow.append(cmd_flow)
 
 
-def _create_job_wf(job, post=False, service_name=None):
+def _create_job_wf(job, service_name, post=False):
     wrk = {}
-    wrk["name"] = job["name"]
+    wrk["name"] = "%s-%s" % (service_name, job["name"])
     wrk["dependencies"] = job.get("dependencies", [])
     if post:
         wrk["dependencies"].append(service_name)
@@ -581,6 +581,15 @@ def version_diff(from_image, to_image):
     from_tag = from_image.rpartition(':')[-1]
     to_tag = to_image.rpartition(':')[-1]
     return from_tag, to_tag
+
+
+def process_dependencies(service, components_map):
+    deps_map = utils.get_dependencies_map(components_map)
+    containers = service['service']['containers']
+    for cmd in itertools.chain(
+            containers['pre'], [containers['daemon']], containers['post']):
+        cmd['dependencies'] = ["%s-%s" % (
+            deps_map[dep], dep) for dep in cmd['dependencies']]
 
 
 def deploy_components(components_map, components):
