@@ -344,8 +344,8 @@ class TestDeployParseWorkflow(base.TestCase):
         expected_workflows = {
             "kenny": {
                 "workflow": {
-                    "name": "kenny",
-                    "dependencies": ["cartman-mom", "stan", "kyle"],
+                    "name": "south-park/kenny",
+                    "dependencies": ["south-park/cartman-mom", "stan", "kyle"],
                     "pre": [],
                     "post": [],
                     "files": [
@@ -363,7 +363,7 @@ class TestDeployParseWorkflow(base.TestCase):
             },
             "cartman-mom": {
                 "workflow": {
-                    "name": "cartman-mom",
+                    "name": "south-park/cartman-mom",
                     "dependencies": ["cartman-dad"],
                     "job": {
                         "command": "oops"
@@ -372,7 +372,7 @@ class TestDeployParseWorkflow(base.TestCase):
             },
             "eric-mom": {
                 "workflow": {
-                    "name": "eric-mom",
+                    "name": "south-park/eric-mom",
                     "dependencies": ["eric-dad", "south-park"],
                     "files": [
                         {
