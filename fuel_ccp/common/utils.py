@@ -159,6 +159,17 @@ def get_deploy_components_info(rendering_context=None):
     return components_map
 
 
+def get_dependencies_map(components_map):
+    deps_map = {}
+    for service_name, service in components_map.items():
+        containers = service['service_content']['service']['containers']
+        for cont in containers:
+            deps_map[cont['name']] = service_name
+            for job in itertools.chain(cont['pre'], cont['post']):
+                if job.get('type') == 'single':
+                    deps_map[job['name']] = service_name
+
+
 def get_deployed_components():
     """Returns set of deployed components."""
     deployed_deployments = kubernetes.list_cluster_deployments()
