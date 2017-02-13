@@ -6,6 +6,7 @@ roles:
     - neutron-metadata-agent
   controller-net-bridge:
     - etcd
+    - galera
     - glance-api
     - glance-registry
     - heat-api-cfn
@@ -13,7 +14,6 @@ roles:
     - heat-engine
     - horizon
     - keystone
-    - mariadb
     - memcached
     - neutron-server
     - nova-api
