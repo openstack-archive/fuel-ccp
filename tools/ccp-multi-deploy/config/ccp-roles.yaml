@@ -1,5 +1,9 @@
 ---
 roles:
+  db:
+    - galera
+  messaging:
+    - rabbitmq
   controller-net-host:
     - neutron-dhcp-agent
     - neutron-l3-agent
@@ -13,7 +17,6 @@ roles:
     - heat-engine
     - horizon
     - keystone
-    - mariadb
     - memcached
     - neutron-server
     - nova-api
