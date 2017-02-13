@@ -5,9 +5,13 @@ nodes:
       - controller-net-bridge
   node4:
     roles:
+      - db
+      - messaging
       - openvswitch
       - controller-net-host
   node[5-6]:
     roles:
+      - db
+      - messaging
       - openvswitch
       - compute
