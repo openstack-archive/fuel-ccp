@@ -1,4 +1,6 @@
+import copy
 import fixtures
+import jsonschema
 import mock
 import testscenarios
 
@@ -116,3 +118,58 @@ class TestServiceValidation(testscenarios.WithScenarios, base.TestCase):
             service_validation.validate_service_versions(
                 components_map, ['test']
             )
+
+
+class TestSchemaValidation(base.TestCase):
+    def test_secret_permissions_validation(self):
+        correct_permissions = ["0400", "0777", "0001"]
+        for perm in correct_permissions:
+            jsonschema.validate(perm, service_validation.PERMISSION_SCHEMA)
+
+        incorrect_permissions = ["123", "0778", "1400"]
+        for perm in incorrect_permissions:
+            self.assertRaisesRegexp(
+                jsonschema.exceptions.ValidationError,
+                "'" + perm + "' does not match.*",
+                jsonschema.validate,
+                perm, service_validation.PERMISSION_SCHEMA)
+
+    def test_secret_definition_validation(self):
+        incorrect_secret = {
+            "path": "/etc/keystone/fernet-keys",
+            "secret": {
+            }
+        }
+        self.assertRaisesRegexp(
+            jsonschema.exceptions.ValidationError,
+            "'secretName' is a required property.*",
+            jsonschema.validate,
+            incorrect_secret, service_validation.SECRET_SCHEMA)
+
+        minimal_correct_secret = copy.deepcopy(incorrect_secret)
+        minimal_correct_secret["secret"].update({"secretName": "fernet"})
+        jsonschema.validate(minimal_correct_secret,
+                            service_validation.SECRET_SCHEMA)
+
+        correct_secret = copy.deepcopy(minimal_correct_secret)
+        correct_secret["secret"] = {
+            "secretName": "fernet",
+            "defaultMode": "0777",
+            "items": [
+                {
+                    "key": "username",
+                    "path": "/specific/username/path",
+                    "mode": "0777"
+                },
+                {
+                    "key": "password",
+                    "path": "/specific/password/path",
+                    "mode": "0400"
+                }
+            ]
+        }
+        correct_secret["data"] = {
+            "item1": "value 1",
+            "2": "/path/file.ext"
+        }
+        jsonschema.validate(correct_secret, service_validation.SECRET_SCHEMA)
