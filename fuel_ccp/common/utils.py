@@ -3,6 +3,7 @@ import logging
 import os
 import pkg_resources
 
+import jinja2
 import yaml
 
 import fuel_ccp
@@ -60,7 +61,8 @@ def get_config_paths():
     return paths
 
 
-def address(service, port=None, external=False, with_scheme=False):
+@jinja2.contextfunction
+def address(ctx, service, port=None, external=False, with_scheme=False):
     addr = None
     service_name = service.split('-')[0]
     enable_tls = CONF.configs.get(service_name, {}).get(
@@ -81,6 +83,10 @@ def address(service, port=None, external=False, with_scheme=False):
         elif port.get('node'):
             addr = '%s:%s' % (CONF.configs.k8s_external_ip, port['node'])
 
+    current_service = ctx.get('_current_service')
+    if current_service:
+        service = CONF.services.get(current_service, {}).get(
+            'mapping', {}).get(service) or service
     if addr is None:
         addr = '.'.join((service, CONF.kubernetes.namespace, 'svc',
                          CONF.kubernetes.cluster_domain))
@@ -120,10 +126,56 @@ def get_component_name_from_repo_path(path):
     return name
 
 
+def get_service_definitions_map():
+    s_d_map = {}
+    for service_name, value in CONF.services._items():
+        s_d_map.setdefault(value['service_def'], [])
+        s_d_map[value['service_def']].append(service_name)
+    return s_d_map
+
+
+def process_dependencies(service, deps_map, services_map):
+    def extend_dep(dep):
+        dep_name = dep.split(':')[0]
+        if dep_name not in deps_map:
+            # dependency is not a container or job
+            # checking service mapping first
+            if dep_name in service_mapping:
+                dep_name = service_mapping[dep_name]
+                service_ref = services_map[dep_name]
+            elif dep_name in services_map:
+                service_ref = services_map[dep_name]
+            else:
+                raise RuntimeError('Dependency "%s" not found' % dep_name)
+            # adjust deps with container names of the service
+            return ["%s/%s" % (dep_name, cnt['name']) for cnt in service_ref[
+                'service_content']['service']['containers']]
+
+        dep_service_def = deps_map[dep_name]
+        dep_service_name = service_mapping.get(
+            dep_service_def) or dep_service_def
+        return ["%s/%s" % (dep_service_name, dep)]
+
+    service_name = service['service_content']['service']['name']
+    service_mapping = CONF.services.get(service_name, {}).get('mapping', {})
+    containers = service['service_content']['service']['containers']
+    for cont in containers:
+        for cmd in itertools.chain(
+                cont.get('pre', []), [cont.get('daemon', [])],
+                cont.get('post', [])):
+            if cmd.get('dependencies'):
+                new_deps = []
+                for dep in cmd['dependencies']:
+                    new_deps.extend(extend_dep(dep))
+                cmd['dependencies'] = new_deps
+
+
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
         rendering_context = CONF.configs._dict
-    components_map = {}
+    service_definitions_map = get_service_definitions_map()
+    services_map = {}
+    custom_services_map = {}
 
     for repo in get_repositories_paths():
         service_dir = os.path.join(repo, "service")
@@ -158,13 +210,38 @@ def get_deploy_components_info(rendering_context=None):
                 LOG.debug("Parse service definition: %s", service_file)
                 service_definition = yaml.load(content)
                 service_name = service_definition['service']['name']
-                components_map[service_name] = {
+                services_map[service_name] = {
                     'component': component,
                     'component_name': component_name,
                     'service_dir': service_dir,
                     'service_content': service_definition
                 }
-    return components_map
+                for svc in service_definitions_map.get(service_name, ()):
+                    LOG.debug("Rendering service definition: %s for '%s' "
+                              "service", service_file, svc)
+                    context = rendering_context.copy()
+                    context['_current_service'] = svc
+                    content = jinja_utils.jinja_render(
+                        os.path.join(service_dir, service_file),
+                        context, functions=[address]
+                    )
+                    LOG.debug("Parse service definition: %s for '%s' "
+                              "service", service_file, svc)
+                    service_definition = yaml.load(content)
+                    service_definition['service']['name'] = svc
+                    custom_services_map[svc] = {
+                        'component': component,
+                        'component_name': component_name,
+                        'service_dir': service_dir,
+                        'service_content': service_definition
+                    }
+
+    deps_map = get_dependencies_map(services_map)
+    services_map.update(custom_services_map)
+    for svc_name, svc in services_map.items():
+        process_dependencies(svc, deps_map, services_map)
+
+    return services_map
 
 
 def get_dependencies_map(components_map):
