@@ -18,8 +18,6 @@ service:
         - name: chown-logs-dir
           command: "sudo /bin/chown keystone:keystone /var/log/ccp/keystone"
         - name: keystone-db-create
-          dependencies:
-            - galera
           type: single
           command:
             mysql -u root -pdb_root_password_default -h galera -e "create database keystone_db_name_default;
@@ -28,14 +26,14 @@ service:
           files:
             - keystone-conf
           dependencies:
-            - keystone-db-create
+            - keystone/keystone-db-create
           type: single
           command: keystone-manage db_sync
         - name: keystone-db-bootstrap
           files:
             - keystone-conf
           dependencies:
-            - keystone-db-sync
+            - keystone/keystone-db-sync
           type: single
           command: keystone-manage bootstrap
                    --bootstrap-password os_user_password_default
@@ -48,8 +46,6 @@ service:
                    --bootstrap-internal-url http://keystone:keystone_public_port_default
 
       daemon:
-        dependencies:
-          - memcached
         files:
           - keystone-conf
           - wsgi-keystone-conf
