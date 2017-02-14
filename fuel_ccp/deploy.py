@@ -470,7 +470,7 @@ def _create_openrc(config):
         "export OS_PASSWORD=%s" % config['openstack']['user_password'],
         "export OS_IDENTITY_API_VERSION=3",
         "export OS_AUTH_URL=%s/v3" %
-        utils.address('keystone', config['keystone']['public_port'], True,
+        utils.address({}, 'keystone', config['keystone']['public_port'], True,
                       True)
     ]
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
@@ -584,14 +584,21 @@ def version_diff(from_image, to_image):
 
 
 def process_dependencies(service, deps_map):
+    def extend_dep(dep):
+        dep_service_def = deps_map[dep.split(':')[0]]
+        dep_service_name = service_mapping.get(
+            dep_service_def) or dep_service_def
+        return "%s/%s" % (dep_service_name, dep)
+
+    service_name = service['service_content']['service']['name']
+    service_mapping = CONF.services.get(service_name, {}).get('mapping', {})
     containers = service['service_content']['service']['containers']
     for cont in containers:
         for cmd in itertools.chain(
                 cont.get('pre', []), [cont.get('daemon', [])],
                 cont.get('post', [])):
-            cmd['dependencies'] = ["%s/%s" % (
-                deps_map[dep.split(':')[0]], dep) for dep in cmd.get(
-                'dependencies', [])]
+            cmd['dependencies'] = list(map(extend_dep, cmd.get(
+                'dependencies', [])))
 
 
 def deploy_components(components_map, components):
