@@ -65,7 +65,9 @@ class AttrDict(object):
                 value._merge(other_value)
             else:
                 if isinstance(other_value, dict):
-                    other_value = AttrDict(other_value)
+                    val = AttrDict()
+                    val._merge(other_value)
+                    other_value = val
                 self._dict[key] = other_value
 
     def _json(self, **kwargs):
