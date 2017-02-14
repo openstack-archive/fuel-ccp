@@ -33,6 +33,7 @@ Advanced topics
    using_odl_instead_of_ovs
    ironic
    known_issues
+   neutron_configuration
 
 Service plugins docs
 --------------------
