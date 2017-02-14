@@ -470,7 +470,7 @@ def _create_openrc(config):
         "export OS_PASSWORD=%s" % config['openstack']['user_password'],
         "export OS_IDENTITY_API_VERSION=3",
         "export OS_AUTH_URL=%s/v3" %
-        utils.address('keystone', config['keystone']['public_port'], True,
+        utils.address({}, 'keystone', config['keystone']['public_port'], True,
                       True)
     ]
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
@@ -583,17 +583,6 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
-def process_dependencies(service, deps_map):
-    containers = service['service_content']['service']['containers']
-    for cont in containers:
-        for cmd in itertools.chain(
-                cont.get('pre', []), [cont.get('daemon', [])],
-                cont.get('post', [])):
-            cmd['dependencies'] = ["%s/%s" % (
-                deps_map[dep.split(':')[0]], dep) for dep in cmd.get(
-                'dependencies', [])]
-
-
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas)
@@ -622,14 +611,11 @@ def deploy_components(components_map, components):
     exports_cm = _create_exports_configmap(exports_map)
     exports_ctx = {'files_header': j2_imports_files_header, 'map': exports_map}
 
-    deps_map = utils.get_dependencies_map(components_map)
-
     configmaps = (start_script_cm, exports_cm)
 
     upgrading_components = {}
     for service_name in components:
         service = components_map[service_name]
-        process_dependencies(service, deps_map)
         service["service_content"]['service']['exports_ctx'] = exports_ctx
         objects_gen = parse_role(service, topology, configmaps)
         objects = list(itertools.chain.from_iterable(objects_gen))
