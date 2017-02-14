@@ -584,14 +584,20 @@ def version_diff(from_image, to_image):
 
 
 def process_dependencies(service, deps_map):
+    def extend_dep(dep):
+        dep_service_def = deps_map[dep.split(':')[0]]
+        dep_service_name = service_mapping.get(
+            dep_service_def) or dep_service_def
+        return "%s/%s" % (dep_service_name, dep)
+
+    service_name = service['service_content']['service']['name']
+    service_mapping = CONF.services.get(service_name, {}).get('mapping', {})
     containers = service['service_content']['service']['containers']
     for cont in containers:
         for cmd in itertools.chain(
                 cont.get('pre', []), [cont.get('daemon', [])],
                 cont.get('post', [])):
-            cmd['dependencies'] = ["%s/%s" % (
-                deps_map[dep.split(':')[0]], dep) for dep in cmd.get(
-                'dependencies', [])]
+            cmd['dependencies'] = map(extend_dep, cmd['dependencies'])
 
 
 def deploy_components(components_map, components):

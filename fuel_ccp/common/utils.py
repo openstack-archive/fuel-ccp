@@ -3,6 +3,7 @@ import logging
 import os
 import pkg_resources
 
+import jinja2
 import yaml
 
 import fuel_ccp
@@ -59,8 +60,8 @@ def get_config_paths():
 
     return paths
 
-
-def address(service, port=None, external=False, with_scheme=False):
+@jinja2.contextfunction
+def address(ctx, service, port=None, external=False, with_scheme=False):
     addr = None
     scheme = 'http'
     if external:
@@ -73,6 +74,10 @@ def address(service, port=None, external=False, with_scheme=False):
         elif port.get('node'):
             addr = '%s:%s' % (CONF.configs.k8s_external_ip, port['node'])
 
+    current_service = ctx.get('_current_service')
+    if current_service:
+        service = CONF.services.get(current_service, {}).get(
+            'mapping', {}).get(service) or service
     if addr is None:
         addr = '.'.join((service, CONF.kubernetes.namespace, 'svc',
                          CONF.kubernetes.cluster_domain))
@@ -112,9 +117,18 @@ def get_component_name_from_repo_path(path):
     return name
 
 
+def get_service_definitions_map():
+    s_d_map = {}
+    for service_name, value in CONF.services:
+        s_d_map.setdefault(value['service_def'], [])
+        s_d_map[value['service_def']].append(service_name)
+    return s_d_map
+
+
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
         rendering_context = CONF.configs._dict
+    service_definitions_map = get_service_definitions_map()
     components_map = {}
 
     for repo in get_repositories_paths():
@@ -156,6 +170,26 @@ def get_deploy_components_info(rendering_context=None):
                     'service_dir': service_dir,
                     'service_content': service_definition
                 }
+                for svc in service_definitions_map.get(service_name, ()):
+                    LOG.debug("Rendering service definition: %s for '%s' "
+                              "service", service_file, svc)
+                    context = rendering_context.copy()
+                    context['_current_service'] = svc
+                    content = jinja_utils.jinja_render(
+                        os.path.join(service_dir, service_file),
+                        context, functions=[address]
+                    )
+                    LOG.debug("Parse service definition: %s for '%s' "
+                              "service", service_file, svc)
+                    service_definition = yaml.load(content)
+                    service_definition['service']['name'] = svc
+                    components_map[svc] = {
+                        'component': component,
+                        'component_name': component_name,
+                        'service_dir': service_dir,
+                        'service_content': service_definition
+                    }
+
     return components_map
 
 
