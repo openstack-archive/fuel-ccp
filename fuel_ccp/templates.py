@@ -133,7 +133,8 @@ def serialize_liveness_probe(liveness):
         cont_spec["livenessProbe"] = {
             "httpGet": {
                 "path": liveness["path"],
-                "port": liveness["port"]
+                "port": liveness["port"],
+                "scheme": liveness.get("scheme", "http")
             },
             "timeoutSeconds": liveness.get("timeout", 1),
             "initialDelaySeconds": liveness.get("initialDelay", 10)
