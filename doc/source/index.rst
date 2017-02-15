@@ -42,6 +42,7 @@ Service plugins docs
    :maxdepth: 1
 
    plugins/searchlight
+   plugins/designate
 
 Developer docs
 --------------
