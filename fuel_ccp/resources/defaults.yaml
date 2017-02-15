@@ -10,7 +10,7 @@ configs:
 
     security:
       tls:
-        enabled: false
+        create_certificates: true
         ca_cert: |
           -----BEGIN CERTIFICATE-----
           MIIDtjCCAp6gAwIBAgIUf16N1S+vqj30x8IsSTrTNwOMqW4wDQYJKoZIhvcNAQEL
