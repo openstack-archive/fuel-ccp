@@ -132,7 +132,8 @@ class TestDeploy(base.TestCase):
             "livenessProbe": {
                 "httpGet": {
                     "path": "_status",
-                    "port": 8080
+                    "port": 8080,
+                    "scheme": "HTTP"
                 },
                 "timeoutSeconds": 1,
                 "initialDelaySeconds": 7
