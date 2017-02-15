@@ -153,7 +153,8 @@ PROBE_SCHEMA_HTTP = {
         "port": PORT_SCHEMA,
         "path": NOT_EMPTY_STRING_SCHEMA,
         "initialDelay": TIMEOUT_SCHEMA,
-        "timeout": TIMEOUT_SCHEMA
+        "timeout": TIMEOUT_SCHEMA,
+        "scheme": {"enum": ["http", "https"]},
     }
 }
 
