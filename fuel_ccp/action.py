@@ -6,6 +6,7 @@ import uuid
 
 import yaml
 
+from fuel_ccp.common import jinja_utils
 from fuel_ccp.common import utils
 from fuel_ccp import config
 from fuel_ccp.config import images as config_images
@@ -85,14 +86,17 @@ class Action(object):
         return json.dumps({"workflow": wf})
 
     def _get_file_templates(self):
-        # TODO(sreshetniak): use imports and add macros CM
+        exports_map = utils.get_repositories_exports()
+        exports_template = jinja_utils.generate_jinja_imports(exports_map)
         data = {}
         for f in self.files:
             template_path = os.path.join(self.component_dir,
                                          "service", "files",
                                          f["content"])
             with open(template_path) as filedata:
-                data[f["content"]] = filedata.read()
+                data[f["content"]] = exports_template + "\n" + filedata.read()
+        for ex_item in exports_map.values():
+            data[ex_item["name"]] = ex_item["body"]
         return data
 
     # job methods
@@ -134,6 +138,11 @@ class Action(object):
             config_volume_items.append({
                 "key": f["content"],
                 "path": "files/%s" % f["content"]
+            })
+        for ex_item in utils.get_repositories_exports().values():
+            config_volume_items.append({
+                "key": ex_item["name"],
+                "path": "exports/%s" % ex_item["name"]
             })
         pod_spec = {
             "metadata": {
