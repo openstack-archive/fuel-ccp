@@ -62,7 +62,9 @@ def get_config_paths():
 
 def address(service, port=None, external=False, with_scheme=False):
     addr = None
-    enable_tls = CONF.configs.get(service, {}).get('tls', {}).get('enabled')
+    service_name = service.split('-')[0]
+    enable_tls = CONF.configs.get(service_name, {}).get(
+        'tls', {}).get('enabled')
 
     if enable_tls:
         scheme = 'https'
