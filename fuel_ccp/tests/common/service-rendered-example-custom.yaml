@@ -19,10 +19,10 @@ service:
           command: "sudo /bin/chown keystone:keystone /var/log/ccp/keystone"
         - name: keystone-db-create
           dependencies:
-            - mariadb
+            - galera
           type: single
           command:
-            mysql -u root -pdb_root_password_custom -h mariadb -e "create database keystone_db_name_custom;
+            mysql -u root -pdb_root_password_custom -h galera -e "create database keystone_db_name_custom;
             grant all privileges on keystone_db_name_custom.* to 'keystone_db_username_custom'@'%' identified by 'keystone_db_password_custom'"
         - name: keystone-db-sync
           files:
