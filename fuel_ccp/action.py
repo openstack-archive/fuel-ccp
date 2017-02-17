@@ -236,7 +236,9 @@ class ActionStatus(object):
         else:
             phase = k8s_spec.obj["status"]["phase"]
             self.restarts = 0
-            self.active = 1 if phase not in {"Failed", "Completed"} else 0
+            self.active = 1 if phase not in {"Failed",
+                                             "Completed",
+                                             "Succeeded"} else 0
             self.failed = phase == "Failed"
 
     @property
