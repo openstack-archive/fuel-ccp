@@ -153,6 +153,15 @@ def process_dependencies(service, deps_map):
                     map(extend_dep, cmd['dependencies']))
 
 
+def extend_with_service_configs(service_name, config):
+    service = CONF.services.get(service_name, {})
+    config._merge(service.get('configs', {}))
+    service_mapping = service.get('mapping')
+    if service_mapping:
+        for _, target_service in service_mapping._items():
+            extend_with_service_configs(target_service, config)
+
+
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
         rendering_context = CONF.configs._dict
@@ -204,6 +213,7 @@ def get_deploy_components_info(rendering_context=None):
                               "service", service_file, svc)
                     context = rendering_context.copy()
                     context['_current_service'] = svc
+                    extend_with_service_configs(svc, context)
                     content = jinja_utils.jinja_render(
                         os.path.join(service_dir, service_file),
                         context, functions=[address]
