@@ -10,6 +10,7 @@ CONF = config.CONF
 
 GLOBAL_CONFIG = "globals"
 NODES_CONFIG = "nodes-config"
+SERVICE_CONFIG = "service-config"
 SCRIPT_CONFIG = "start-script"
 FILES_CONFIG = "files"
 META_CONFIG = "meta"
@@ -83,6 +84,10 @@ def serialize_volume_mounts(container, for_job=None):
         {
             "name": NODES_CONFIG,
             "mountPath": "/etc/ccp/%s" % NODES_CONFIG
+        },
+        {
+            "name": SERVICE_CONFIG,
+            "mountPath": "/etc/ccp/%s" % SERVICE_CONFIG
         }
     ]
     for v in itertools.chain(container.get("volumes", ()),
@@ -300,10 +305,18 @@ def serialize_volumes(service, for_job=None):
                 "items": [{"key": NODES_CONFIG,
                            "path": "nodes-config.json"}]
             }
+        },
+        {
+            "name": SERVICE_CONFIG,
+            "configMap": {
+                "name": "%s-%s" % (service["name"], SERVICE_CONFIG),
+                "items": [{"key": SERVICE_CONFIG,
+                           "path": "%s.json" % SERVICE_CONFIG}]
+            }
         }
     ]
     volume_names = [GLOBAL_CONFIG, META_CONFIG, ROLE_CONFIG, SCRIPT_CONFIG,
-                    FILES_CONFIG, EXPORTS_CONFIG, NODES_CONFIG]
+                    FILES_CONFIG, EXPORTS_CONFIG, NODES_CONFIG, SERVICE_CONFIG]
     for cont in itertools.chain(service["containers"], [for_job]):
         for v in cont.get("volumes", ()):
             if v["name"] in volume_names:

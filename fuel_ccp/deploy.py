@@ -109,6 +109,7 @@ def parse_role(component, topology, configmaps):
     process_files(files, service_dir)
     files_cm = _create_files_configmap(service_name, files, files_header)
     meta_cm = _create_meta_configmap(service)
+    _create_service_configmap(service_name)
 
     yield _process_secrets(role.get("secrets"))
 
@@ -351,6 +352,24 @@ def _create_nodes_configmap(nodes):
     data = {templates.NODES_CONFIG: nodes_config}
     cm = templates.serialize_configmap(templates.NODES_CONFIG, data)
     return kubernetes.process_object(cm)
+
+
+def _get_service_config(service_name, config):
+    service = CONF.services.get(service_name, {})
+    config._merge(service.get('configs', {}))
+    service_mapping = service.get('mapping')
+    if service_mapping:
+        for _, target_service in service_mapping._items():
+            _get_service_config(target_service, config)
+
+
+def _create_service_configmap(service_name):
+    configmap_name = "%s-%s" % (service_name, templates.SERVICE_CONFIG)
+    config = _yaml.AttrDict()
+    _get_service_config(service_name, config)
+    data = {templates.SERVICE_CONFIG: config._json()}
+    template = templates.serialize_configmap(configmap_name, data)
+    return kubernetes.process_object(template)
 
 
 def get_start_script():

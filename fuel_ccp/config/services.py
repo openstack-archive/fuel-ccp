@@ -8,6 +8,7 @@ SCHEMA = {
             "properties": {
                 "service_def": {"type": "string"},
                 "mapping": {"type": "object"},
+                "configs": {"type": "object"},
             }
         }
     }
