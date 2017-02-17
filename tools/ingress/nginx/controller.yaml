@@ -1,0 +1,76 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  namespace: NAMESPACE
+  name: nginx-ingress-controller
+  labels:
+    k8s-app: nginx-ingress-controller
+spec:
+  tls:
+  - hosts:
+    - "*.DOMAIN"
+    secretName: nginx-ingress-controller-cert
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+  name: nginx-ingress-controller
+  labels:
+    k8s-app: nginx-ingress-controller
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress-controller
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - image: gcr.io/google_containers/nginx-ingress-controller:0.8.3
+        name: nginx-ingress-controller
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 1
+        ports:
+        - containerPort: HTTP_PORT
+          hostPort: HTTP_PORT
+        - containerPort: HTTPS_PORT
+          hostPort: HTTPS_PORT
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        args:
+        - /nginx-ingress-controller
+        - --default-backend-service=$(POD_NAMESPACE)/nginx-ingress-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: NAMESPACE
+  name: nginx-ingress-controller
+spec:
+  externalIPs:
+    - EXTERNAL_IP
+  ports:
+    - name: http
+      port: HTTP_PORT
+    - name: https
+      port: HTTPS_PORT
+  selector:
+    app: nginx-ingress-controller
