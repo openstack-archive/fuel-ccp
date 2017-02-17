@@ -1,4 +1,5 @@
-alias ccp='docker run --rm  -t -i --name=fuel-ccp --network=host \
+alias ccp='docker run --rm -t -i --network=host \
+           --name=fuel-ccp-`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 5 | head -n 1` \
            -v ~/:/home/`whoami`/ -v /var/run/docker.sock:/var/run/docker.sock \
            -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_USER_NAME=`whoami` \
            fuel-ccp:latest'
