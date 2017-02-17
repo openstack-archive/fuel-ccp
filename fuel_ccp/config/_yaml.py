@@ -19,7 +19,7 @@ class AttrDict(object):
 
     def __getattr__(self, name):
         try:
-            return self._dict[name]
+            return object.__getattribute__(self, '_dict')[name]
         except KeyError:
             raise AttributeError(name)
 
