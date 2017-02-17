@@ -9,6 +9,7 @@ import yaml
 import fuel_ccp
 from fuel_ccp.common import jinja_utils
 from fuel_ccp import config
+from fuel_ccp.config import _yaml
 from fuel_ccp import kubernetes
 
 
@@ -170,9 +171,18 @@ def process_dependencies(service, deps_map, services_map):
                 cmd['dependencies'] = new_deps
 
 
+def extend_with_service_configs(service_name, config):
+    service = CONF.services.get(service_name, {})
+    config._merge(service.get('configs', {}))
+    service_mapping = service.get('mapping')
+    if service_mapping:
+        for _, target_service in service_mapping._items():
+            extend_with_service_configs(target_service, config)
+
+
 def get_deploy_components_info(rendering_context=None):
     if rendering_context is None:
-        rendering_context = CONF.configs._dict
+        rendering_context = CONF.configs
     service_definitions_map = get_service_definitions_map()
     services_map = {}
     custom_services_map = {}
@@ -204,7 +214,7 @@ def get_deploy_components_info(rendering_context=None):
             if service_file.endswith('.yaml'):
                 LOG.debug("Rendering service definition: %s", service_file)
                 content = jinja_utils.jinja_render(
-                    os.path.join(service_dir, service_file), rendering_context,
+                    os.path.join(service_dir, service_file), rendering_context._dict,
                     functions=[address]
                 )
                 LOG.debug("Parse service definition: %s", service_file)
@@ -219,11 +229,12 @@ def get_deploy_components_info(rendering_context=None):
                 for svc in service_definitions_map.get(service_name, ()):
                     LOG.debug("Rendering service definition: %s for '%s' "
                               "service", service_file, svc)
-                    context = rendering_context.copy()
+                    context = copy.deepcopy(rendering_context)
                     context['_current_service'] = svc
+                    extend_with_service_configs(svc, context)
                     content = jinja_utils.jinja_render(
                         os.path.join(service_dir, service_file),
-                        context, functions=[address]
+                        context._dict, functions=[address]
                     )
                     LOG.debug("Parse service definition: %s for '%s' "
                               "service", service_file, svc)
