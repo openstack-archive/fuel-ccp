@@ -10,6 +10,9 @@ DEFAULTS = {
         'password': None,
         'cluster_domain': 'cluster.local',
         'image_pull_policy': None,
+        'appcontroller': {
+            "enabled": False
+        }
     },
 }
 
@@ -33,6 +36,13 @@ SCHEMA = {
                 {'type': 'null'},
                 {'enum': ['Always', 'IfNotPresent', 'Never']},
             ]},
+            'appcontroller': {
+                'type': 'object',
+                'additionalProperties': False,
+                'properties': {
+                    "enabled": {'type': 'boolean'},
+                },
+            },
         },
     },
 }
