@@ -26,6 +26,14 @@ def get_host(path):
     return urlparse.urlsplit(path).netloc
 
 
+def get_hostname(path):
+    hostname = urlparse.urlsplit(path).hostname
+    if hostname is None:
+        # No schema provided in URL
+        return path.split(':')[0]
+    return hostname
+
+
 def j2raise(msg):
     raise AssertionError(msg)
 
@@ -40,6 +48,7 @@ def jinja_render(path, context, functions=(), ignore_undefined=False):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         os.path.dirname(path)), **kwargs)
     env.filters['host'] = get_host
+    env.filters['hostname'] = get_hostname
     # FIXME: gethostbyname should be only used during config files render
     env.filters['gethostbyname'] = lambda x: x
 

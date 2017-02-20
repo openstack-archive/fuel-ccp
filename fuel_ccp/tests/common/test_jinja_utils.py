@@ -13,7 +13,9 @@ class TestJinjaUtils(base.TestCase):
         super(TestJinjaUtils, self).setUp()
         conf = config._yaml.AttrDict()
         conf_dict = {"security": {"tls": {"openstack": {"enabled": False}}},
-                     "etcd": {"tls": {"enabled": True}}}
+                     "etcd": {"tls": {"enabled": True}},
+                     "ingress": {"enabled": True, "port": 8443,
+                                 "domain": "ccp.svc.cluster.local"}}
         prepared_conf = self.nested_dict_to_attrdict(conf_dict)
         self.conf.configs._merge(prepared_conf)
         conf._merge(config._REAL_CONF)
@@ -32,7 +34,10 @@ class TestJinjaUtils(base.TestCase):
         self.assertEqual(
             "debian\njessie\nsome maintainer\nneedle\nneedle\n"
             "keystone.ccp.svc.cluster.local\n"
-            "keystone.ccp.svc.cluster.local",
+            "keystone.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local:8443",
             content)
 
         context = {
@@ -54,7 +59,10 @@ class TestJinjaUtils(base.TestCase):
         self.assertEqual(
             "debian\njessie\nsome maintainer\nneedle\nneedle\n"
             "keystone.ccp.svc.cluster.local\n"
-            "keystone.ccp.svc.cluster.local",
+            "keystone.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local:8443",
             content)
 
         context = {
@@ -65,5 +73,8 @@ class TestJinjaUtils(base.TestCase):
             ignore_undefined=True)
         self.assertEqual(
             "debian\n\n\n\n\nkeystone.ccp.svc.cluster.local\n"
-            "keystone.ccp.svc.cluster.local",
+            "keystone.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local\n"
+            "gerrit.ccp.svc.cluster.local:8443",
             content)

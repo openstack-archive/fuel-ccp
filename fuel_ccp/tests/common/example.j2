@@ -5,3 +5,6 @@
 {{ duck.egg }}
 {{ address('keystone') }}
 {{ address('keystone') | gethostbyname }}
+{{ address('gerrit', {'ingress': 'gerrit', 'port': '8080' }, external=True, with_scheme=True) | hostname }}
+{{ address('gerrit', {'ingress': 'gerrit', 'port': '8080' }, external=True) | hostname }}
+{{ address('gerrit', {'ingress': 'gerrit', 'port': '8080' }, external=True, with_scheme=True) | host }}
