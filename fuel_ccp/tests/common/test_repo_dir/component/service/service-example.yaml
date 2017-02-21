@@ -19,8 +19,6 @@ service:
         - name: chown-logs-dir
           command: "sudo /bin/chown {{ service_name }}:{{ service_name }} /var/log/ccp/{{ service_name }}"
         - name: {{ service_name }}-db-create
-          dependencies:
-            - galera
           type: single
           command:
             mysql -u root -p{{ db_root_password }} -h galera -e "create database {{ keystone_db_name }};
@@ -49,8 +47,6 @@ service:
                    --bootstrap-internal-url http://{{ service_name }}:{{ keystone_public_port }}
 
       daemon:
-        dependencies:
-          - memcached
         files:
           - {{ service_name }}-conf
           - wsgi-{{ service_name }}-conf
