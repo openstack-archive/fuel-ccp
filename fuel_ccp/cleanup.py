@@ -131,7 +131,7 @@ def _cleanup_openstack_environment(configs, auth_url=None, verify=True):
                            'is not deployed')
 
     configs['auth_url'] = auth_url or '%s/v3' % utils.address(
-        'keystone', configs['keystone']['public_port'], True, True)
+        {}, 'keystone', configs['keystone']['public_port'], True, True)
 
     session = _get_session(
         configs['auth_url'], configs['openstack']['user_name'],
