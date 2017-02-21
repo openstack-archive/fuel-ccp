@@ -42,7 +42,7 @@ class TestUtils(base.TestCase):
         res = (
             utils.get_deploy_components_info()["keystone"]["service_content"]
         )
-
+        print(yaml.dump(res, default_flow_style=False))
         with open(os.path.join(base_dir,
                                "service-rendered-example-default.yaml")) as f:
             expected = yaml.load(f)
@@ -171,4 +171,4 @@ class TestAddress(testscenarios.WithScenarios, base.TestCase):
         self.conf.configs._merge(prepared_conf)
 
         self.assertEqual(self.address, utils.address(
-            'service', self.port, self.external, self.with_scheme))
+            {}, 'service', self.port, self.external, self.with_scheme))

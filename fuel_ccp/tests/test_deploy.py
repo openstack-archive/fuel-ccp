@@ -373,7 +373,7 @@ class TestDeployParseWorkflow(base.TestCase):
             "eric-mom": {
                 "workflow": {
                     "name": "south-park/eric-mom",
-                    "dependencies": ["eric-dad", "south-park"],
+                    "dependencies": ["eric-dad", "south-park/kenny"],
                     "files": [
                         {
                             "name": "eric",
