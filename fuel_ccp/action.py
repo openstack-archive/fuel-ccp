@@ -51,9 +51,18 @@ class Action(object):
         pass
 
     def run(self):
+        self._process_dependencies()
         self._create_configmap()
         self._create_action()
         return self.k8s_name
+
+    def _process_dependencies(self):
+        services_map = utils.get_deploy_components_info()
+        deps_map = utils.get_dependencies_map(services_map)
+        new_deps = []
+        for dep in self.dependencies:
+            new_deps.extend(utils.extend_dependency(dep, deps_map, {}, {}))
+        self.dependencies = new_deps
 
     # configmap methods
 
