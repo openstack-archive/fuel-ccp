@@ -8,6 +8,9 @@ builder:
 registry:
   address: "127.0.0.1:31500"
   timeout: 1500
+replicas:
+  galera: 3
+  rabbitmq: 3
 repositories:
   path: /tmp/ccp-repos
   skip_empty: True
@@ -19,6 +22,8 @@ repositories:
       name: entrypoint
     - git_url: https://git.openstack.org/openstack/fuel-ccp-etcd
       name: etcd
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-galera
+      name: galera
     - git_url: https://git.openstack.org/openstack/fuel-ccp-glance
       name: glance
     - git_url: https://git.openstack.org/openstack/fuel-ccp-heat
@@ -27,8 +32,6 @@ repositories:
       name: horizon
     - git_url: https://git.openstack.org/openstack/fuel-ccp-keystone
       name: keystone
-    - git_url: https://git.openstack.org/openstack/fuel-ccp-mariadb
-      name: mariadb
     - git_url: https://git.openstack.org/openstack/fuel-ccp-memcached
       name: memcached
     - git_url: https://git.openstack.org/openstack/fuel-ccp-neutron
