@@ -474,6 +474,15 @@ def _create_namespace(configs):
     kubernetes.process_object(template)
 
 
+def _create_limitrange(limits, namespace):
+    if CONF.action.dry_run:
+        return
+
+    LOG.info("Limits are configured, applying limits for namespace")
+    LOG.debug("Limits are %s" % limits)
+    template = templates.serialize_limitrange(limits, namespace)
+    kubernetes.process_object(template)
+
 def _create_openrc(config):
     openrc = [
         "export OS_PROJECT_DOMAIN_NAME=default",
@@ -613,6 +622,10 @@ def deploy_components(components_map, components):
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     _create_namespace(CONF.configs)
+
+    limits = CONF.kubernetes.get('namespace_limits', None)
+    if limits:
+        _create_limitrange(limits, CONF.kubernetes.namespace)
     _create_globals_configmap(CONF.configs)
     _create_nodes_configmap(CONF.nodes)
     start_script_cm = create_start_script_configmap()

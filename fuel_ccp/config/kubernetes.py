@@ -10,10 +10,54 @@ DEFAULTS = {
         'password': None,
         'cluster_domain': 'cluster.local',
         'image_pull_policy': None,
+        'namespace_limits': None,
     },
 }
 
 STRING_OR_NULL = {'anyOf': [{'type': 'string'}, {'type': 'null'}]}
+
+LIMIT_OBJECT_SCHEMA = {
+        'type': 'object',
+        'required': ['cpu', 'memory'],
+        'properties': {
+            'cpu': {'type': 'string'},
+            'memory': {'type': 'string'}
+        }
+}
+
+LIMIT_ITEM_POD_SCHEMA = {
+        'type': 'object',
+        'required': ['min', 'max'],
+        'additionalProperties': False,
+        'properties': {
+            'min': LIMIT_OBJECT_SCHEMA,
+            'max': LIMIT_OBJECT_SCHEMA
+        }
+}
+
+LIMIT_ITEM_CONTAINER_SCHEMA = {
+        'type': 'object',
+        'required': ['min', 'max', 'default', 'defaultRequest'],
+        'additionalProperties': False,
+        'properties': {
+            'min': LIMIT_OBJECT_SCHEMA,
+            'max': LIMIT_OBJECT_SCHEMA,
+            'default': LIMIT_OBJECT_SCHEMA,
+            'defaultRequest': LIMIT_OBJECT_SCHEMA
+        }
+}
+
+LIMIT_SCHEMA = {
+        'type': 'object',
+        'additionalProperties': False,
+
+        'properties': {
+          'Pod': {'anyOf': [LIMIT_ITEM_POD_SCHEMA, {'type': 'null'}]},
+          'Container': {'anyOf': [LIMIT_ITEM_CONTAINER_SCHEMA, {'type': 'null'}]}
+        }
+}
+
+LIMIT_OR_NULL = {'anyOf': [LIMIT_SCHEMA, {'type': 'null'}]}
 
 SCHEMA = {
     'kubernetes': {
@@ -33,6 +77,7 @@ SCHEMA = {
                 {'type': 'null'},
                 {'enum': ['Always', 'IfNotPresent', 'Never']},
             ]},
+            'namespace_limits': LIMIT_OR_NULL
         },
     },
 }

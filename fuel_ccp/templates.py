@@ -544,3 +544,32 @@ def serialize_secret(name, type="Opaque", data={}):
         "type": type,
         "data": data
     }
+
+def serialize_limitrange(limits_config, namespace):
+    limits = []
+    for item, limit in limits_config.iteritems():
+        l = serialize_limitrangeitem(item, limit)
+        limits.append(l)
+
+    obj = {
+        "apiVersion": "v1",
+        "kind": "LimitRange",
+        "metadata": {
+            "name": "limits",
+            "namespace": namespace
+        },
+        "spec": {
+            "limits": limits
+        }
+    }
+    return obj
+
+def serialize_limitrangeitem(item, limit):
+    obj = {}
+    for limit_type, limit_value in limit.iteritems():
+        obj[limit_type] = {
+            "cpu": limit[limit_type]["cpu"],
+            "memory": limit[limit_type]['memory']
+        }
+    obj['type'] = item
+    return obj
