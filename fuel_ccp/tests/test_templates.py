@@ -160,3 +160,80 @@ class TestDeploy(base.TestCase):
                 for (key, value) in six.iteritems(serialized["data"])]
         )
         self.assertDictEqual(expected, serialized)
+
+    def test_serialize_limitrange(self):
+        limit_definition = {
+            'Pod': {
+                'max': {
+                    'cpu': '2',
+                    'memory': '1Gi'
+                },
+                'min': {
+                    'cpu': '200m',
+                    'memory': '6Mi'
+                }
+            },
+            'Container': {
+                'max': {
+                    'cpu': '2',
+                    'memory': '1Gi'
+                },
+                'min': {
+                    'cpu': '100m',
+                    'memory': '3Mi'
+                },
+                'default': {
+                    'cpu': '300m',
+                    'memory': '200Mi'
+                },
+                'defaultRequest': {
+                    'cpu': '200m',
+                    'memory': '100Mi'
+                },
+
+            }
+        }
+        expected = {
+            "apiVersion": "v1",
+            "kind": "LimitRange",
+            "metadata": {
+                "name": "limits",
+                "namespace": "ccp",
+            },
+            "spec": {
+                "limits": [
+                    {
+                        "max": {
+                            "cpu": "2",
+                            "memory": "1Gi"
+                        },
+                        "min": {
+                            "cpu": "200m",
+                            "memory": "6Mi"
+                        },
+                        "type": "Pod"
+                    },
+                    {
+                        "default": {
+                            "cpu": "300m",
+                            "memory": "200Mi"
+                        },
+                        "defaultRequest": {
+                            "cpu": "200m",
+                            "memory": "100Mi"
+                        },
+                        "max": {
+                            "cpu": "2",
+                            "memory": "1Gi"
+                        },
+                        "min": {
+                            "cpu": "100m",
+                            "memory": "3Mi"
+                        },
+                        "type": "Container"
+                    }
+                ]
+            }
+        }
+        limit_spec = templates.serialize_limitrange(limit_definition, 'ccp')
+        self.assertDictEqual(expected, limit_spec)
