@@ -62,4 +62,4 @@ def generate_jinja_imports(exports_map):
                                'python compatible naming' % (name, import_as))
         imports.append(
             "{% import '" + name + "' as " + import_as + " with context %}")
-    return ''.join(imports)
+    return ''.join(sorted(imports))

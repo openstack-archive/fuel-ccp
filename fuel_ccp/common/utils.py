@@ -105,10 +105,12 @@ def get_repositories_exports():
                 path = os.path.join(exports_dir, export_file)
                 LOG.debug('Found shared jinja template file %s', path)
                 if cm_key not in exports:
-                    exports[cm_key] = {'name': export_file, 'body': ''}
-                # Merge the files with same name
+                    exports[cm_key] = {'name': export_file, 'body': []}
                 with open(path) as f:
-                    exports[cm_key]['body'] += f.read() + '\n'
+                    exports[cm_key]['body'].append(f.read())
+    for cm_key, cm in exports.items():
+        # Merge files with the same name
+        cm['body'] = '\n'.join(sorted(cm['body']))
     return exports
 
 
