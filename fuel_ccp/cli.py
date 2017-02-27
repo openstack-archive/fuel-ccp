@@ -341,12 +341,17 @@ class ActionRun(BaseCommand, show.ShowOne):
         parser = super(ActionRun, self).get_parser(*args, **kwargs)
         parser.add_argument("action",
                             help="Run action")
+        parser.add_argument("-p", "--parameter",
+                            action="append",
+                            help="Parameters for action in format param=value."
+                                 " Option can be repetable.")
         return parser
 
     def take_action(self, parsed_args):
         self._fetch_repos()
         config.load_component_defaults()
-        action_name = action.run_action(parsed_args.action)
+        action_name = action.run_action(parsed_args.action,
+                                        parsed_args.parameter)
         action_obj = action.get_action_status_by_name(action_name)
         return get_status_for_single_action(action_obj)
 

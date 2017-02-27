@@ -33,6 +33,7 @@ class Action(object):
         self.command = kwargs.pop("command")
         self.dependencies = kwargs.pop("dependencies", ())
         self.files = kwargs.pop("files", ())
+        self.parameters = kwargs.pop("parameters", ())
         self.restart_policy = kwargs.pop("restart_policy",
                                          RESTART_POLICY_NEVER)
 
@@ -50,7 +51,11 @@ class Action(object):
     def validate(self):
         pass
 
-    def run(self):
+    def run(self, user_parameters=None):
+        if user_parameters:
+            self.user_parameters = user_parameters
+        else:
+            self.user_parameters = ()
         self._create_configmap()
         self._create_action()
         return self.k8s_name
@@ -63,6 +68,7 @@ class Action(object):
             "nodes-config": utils.get_nodes_config(CONF.nodes),
             "workflow": self._get_workflow()
         }
+        data["config"]["action_parameters"] = self._get_custom_parameters()
         data.update(self._get_file_templates())
 
         cm = templates.serialize_configmap(self.k8s_name, data)
@@ -85,6 +91,21 @@ class Action(object):
                 "user": f.get("user")
             })
         return json.dumps({"workflow": wf})
+
+    def _get_custom_parameters(self):
+        parameters = {}
+        # add defaults
+        for param in self.parameters:
+            parameters[param["key"]] = param["default_value"]
+        # process user params
+        for param in self.user_parameters:
+            key, sep, value = param.partition("=")
+            if key in parameters:
+                parameters[key] = value
+            else:
+                raise Exception("Parameter %s is not allowed for %s action",
+                                key, self.name)
+        return parameters
 
     def _get_file_templates(self):
         exports_map = utils.get_repositories_exports()
@@ -347,7 +368,7 @@ def get_action(action_name):
                                        action_name))
 
 
-def run_action(action_name):
+def run_action(action_name, user_parameters=None):
     """Run action.
 
     :returns: str -- action name
@@ -355,7 +376,7 @@ def run_action(action_name):
     """
     action = get_action(action_name)
     action.validate()
-    return action.run()
+    return action.run(user_parameters)
 
 
 def list_action_status(action_type=None):
