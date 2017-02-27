@@ -44,5 +44,7 @@ repositories:
       name: rabbitmq
     - git_url: https://git.openstack.org/openstack/fuel-ccp-ceph
       name: ceph
+    - git_url: https://git.openstack.org/openstack/fuel-ccp-ironic
+      name: ironic
 configs:
     private_interface: ens3
