@@ -346,12 +346,13 @@ def list_actions():
             continue
         for filename in os.listdir(action_path):
             if filename.endswith(".yaml"):
-                with open(os.path.join(action_path, filename)) as f:
-                    data = yaml.load(f)
-                    for action_dict in data.get("actions", ()):
-                        actions.append(Action(component=component_name,
-                                              component_dir=repo,
-                                              **action_dict))
+                action_file = os.path.join(action_path, filename)
+                data = jinja_utils.jinja_render(action_file,
+                                                CONF.configs._dict)
+                for action_dict in yaml.load(data).get("actions", ()):
+                    actions.append(Action(component=component_name,
+                                          component_dir=repo,
+                                          **action_dict))
     return actions
 
 
