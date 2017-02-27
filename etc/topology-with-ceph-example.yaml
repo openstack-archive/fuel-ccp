@@ -1,3 +1,10 @@
+services:
+  database:
+    service_def: galera
+  rpc:
+    service_def: rabbitmq
+  notifications:
+    service_def: rabbitmq
 nodes:
   node1:
     roles:
@@ -13,9 +20,10 @@ nodes:
       - openvswitch
 roles:
   db:
-    - galera
+    - database
   messaging:
-    - rabbitmq
+    - rpc
+    - notifications
   controller:
     - etcd
     - glance-api
