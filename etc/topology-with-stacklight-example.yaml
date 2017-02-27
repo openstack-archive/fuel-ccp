@@ -3,7 +3,13 @@
 # require Kubernetes 1.4 or higher. With this topology configuration and with
 # Kubernetes 1.3 the deployment will fail with an error indicating that
 # "spec.nodeName" is not supported by the downward API.
-
+services:
+  database:
+    service_def: galera
+  rpc:
+    service_def: rabbitmq
+  notifications:
+    service_def: rabbitmq
 nodes:
   node1:
     roles:
@@ -22,9 +28,10 @@ nodes:
       - openvswitch
 roles:
   db:
-    - galera
+    - database
   messaging:
-    - rabbitmq
+    - rpc
+    - notifications
   controller:
     - etcd
     - glance-api
