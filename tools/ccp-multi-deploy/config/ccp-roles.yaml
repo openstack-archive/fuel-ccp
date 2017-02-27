@@ -1,9 +1,17 @@
 ---
+services:
+  database:
+    service_def: galera
+  rpc:
+    service_def: rabbitmq
+  notifications:
+    service_def: rabbitmq
 roles:
   db:
-    - galera
+    - database
   messaging:
-    - rabbitmq
+    - rpc
+    - notifications
   controller-net-host:
     - neutron-dhcp-agent
     - neutron-l3-agent
