@@ -11,6 +11,13 @@ tee "${CONFIG_FILE}" <<EOF
 debug: True
 repositories:
   path: "${WORKSPACE}"
+services:
+  database:
+    service_def: galera
+  rpc:
+    service_def: rabbitmq
+  notifications:
+    service_def: rabbitmq
 EOF
 
 tox -e venv -- python "${MY_DIR}/run_cloner.py" "${CONFIG_FILE}"  "${ZUUL_CLONER}" --cache-dir /opt/git git://git.openstack.org
