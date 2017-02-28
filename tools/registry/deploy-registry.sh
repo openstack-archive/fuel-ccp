@@ -42,22 +42,16 @@ function kube_cmd {
 }
 
 function await_readiness {
-    pod_name=$1;
-    get_pod="kube_cmd get pod $pod_name -o template --template "
+    rc_name=$1;
+    template="{{.status.readyReplicas}}/{{.spec.replicas}}"
+    get_rc="kube_cmd get rc $rc_name -o template --template "
 
-    echo "Waiting for $pod_name pod readiness"
+    echo "Waiting for $rc_name readiness"
 
-    template="{{.status.phase}}"
-    while [ $($get_pod $template) != "Running" ]; do
+    while $get_rc $template | egrep -v '^(.*)/\1$' > /dev/null; do
         sleep 3
     done
-    echo "The $pod_name pod is running"
-
-    template="{{range.status.containerStatuses}}{{.ready}}{{end}}"
-    while [ $($get_pod $template) != "true" ]; do
-        sleep 3
-    done
-    echo "The $pod_name pod state is ready"
+    echo "The $rc_name is ready"
 }
 
 if [ -z $NODE ]; then
@@ -68,14 +62,14 @@ fi
 kubectl label node $NODE app=ccp-registry --overwrite
 
 function deploy_registry {
-    kube_cmd apply -f $WORKDIR/registry-pod.yaml
+    kube_cmd apply -f $WORKDIR/registry-rc.yaml
     kube_cmd apply -f $WORKDIR/registry-service.yaml
     await_readiness registry
     kube_cmd get service registry
 }
 
 function deploy_registry_ui {
-    cat $WORKDIR/registry-ui-pod.yaml | envsubst | kube_cmd apply -f -
+    cat $WORKDIR/registry-ui-rc.yaml | envsubst | kube_cmd apply -f -
     kube_cmd apply -f $WORKDIR/registry-ui-service.yaml
     await_readiness registry-ui
     kube_cmd get service registry-ui
