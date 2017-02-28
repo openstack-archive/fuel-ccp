@@ -199,7 +199,8 @@ def serialize_job_pod_spec(service, job, cont_spec, affinity):
         "spec": {
             "containers": [cont_spec],
             "volumes": serialize_volumes(service, job),
-            "restartPolicy": "OnFailure"
+            "restartPolicy": "OnFailure",
+            "imagePullSecrets": [{"name": "registry-key"}]
         }
     }
 
@@ -214,7 +215,8 @@ def serialize_daemon_pod_spec(service):
         "volumes": serialize_volumes(service),
         "restartPolicy": "Always",
         "hostNetwork": service.get("hostNetwork", False),
-        "hostPID": service.get("hostPID", False)
+        "hostPID": service.get("hostPID", False),
+        "imagePullSecrets": [{"name": "registry-key"}]
     }
 
     return cont_spec
