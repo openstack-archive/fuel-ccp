@@ -108,6 +108,7 @@ class TestDeploy(base.TestCase):
 
         openrc_etalon_file = 'openrc-%s-etalon' % namespace
         openrc_test_file = 'openrc-%s' % namespace
+        cert_path = os.path.join(os.getcwd(), 'ca-cert.pem')
         config = {
             "openstack": {
                 "project_name": "admin",
@@ -116,6 +117,13 @@ class TestDeploy(base.TestCase):
             },
             "keystone": {"public_port": {"cont": 5000}},
             "namespace": self.namespace,
+            "security": {
+                "tls": {
+                    "create_certificates": "enabled",
+                    "ca_cert": "test_certificate"
+                }
+
+            }
         }
         rc = [
             "export OS_PROJECT_DOMAIN_NAME=default",
@@ -126,6 +134,7 @@ class TestDeploy(base.TestCase):
             "export OS_IDENTITY_API_VERSION=3",
             "export OS_AUTH_URL=http://keystone.ccp.svc.cluster.local:%s/v3" %
             config['keystone']['public_port']['cont'],
+            "export OS_CACERT=%s" % cert_path,
         ]
 
         with open(openrc_etalon_file, 'w') as openrc_file:
@@ -133,6 +142,7 @@ class TestDeploy(base.TestCase):
         self.addCleanup(os.remove, openrc_etalon_file)
         deploy._create_openrc(config)
         self.addCleanup(os.remove, openrc_test_file)
+        self.addCleanup(os.remove, "ca-cert.pem")
         result = filecmp.cmp(openrc_etalon_file,
                              openrc_test_file,
                              shallow=False)
