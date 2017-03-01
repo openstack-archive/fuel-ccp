@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import itertools
 import json
@@ -39,7 +40,7 @@ def _expand_items(service, kind, items):
             _expand(cmd)
 
 
-def _get_configmaps_version(configmaps, service_dir, files, configs):
+def _get_configmaps_version(configmaps, files, configs):
     """Get overall ConfigMaps version
 
     If any of the ConfigMaps changed, the overall version will be
@@ -109,7 +110,8 @@ def parse_role(component, topology, configmaps):
     process_files(files, service_dir)
     files_cm = _create_files_configmap(service_name, files, files_header)
     meta_cm = _create_meta_configmap(service)
-    _create_service_configmap(service_name)
+    service_configs = utils.get_service_configs(service_name)
+    _create_service_configmap(service_name, service_configs)
 
     yield _process_secrets(role.get("secrets"))
 
@@ -121,8 +123,16 @@ def parse_role(component, topology, configmaps):
     if CONF.action.dry_run:
         cm_version = 'dry-run'
     else:
+        rendering_context = copy.deepcopy(CONF.configs)
+        # update with node-related params
+        for node_name, node in sorted(CONF.nodes._items()):
+            rendering_context._merge(node.get('configs', {}))
+
+        # update with service-related params
+        rendering_context._merge(service_configs)
+
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, files, CONF.configs._dict)
+            configmaps, files, rendering_context._dict)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
@@ -355,11 +365,9 @@ def _create_nodes_configmap(nodes):
     return kubernetes.process_object(cm)
 
 
-def _create_service_configmap(service_name):
+def _create_service_configmap(service_name, service_config):
     configmap_name = "%s-%s" % (service_name, templates.SERVICE_CONFIG)
-    config = _yaml.AttrDict()
-    utils.extend_with_service_configs(service_name, config)
-    data = {templates.SERVICE_CONFIG: config._json()}
+    data = {templates.SERVICE_CONFIG: service_config._json()}
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
 
