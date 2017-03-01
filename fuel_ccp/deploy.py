@@ -486,6 +486,12 @@ def _create_openrc(config):
         utils.address('keystone', config['keystone']['public_port'], True,
                       True)
     ]
+    if config['security']['tls']['create_certificates']:
+        with open('ca-cert.pem', 'w') as cert_file:
+            cert_file.write(config['security']['tls']['ca_cert'])
+        file_path = "%s/%s", os.getcwd() , 'ca-cert.pem'
+        openrc.append("export OS_CACERT=%s" % file_path)
+
     with open('openrc-%s' % config['namespace'], 'w') as openrc_file:
         openrc_file.write("\n".join(openrc))
     LOG.info("Openrc file for this deployment created at %s/openrc-%s",
