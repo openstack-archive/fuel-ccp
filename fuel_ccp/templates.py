@@ -120,7 +120,24 @@ def serialize_env_variables(container):
                     "fieldPath": "metadata.name"
                 }
             }
+        },
+        {
+            "name": "CPU_LIMIT",
+            "valueFrom": {
+                "resourceFieldRef": {
+                    "resource": "limits.cpu"
+                }
+            }
+        },
+        {
+            "name": "MEMORY_LIMIT",
+            "valueFrom": {
+                "resourceFieldRef": {
+                    "resource": "limits.memory"
+                }
+            }
         }
+
     ]
     if container.get('env'):
         env.extend(container['env'])

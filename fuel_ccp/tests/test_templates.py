@@ -89,6 +89,22 @@ class TestDeploy(base.TestCase):
                     }
                 },
                 {
+                    'name': 'CPU_LIMIT',
+                    'valueFrom': {
+                        'resourceFieldRef': {
+                            'resource': 'limits.cpu'
+                        }
+                    }
+                },
+                {
+                    'name': 'MEMORY_LIMIT',
+                    'valueFrom': {
+                        'resourceFieldRef': {
+                            'resource': 'limits.memory'
+                        }
+                    }
+                },
+                {
                     "name": "env_foo",
                     "valueFrom": {
                         "valueField": {
