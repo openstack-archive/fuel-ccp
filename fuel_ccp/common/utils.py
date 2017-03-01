@@ -295,3 +295,9 @@ def get_nodes_config(nodes):
         if 'configs' in nodes[node]:
             nodes_config[node] = nodes[node]['configs']
     return nodes_config._json(sort_keys=True)
+
+
+def get_service_configs(service_name):
+    service_config = config._yaml.AttrDict()
+    extend_with_service_configs(service_name, service_config)
+    return config
