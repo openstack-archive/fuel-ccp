@@ -44,6 +44,7 @@ of the microservices and credentials for connecting to Kubernetes cluster.
 - :ref:`configs`
 - :ref:`files`
 - :ref:`kubernetes`
+- :ref:`services`
 - :ref:`nodes`
 - :ref:`roles`
 - :ref:`replicas`
@@ -469,6 +470,45 @@ For example:
 
  replicas:
    heat-engine: 3
+
+
+.. _services
+
+services
+--------
+
+Isolation:
+
+- Not used in any template file, only used by the CCP CLI to create new
+  services and connect them between each other.
+
+Allowed content:
+
+- This is a dict that contains definitions for dedicated services.
+  Its keys are service names, values are dicts with the following keys:
+
+.. list-table::
+   :widths: 10 25 10 10
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Schema
+     - Default
+   * - service_def
+     - Name of the service definition associated with that service.
+     - string
+     - --
+   * - mapping
+     - Dict to map service abstractions to defined services.
+     - dict
+     - --
+   * - configs
+     - Config overrides for this particular service.
+     - dict
+     - --
+
+You can find more information and examples in :doc:`services_section` page.
 
 .. _nodes:
 
