@@ -596,6 +596,19 @@ def version_diff(from_image, to_image):
     return from_tag, to_tag
 
 
+def _create_registry_secret():
+    dockercfg = {
+        CONF.registry.address: {
+            "username": CONF.registry.username,
+            "password": CONF.registry.password
+        }
+    }
+    data = {".dockercfg": json.dumps(dockercfg, sort_keys=True)}
+    secret = templates.serialize_secret(
+        "registry-key", "kubernetes.io/dockercfg", data)
+    kubernetes.process_object(secret)
+
+
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas)
@@ -613,6 +626,7 @@ def deploy_components(components_map, components):
         os.makedirs(os.path.join(CONF.action.export_dir, 'configmaps'))
 
     _create_namespace(CONF.configs)
+    _create_registry_secret()
     _create_globals_configmap(CONF.configs)
     _create_nodes_configmap(CONF.nodes)
     start_script_cm = create_start_script_configmap()
