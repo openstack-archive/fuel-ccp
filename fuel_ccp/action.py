@@ -63,12 +63,13 @@ class Action(object):
     # configmap methods
 
     def _create_configmap(self):
+        conf = copy.deepcopy(CONF.configs)
+        conf.action_parameters = self._get_custom_parameters()
         data = {
-            "config": CONF.configs._json(sort_keys=True),
+            "config": conf._json(sort_keys=True),
             "nodes-config": utils.get_nodes_config(CONF.nodes),
             "workflow": self._get_workflow()
         }
-        data["config"]["action_parameters"] = self._get_custom_parameters()
         data.update(self._get_file_templates())
 
         cm = templates.serialize_configmap(self.k8s_name, data)
