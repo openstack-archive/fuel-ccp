@@ -1,0 +1,54 @@
+services:
+  database:
+    service_def: galera
+  rpc:
+    service_def: zmq-proxy
+  notifications:
+    service_def: zmq-proxy
+
+nodes:
+  node1:
+    roles:
+      - db
+      - messaging
+      - controller
+      - openvswitch
+  node[2-3]:
+    roles:
+      - db
+      - messaging
+      - compute
+      - openvswitch
+roles:
+  db:
+    - database
+  messaging:
+    - rpc
+    - notifications
+    - redis
+  controller:
+    - etcd
+    - glance-api
+    - glance-registry
+    - heat-api-cfn
+    - heat-api
+    - heat-engine
+    - horizon
+    - keystone
+    - memcached
+    - neutron-dhcp-agent
+    - neutron-l3-agent
+    - neutron-metadata-agent
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+  compute:
+    - nova-compute
+    - nova-libvirt
+  openvswitch:
+    - neutron-openvswitch-agent
+    - openvswitch-db
+    - openvswitch-vswitchd
