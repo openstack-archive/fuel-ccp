@@ -45,6 +45,8 @@ class TestDeploy(base.TestCase):
             ],
             "volumeMounts": [
                 {'mountPath': '/etc/ccp/globals', 'name': 'globals'},
+                {'mountPath': '/etc/ccp/global-secrets',
+                 'name': 'global-secrets'},
                 {'mountPath': '/etc/ccp/role', 'name': 'role'},
                 {'mountPath': '/etc/ccp/meta', 'name': 'meta'},
                 {'mountPath': '/opt/ccp_start_script/bin',
