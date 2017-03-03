@@ -9,6 +9,7 @@ from fuel_ccp.config import images
 CONF = config.CONF
 
 GLOBAL_CONFIG = "globals"
+GLOBAL_SECRET_CONFIG = "global-secrets"
 NODES_CONFIG = "nodes-config"
 SERVICE_CONFIG = "service-config"
 SCRIPT_CONFIG = "start-script"
@@ -60,6 +61,10 @@ def serialize_volume_mounts(container, for_job=None):
         {
             "name": GLOBAL_CONFIG,
             "mountPath": "/etc/ccp/%s" % GLOBAL_CONFIG
+        },
+        {
+            "name": GLOBAL_SECRET_CONFIG,
+            "mountPath": "/etc/ccp/%s" % GLOBAL_SECRET_CONFIG
         },
         {
             "name": ROLE_CONFIG,
@@ -278,6 +283,14 @@ def serialize_volumes(service, for_job=None):
                 "name": GLOBAL_CONFIG,
                 "items": [{"key": GLOBAL_CONFIG,
                            "path": "globals.json"}]
+            }
+        },
+        {
+            "name": GLOBAL_SECRET_CONFIG,
+            "secret": {
+                "secretName": GLOBAL_SECRET_CONFIG,
+                "items": [{"key": GLOBAL_SECRET_CONFIG,
+                           "path": "%s.json" % GLOBAL_SECRET_CONFIG}]
             }
         },
         {

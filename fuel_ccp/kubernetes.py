@@ -16,6 +16,7 @@ UPDATABLE_OBJECTS = (
     'Service',
     'Ingress',
     'StatefulSet',
+    'Secret',
 )
 
 

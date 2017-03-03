@@ -206,5 +206,6 @@ def _cleanup_kubernetes_objects():
 
 def cleanup(auth_url=None, skip_os_cleanup=False, verify=True):
     if not skip_os_cleanup:
-        _cleanup_openstack_environment(CONF.configs, auth_url, verify)
+        conf = utils.get_rendering_config()
+        _cleanup_openstack_environment(conf, auth_url, verify)
     _cleanup_kubernetes_objects()

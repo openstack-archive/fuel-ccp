@@ -348,6 +348,13 @@ def _create_globals_configmap(config):
     return kubernetes.process_object(cm)
 
 
+def _create_globals_secret(conf):
+    data = {templates.GLOBAL_SECRET_CONFIG: conf._json(sort_keys=True)}
+    secret = templates.serialize_secret(
+        templates.GLOBAL_SECRET_CONFIG, data=data)
+    return kubernetes.process_object(secret)
+
+
 def _create_nodes_configmap(nodes):
     nodes_config = utils.get_nodes_config(nodes)
     data = {templates.NODES_CONFIG: nodes_config}
@@ -646,6 +653,7 @@ def deploy_components(components_map, components):
     _create_namespace(CONF.configs)
     _create_registry_secret()
     _create_globals_configmap(CONF.configs)
+    _create_globals_secret(CONF.secret_configs)
     _create_nodes_configmap(CONF.nodes)
     start_script_cm = create_start_script_configmap()
 
@@ -696,4 +704,5 @@ def deploy_components(components_map, components):
                             topology, exports_ctx)
 
     if 'keystone' in components:
-        _create_openrc(CONF.configs)
+        conf = utils.get_rendering_config()
+        _create_openrc(conf)

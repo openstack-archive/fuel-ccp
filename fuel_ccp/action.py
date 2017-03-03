@@ -75,6 +75,7 @@ class Action(object):
         CONF.configs._update(action_parameters=self._get_custom_parameters())
         data = {
             "config": CONF.configs._json(sort_keys=True),
+            "secret-config": CONF.secret_configs._json(sort_keys=True),
             "nodes-config": utils.get_nodes_config(CONF.nodes),
             "workflow": self._get_workflow()
         }
@@ -155,6 +156,10 @@ class Action(object):
             {
                 "key": "config",
                 "path": "globals/globals.json"
+            },
+            {
+                "key": "secret-config",
+                "path": "global-secrets/global-secrets.json"
             },
             {
                 "key": "nodes-config",
@@ -356,8 +361,8 @@ def list_actions():
         for filename in os.listdir(action_path):
             if filename.endswith(".yaml"):
                 action_file = os.path.join(action_path, filename)
-                data = jinja_utils.jinja_render(action_file,
-                                                CONF.configs._dict)
+                conf = utils.get_rendering_config()
+                data = jinja_utils.jinja_render(action_file, conf._dict)
                 for action_dict in yaml.load(data).get("actions", ()):
                     actions.append(Action(component=component_name,
                                           component_dir=repo,
