@@ -121,8 +121,9 @@ def parse_role(component, topology, configmaps):
     if CONF.action.dry_run:
         cm_version = 'dry-run'
     else:
+        rendering_context = utils.get_rendering_config()
         cm_version = _get_configmaps_version(
-            configmaps, service_dir, files, CONF.configs._dict)
+            configmaps, service_dir, files, rendering_context._dict)
 
     for cont in service["containers"]:
         daemon_cmd = cont["daemon"]
@@ -346,6 +347,13 @@ def _create_globals_configmap(config):
     data = {templates.GLOBAL_CONFIG: config._json(sort_keys=True)}
     cm = templates.serialize_configmap(templates.GLOBAL_CONFIG, data)
     return kubernetes.process_object(cm)
+
+
+def _create_globals_secret(conf):
+    data = {templates.GLOBAL_SECRET_CONFIG: conf._json(sort_keys=True)}
+    secret = templates.serialize_secret(
+        templates.GLOBAL_SECRET_CONFIG, data=data)
+    return kubernetes.process_object(secret)
 
 
 def _create_nodes_configmap(nodes):
@@ -646,6 +654,7 @@ def deploy_components(components_map, components):
     _create_namespace(CONF.configs)
     _create_registry_secret()
     _create_globals_configmap(CONF.configs)
+    _create_globals_secret(CONF.secret_configs)
     _create_nodes_configmap(CONF.nodes)
     start_script_cm = create_start_script_configmap()
 
@@ -696,4 +705,5 @@ def deploy_components(components_map, components):
                             topology, exports_ctx)
 
     if 'keystone' in components:
-        _create_openrc(CONF.configs)
+        conf = utils.get_rendering_config()
+        _create_openrc(conf)

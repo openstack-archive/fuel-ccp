@@ -76,7 +76,7 @@ def get_config_defaults():
             'urllib3=WARN'
         ]
     })
-    for name in ['configs', 'nodes', 'roles', 'versions']:
+    for name in ['configs', 'secret_configs', 'nodes', 'roles', 'versions']:
         defaults[name] = _yaml.AttrDict()
     for module in CONFIG_MODULES:
         defaults._merge(module.DEFAULTS)
@@ -102,7 +102,7 @@ def get_config_schema():
     for name in ignore_opts:
         schema['properties'][name] = {}
     # Also for now don't validate sections that used to be in deploy config
-    for name in ['configs', 'nodes', 'roles', 'versions']:
+    for name in ['configs', 'secret_configs', 'nodes', 'roles', 'versions']:
         schema['properties'][name] = {'type': 'object'}
     return schema
 
@@ -118,7 +118,7 @@ def load_component_defaults():
     from fuel_ccp.common import utils
 
     sections = ['versions', 'sources', 'configs', 'nodes', 'roles', 'replicas',
-                'url', 'files', 'services']
+                'url', 'files', 'services', 'secret_configs']
     new_config = _yaml.AttrDict((k, _yaml.AttrDict()) for k in sections)
     for path in utils.get_config_paths():
         if not os.path.exists(path):

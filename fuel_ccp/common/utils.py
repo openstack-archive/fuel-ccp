@@ -192,7 +192,7 @@ def extend_with_service_configs(service_name, config):
 
 
 def get_deploy_components_info():
-    rendering_context = CONF.configs
+    rendering_context = get_rendering_config()
     service_definitions_map = get_service_definitions_map()
     services_map = {}
     custom_services_map = {}
@@ -295,3 +295,9 @@ def get_nodes_config(nodes):
         if 'configs' in nodes[node]:
             nodes_config[node] = nodes[node]['configs']
     return nodes_config._json(sort_keys=True)
+
+
+def get_rendering_config():
+    conf = copy.deepcopy(CONF.configs)
+    conf._merge(CONF.secret_configs)
+    return conf
