@@ -376,7 +376,7 @@ def serialize_volumes(service, for_job=None):
 
 
 def serialize_job(name, spec, component_name, app_name):
-    return {
+    job = {
         "apiVersion": "batch/v1",
         "kind": "Job",
         "metadata": {
@@ -391,6 +391,16 @@ def serialize_job(name, spec, component_name, app_name):
             "template": spec
         }
     }
+    if CONF.kubernetes.appcontroller["enabled"]:
+        job = {
+            "apiVersion": "appcontroller.k8s/v1alpha1",
+            "kind": "Definition",
+            "metadata": {
+                "name": "job-%s" % name
+            },
+            "job": job
+        }
+    return job
 
 
 def serialize_deployment(name, spec, annotations, replicas, component_name,
@@ -423,6 +433,15 @@ def serialize_deployment(name, spec, annotations, replicas, component_name,
             }
         }
     }
+    if CONF.kubernetes.appcontroller["enabled"]:
+        deployment = {
+            "apiVersion": "appcontroller.k8s/v1alpha1",
+            "kind": "Definition",
+            "metadata": {
+                "name": "deployment-%s" % name
+            },
+            "deployment": deployment
+        }
 
     return deployment
 
@@ -532,6 +551,16 @@ def serialize_service(name, ports, headless=False, annotations=None):
     else:
         obj["spec"]["clusterIP"] = "None"
 
+    if CONF.kubernetes.appcontroller["enabled"]:
+        obj = {
+            "apiVersion": "appcontroller.k8s/v1alpha1",
+            "kind": "Definition",
+            "metadata": {
+                "name": "service-%s" % name
+            },
+            "service": obj
+        }
+
     return obj
 
 
@@ -575,4 +604,16 @@ def serialize_secret(name, type="Opaque", data={}):
         },
         "type": type,
         "data": data
+    }
+
+
+def serialize_dependency(name, parent, child):
+    return {
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Dependency",
+        "metadata": {
+            "name": name
+        },
+        "parent": parent,
+        "child": child
     }
