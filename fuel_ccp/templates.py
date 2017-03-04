@@ -29,6 +29,18 @@ def _get_readiness_cmd(role_name):
     return [PYTHON_PATH, ENTRYPOINT_PATH, "status", role_name]
 
 
+def _wrap_with_definition(name, obj):
+    kind = obj['kind'].lower()
+    return {
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Definition",
+        "metadata": {
+            "name": "%s-%s" % (kind, name)
+        },
+        kind: obj
+    }
+
+
 def serialize_namespace(name):
     return {
         "apiVersion": "v1",
@@ -376,7 +388,7 @@ def serialize_volumes(service, for_job=None):
 
 
 def serialize_job(name, spec, component_name, app_name):
-    return {
+    job = {
         "apiVersion": "batch/v1",
         "kind": "Job",
         "metadata": {
@@ -391,6 +403,9 @@ def serialize_job(name, spec, component_name, app_name):
             "template": spec
         }
     }
+    if CONF.kubernetes.appcontroller["enabled"]:
+        job = _wrap_with_definition(name, job)
+    return job
 
 
 def serialize_deployment(name, spec, annotations, replicas, component_name,
@@ -423,12 +438,14 @@ def serialize_deployment(name, spec, annotations, replicas, component_name,
             }
         }
     }
+    if CONF.kubernetes.appcontroller["enabled"]:
+        deployment = _wrap_with_definition(name, deployment)
 
     return deployment
 
 
 def serialize_statefulset(name, spec, annotations, replicas, component_name):
-    return {
+    obj = {
         "apiVersion": "apps/v1beta1",
         "kind": "StatefulSet",
         "metadata": {
@@ -450,6 +467,10 @@ def serialize_statefulset(name, spec, annotations, replicas, component_name):
             }
         }
     }
+
+    if CONF.kubernetes.appcontroller["enabled"]:
+        obj = _wrap_with_definition(name, obj)
+    return obj
 
 
 def serialize_affinity(service, topology):
@@ -532,6 +553,16 @@ def serialize_service(name, ports, headless=False, annotations=None):
     else:
         obj["spec"]["clusterIP"] = "None"
 
+    if CONF.kubernetes.appcontroller["enabled"]:
+        obj = {
+            "apiVersion": "appcontroller.k8s/v1alpha1",
+            "kind": "Definition",
+            "metadata": {
+                "name": "service-%s" % name
+            },
+            "service": obj
+        }
+
     return obj
 
 
@@ -575,4 +606,16 @@ def serialize_secret(name, type="Opaque", data={}):
         },
         "type": type,
         "data": data
+    }
+
+
+def serialize_dependency(name, parent, child):
+    return {
+        "apiVersion": "appcontroller.k8s/v1alpha1",
+        "kind": "Dependency",
+        "metadata": {
+            "name": name
+        },
+        "parent": parent,
+        "child": child
     }
