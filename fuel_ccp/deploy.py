@@ -556,6 +556,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
         "exports_ctx": exports_ctx,
     }
     _create_meta_configmap(service)
+    _create_service_configmap(prefix)
 
     workflows = {prefix: ""}
     jobs = container["pre"]
@@ -564,7 +565,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
     for step in upgrade_def['steps']:
         step_type = step.get('type', 'single')
         job_name = "{}-{}".format(prefix, step['name'])
-        job = {"name": job_name, "type": "single"}
+        job = {"name": step['name'], "type": "single"}
         for key in ['files', 'volumes', 'topology_key']:
             if step.get(key):
                 job[key] = step[key]
@@ -596,7 +597,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
                         kill.append(object_dict)
         else:
             raise RuntimeError("Unsupported upgrade step type: %s" % step_type)
-        workflows[job_name] = \
+        workflows[step['name']] = \
             json.dumps({'workflow': workflow}, sort_keys=True)
 
     _create_workflow(workflows, prefix)
