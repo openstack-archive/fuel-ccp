@@ -345,12 +345,15 @@ class ActionRun(BaseCommand, show.ShowOne):
                             action="append",
                             help="Parameters for action in format param=value."
                                  " Option can be repetable.")
+        parser.add_argument("-s", "--schedule",
+                            help="Schedule to run action timely. Supports cron format.")
         return parser
 
     def take_action(self, parsed_args):
         self._fetch_repos()
         config.load_component_defaults()
         action_name = action.run_action(parsed_args.action,
+                                        parsed_args.schedule,
                                         parsed_args.parameter)
         action_obj = action.get_action_status_by_name(action_name)
         return get_status_for_single_action(action_obj)

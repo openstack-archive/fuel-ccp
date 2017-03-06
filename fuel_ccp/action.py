@@ -51,11 +51,12 @@ class Action(object):
     def validate(self):
         pass
 
-    def run(self, user_parameters=None):
+    def run(self, schedule=None, user_parameters=None):
         if user_parameters:
             self.user_parameters = user_parameters
         else:
             self.user_parameters = ()
+        self.schedule = schedule
         self._process_dependencies()
         self._create_configmap()
         self._create_action()
@@ -211,13 +212,16 @@ class Action(object):
                 ]
             }
         }
-        if self.restart_policy == RESTART_POLICY_NEVER:
-            self._create_pod(pod_spec)
-        elif self.restart_policy == RESTART_POLICY_ALWAYS:
-            self._create_job(pod_spec)
+        if self.schedule:
+            self._create_cron_job(pod_spec)
         else:
-            raise ValueError("Restart policy %s is not supported" % (
-                self.restart_policy))
+            if self.restart_policy == RESTART_POLICY_NEVER:
+                self._create_pod(pod_spec)
+            elif self.restart_policy == RESTART_POLICY_ALWAYS:
+                self._create_job(pod_spec)
+            else:
+                raise ValueError("Restart policy %s is not supported" % (
+                    self.restart_policy))
 
     def _create_pod(self, pod_spec):
         spec = copy.deepcopy(pod_spec)
@@ -238,6 +242,20 @@ class Action(object):
             LOG.info('%s: action "%s" has been successfully run',
                      self.component, self.k8s_name)
 
+    def _create_cron_job(self, pod_spec):
+        cron_job_spec = templates.serialize_cron_job(
+            name=self.k8s_name,
+            pod_spec=pod_spec,
+            schedule=self.schedule,
+            component_name=self.component,
+            app_name=self.name
+        )
+        cron_job_spec["metadata"]["labels"].update({"ccp-action": "true"})
+        cron_job_spec["spec"]["jobTemplate"]["metadata"]["labels"].update({"ccp-action": "true"})
+        if kubernetes.process_object(cron_job_spec):
+            LOG.info('%s: action "%s" has been successfully run',
+                     self.component, self.k8s_name)
+
 
 class ActionStatus(object):
 
@@ -248,6 +266,8 @@ class ActionStatus(object):
             selector += "," + "app=%s" % action_name
         actions = []
         job_names = []
+        for cron_job in kubernetes.list_cluster_cronjobs(selector=selector):
+            actions.append(cls(cron_job))
         for job in kubernetes.list_cluster_jobs(selector=selector):
             actions.append(cls(job))
             job_names.append(job.name)
@@ -317,10 +337,13 @@ class ActionStatus(object):
             action = kubernetes.list_cluster_jobs(name=action_name)
         except pykube_exc.ObjectDoesNotExist:
             try:
-                action = kubernetes.list_cluster_pods(name=action_name)
+                action = kubernetes.list_cluster_jobs(name=action_name)
             except pykube_exc.ObjectDoesNotExist:
-                LOG.error('Action with name %s not found', action_name)
-                return False
+                try:
+                    action = kubernetes.list_cluster_pods(name=action_name)
+                except pykube_exc.ObjectDoesNotExist:
+                    LOG.error('Action with name %s not found', action_name)
+                    return False
         try:
             action.delete()
         except pykube_exc.HTTPError as ex:
@@ -378,7 +401,7 @@ def get_action(action_name):
                                        action_name))
 
 
-def run_action(action_name, user_parameters=None):
+def run_action(action_name, schedule=None, user_parameters=None):
     """Run action.
 
     :returns: str -- action name
@@ -386,7 +409,7 @@ def run_action(action_name, user_parameters=None):
     """
     action = get_action(action_name)
     action.validate()
-    return action.run(user_parameters)
+    return action.run(schedule, user_parameters)
 
 
 def list_action_status(action_type=None):

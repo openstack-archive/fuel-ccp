@@ -96,6 +96,11 @@ def get_pykube_object(object_dict, namespace=None, client=None):
         client = get_client()
 
     obj_class = getattr(pykube, object_dict["kind"], None)
+
+    # TODO dklenov - remove after pykube v0.15 is out.
+    if object_dict["kind"] == "CronJob":
+        obj_class = CronJob
+
     if obj_class is None:
         raise RuntimeError('"%s" object is not supported, skipping.'
                            % object_dict['kind'])
@@ -194,6 +199,19 @@ def list_cluster_jobs(selector=None, name=None):
     return jobs
 
 
+def list_cluster_cronjobs(selector=None, name=None):
+    ccp_selector = "ccp=true"
+    if selector:
+        ccp_selector += "," + selector
+    client = get_client()
+    cronjobs = CronJob.objects(client).filter(
+        namespace=CONF.kubernetes.namespace,
+        selector=ccp_selector)
+    if name:
+        return cronjobs.get_by_name(name)
+    return cronjobs
+
+
 def list_cluster_services():
     client = get_client()
     return pykube.Service.objects(client).filter(
@@ -226,3 +244,11 @@ def get_configmap(name):
     return pykube.ConfigMap.objects(client).filter(
         namespace=CONF.kubernetes.namespace,
         selector="ccp=true").get_by_name(name)
+
+
+# TODO dklenov - remove after pykube v0.15 is out.
+class CronJob(pykube.objects.NamespacedAPIObject):
+
+    version = "batch/v2alpha1"
+    endpoint = "cronjobs"
+    kind = "CronJob"

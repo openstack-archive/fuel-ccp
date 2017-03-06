@@ -393,6 +393,37 @@ def serialize_job(name, spec, component_name, app_name):
     }
 
 
+def serialize_cron_job(name, pod_spec, schedule, component_name, app_name):
+    return {
+        "apiVersion": "batch/v2alpha1",
+        "kind": "CronJob",
+        "metadata": {
+            "name": name,
+            "labels": {
+                "app": app_name,
+                "ccp": "true",
+                "ccp-component": component_name
+            }
+        },
+        "spec": {
+            "schedule": schedule,
+            "jobTemplate": {
+                "metadata": {
+                    "name": name,
+                    "labels": {
+                        "app": app_name,
+                        "ccp": "true",
+                        "ccp-component": component_name
+                    }
+                },
+                "spec": {
+                    "template": pod_spec
+                }
+            }
+        }
+    }
+
+
 def serialize_deployment(name, spec, annotations, replicas, component_name,
                          strategy):
     if strategy['type'] == 'RollingUpdate':
