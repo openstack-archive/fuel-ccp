@@ -301,3 +301,9 @@ def get_rendering_config():
     conf = copy.deepcopy(CONF.configs)
     conf._merge(CONF.secret_configs)
     return conf
+
+
+def get_service_configs(service_name):
+    service_config = config._yaml.AttrDict()
+    extend_with_service_configs(service_name, service_config)
+    return service_config
