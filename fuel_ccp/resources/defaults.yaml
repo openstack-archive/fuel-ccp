@@ -8,6 +8,7 @@ configs:
       domain: external
       port: 8443
 
+secret_configs:
     security:
       tls:
         create_certificates: true
