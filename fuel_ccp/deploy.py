@@ -89,7 +89,7 @@ def _process_secrets(secrets):
                                              type, data)
 
 
-def parse_role(component, topology, configmaps):
+def parse_role(component, topology, configmaps, components_map):
     service_dir = component["service_dir"]
     role = component["service_content"]
     component_name = component["component_name"]
@@ -115,6 +115,8 @@ def parse_role(component, topology, configmaps):
     yield _process_secrets(role.get("secrets"))
 
     workflows = _parse_workflows(service)
+    if CONF.kubernetes.appcontroller['enabled']:
+        yield create_dependencies(workflows, components_map)
     serialize_workflows(workflows)
     workflow_cm = _create_workflow(workflows, service_name)
     configmaps = configmaps + (files_cm, meta_cm, workflow_cm)
@@ -643,6 +645,27 @@ def _create_registry_secret():
     kubernetes.process_object(secret)
 
 
+def _format_dependency(dep, components_map):
+    service_name, _, dep_name = dep.partition('/')
+    # FIXME in general this is not correct...
+    if dep_name in components_map:
+        kind = components_map[dep_name]['service_content']['service'].get(
+            'kind', "deployment")
+        return "%s/%s" % (kind.lower(), service_name)
+    return "job/%s-%s" % (service_name, dep_name)
+
+
+def create_dependencies(workflows, components_map):
+    for name, wf in six.iteritems(workflows):
+        child = _format_dependency(wf['workflow']['name'], components_map)
+        for dep in wf['workflow']['dependencies']:
+            parent = _format_dependency(dep, components_map)
+            dep_name = "-".join((child.partition("/")[-1],
+                                 parent.partition("/")[-1]))[:63].rstrip("-")
+            template = templates.serialize_dependency(dep_name, parent, child)
+            yield template
+
+
 def deploy_components(components_map, components):
 
     topology = _make_topology(CONF.nodes, CONF.roles, CONF.replicas)
@@ -679,7 +702,7 @@ def deploy_components(components_map, components):
     for service_name in components:
         service = components_map[service_name]
         service["service_content"]['service']['exports_ctx'] = exports_ctx
-        objects_gen = parse_role(service, topology, configmaps)
+        objects_gen = parse_role(service, topology, configmaps, components_map)
         objects = list(itertools.chain.from_iterable(objects_gen))
         component_name = service['component_name']
         do_upgrade = component_name in upgrading_components
