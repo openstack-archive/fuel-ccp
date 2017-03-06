@@ -155,11 +155,11 @@ class TestDeploy(base.TestCase):
         cm_list = [mock.Mock(obj={'metadata': {'resourceVersion': '1'}})
                    for _ in range(3)]
         self.assertEqual('111222', deploy._get_configmaps_version(
-            cm_list, mock.ANY, mock.ANY, mock.ANY))
+            cm_list, mock.ANY, mock.ANY))
 
         cm_list = []
         self.assertEqual('222', deploy._get_configmaps_version(
-            cm_list, mock.ANY, mock.ANY, mock.ANY))
+            cm_list, mock.ANY, mock.ANY))
 
     def test_get_service_files_hash(self):
         files = {
