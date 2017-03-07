@@ -81,9 +81,10 @@ def get_pod_states(components=None):
                 continue
             states.setdefault(svc_name, copy.deepcopy(STATE_TEMPLATE))
             for port in svc.obj["spec"]["ports"]:
-                states[svc_name]["links"].append(EXT_LINK_TEMPLATE.format(
-                    ext_ip=ext_ip,
-                    port=port["nodePort"]))
+                if port.get('nodePort'):
+                    states[svc_name]["links"].append(EXT_LINK_TEMPLATE.format(
+                        ext_ip=ext_ip,
+                        port=port["nodePort"]))
     return states
 
 
