@@ -16,7 +16,6 @@ UPDATABLE_OBJECTS = (
     'Deployment',
     'Service',
     'Ingress',
-    'StatefulSet',
     'Secret',
 )
 
