@@ -42,6 +42,7 @@ This group is dedicated to describe topology of deployment, configuration
 of the microservices and credentials for connecting to Kubernetes cluster.
 
 - :ref:`configs`
+- :ref:`secret_configs`
 - :ref:`files`
 - :ref:`kubernetes`
 - :ref:`services`
@@ -369,6 +370,14 @@ Example:
 So you could add "{{ keystone_debug }}" variable to you templates, which will
 be rendered into "false" in this case.
 
+.. _secret_configs:
+
+secret_configs
+--------------
+
+Same as :ref:`configs`, but will be stored inside of k8s Secret instead of
+ConfigMap.
+
 .. _files:
 
 files
@@ -472,7 +481,7 @@ For example:
    heat-engine: 3
 
 
-.. _services
+.. _services:
 
 services
 --------
@@ -508,7 +517,7 @@ Allowed content:
      - dict
      - --
 
-You can find more information and examples in :doc:`services_section` page.
+You can find more information and examples in :doc:`services` page.
 
 .. _nodes:
 
