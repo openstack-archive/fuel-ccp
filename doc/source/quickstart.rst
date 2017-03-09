@@ -156,8 +156,9 @@ Append replicas configuration:
 
     cat >> ~/.ccp.yaml << EOF
     replicas:
-      galera: 3
-      rabbitmq: 3
+      database: 3
+      rpc: 3
+      notification: 1
     EOF
 
 This will sets the number of replicas to create for each service. We need 3
