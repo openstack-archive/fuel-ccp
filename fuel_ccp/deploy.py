@@ -248,7 +248,8 @@ def _process_ports(service):
                     service["name"], ingress_host, source_port))
     service_template = templates.serialize_service(
         service["name"], ports,
-        headless=service.get("kind") == "StatefulSet",
+        headless=service.get("kind") == "StatefulSet" or service.get(
+            "headless", False),
         annotations=service.get('annotations', {}).get('service'))
     yield service_template
 

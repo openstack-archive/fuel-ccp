@@ -257,6 +257,9 @@ SERVICE_SCHEMA = {
                 "kind": {
                     "enum": ["Deployment", "DaemonSet", "StatefulSet"]
                 },
+                "headless": {
+                    "type": "boolean"
+                },
                 "hostNetwork": {
                     "type": "boolean"
                 },

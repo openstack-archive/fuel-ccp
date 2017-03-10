@@ -14,6 +14,7 @@ Application definition template
         kind: DaemonSet
         ports:
             - internal-port:external-port
+        headless: true
         hostNetwork: true
         hostPID: true
         antiAffinity: local
@@ -117,6 +118,11 @@ service
      - --
    * - hostNetwork
      - Use the host’s network namespace.
+     - false
+     - boolean
+     - false
+   * - headless
+     - Create headless service.
      - false
      - boolean
      - false
