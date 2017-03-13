@@ -29,6 +29,7 @@ Advanced topics
    galera
    ceph
    ceph_cluster
+   enable_sriov
    using_calico_instead_of_ovs
    using_odl_instead_of_ovs
    ironic
