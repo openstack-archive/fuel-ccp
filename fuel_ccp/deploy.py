@@ -574,7 +574,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
         "exports_ctx": exports_ctx,
     }
     _create_meta_configmap(service)
-    _create_service_configmap(prefix)
+    _create_service_configmap(prefix, _yaml.AttrDict())
 
     workflows = {prefix: ""}
     jobs = container["pre"]
