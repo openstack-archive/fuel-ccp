@@ -377,7 +377,7 @@ def _create_nodes_configmap(nodes):
 
 def _create_service_configmap(service_name, service_config):
     configmap_name = "%s-%s" % (service_name, templates.SERVICE_CONFIG)
-    data = {templates.SERVICE_CONFIG: service_config._json()}
+    data = {templates.SERVICE_CONFIG: service_config._json(sort_keys=True)}
     template = templates.serialize_configmap(configmap_name, data)
     return kubernetes.process_object(template)
 
@@ -574,7 +574,7 @@ def create_upgrade_jobs(component_name, upgrade_data, configmaps, topology,
         "exports_ctx": exports_ctx,
     }
     _create_meta_configmap(service)
-    _create_service_configmap(prefix)
+    _create_service_configmap(prefix, _yaml.AttrDict())
 
     workflows = {prefix: ""}
     jobs = container["pre"]
