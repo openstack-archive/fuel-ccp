@@ -51,6 +51,7 @@ VLAN ranges are configured per each physical network in the ``configs.neutron.ph
         interface: "eno2"
         flat: false
         vlan_range: "1050:2050"
+        dpdk: false
 
 For more information on configuring physical networks refer to the `QuickStart Guide`_.
 

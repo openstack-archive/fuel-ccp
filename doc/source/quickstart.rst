@@ -128,6 +128,7 @@ Append global CCP configuration:
               interface: "ens8"
               flat: true
               vlan_range: "1001:1030"
+              dpdk: false
     EOF
 
 Make sure to adjust it to your environment, since the network configuration of
@@ -146,6 +147,9 @@ your environment may be different.
   ``flat`` allow to use this network as flat, without segmentation.
   ``vlan_range`` is range of allowed VLANs, should be false if VLAN
   segmenantion is not allowed.
+  ``dpdk`` if enabled for particular network, OVS will handle it via userspace
+  `DPDK
+  <https://docs.openstack.org/developer/neutron/devref/ovs_vhostuser.html>`__
 
 For the additional info about bootstrapping configuration please read the
 :doc:`bootstrapping`.
