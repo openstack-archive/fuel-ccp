@@ -64,6 +64,14 @@ def get_pod_states(components=None):
         states[app_name]["job_completed"] += (
             job.obj["status"].get("succeeded", 0))
 
+    for ss in kubernetes.list_cluster_statefulsets(selector):
+        states.setdefault(ss.name, copy.deepcopy(STATE_TEMPLATE))
+        states[ss.name]["pod_total"] = ss.obj["spec"]["replicas"]
+        for pod in kubernetes.list_cluster_pods(ss.name):
+            if all((cont["ready"] for cont in
+                    pod.obj["status"]["containerStatuses"])):
+                states[ss.name]["pod_running"] += 1
+
     if CONF.configs.ingress.enabled:
         url_template = "https://%s"
         if CONF.configs.ingress.get("port"):
