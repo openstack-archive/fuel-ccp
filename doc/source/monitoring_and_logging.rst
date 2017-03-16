@@ -155,3 +155,63 @@ And for Kibana:
 
     $ kubectl get service kibana -o yaml | awk '/nodePort: / {print $NF}'
     31426
+
+ElasticSearch cluster
+=====================
+
+Documentation above describes using elasticsearch as one node service without
+ability to scale --- stacklight doesn't require elasticsearch cluster. This one
+node elasticsearch is master-eligible, so could be scaled with any another
+master, data or client node.
+
+For more details about master, data and client node types please read
+`elasticsearch node documentation <https://www.elastic.co/guide/en/
+elasticsearch/reference/5.2/modules-node.html>`_.
+
+CCP implementation of elasticsearch cluster contains three available services:
+
+* ``elasticsearch`` --- master-eligible service, represents master node;
+
+* ``elasticsearch-data`` --- data (non-master) service, represents data node,
+  contains `elasticsearch-data` volume for storing data;
+
+* ``elasticsearch-client`` --- special type of coordinating only node that can
+  connect to multiple clusters and perform search and other operations across
+  all connected clusters. Represents tribe node type.
+
+All these services can be scaled and deployed on several nodes with replicas -
+they will form cluster. It can be checked with command:
+
+::
+
+    $ curl -X GET http://elasticsearch.ccp.svc.cluster.local:9200/_cluster/health?pretty
+
+which will print total number of cluster nodes and number of data nodes. More
+detailed info about each cluster node called with command:
+
+::
+
+   $ curl -X GET http://elasticsearch.ccp.svc.cluster.local:9200/_cluster/state?pretty
+
+For example, we need elasticsearch cluster with 2 data nodes. Then, topology
+will be look like:
+
+::
+   replicas:
+     elasticsearch-data: 2
+     ...
+   nodes:
+     node1:
+       roles:
+         - controller
+         ...
+     node[2-3]:
+       roles:
+         - es-data
+   roles:
+     es-data:
+       - elasticsearch-data
+     controller:
+       - elasticsearch
+       - elasticsearch-client
+       ...
