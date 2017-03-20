@@ -207,11 +207,14 @@ def list_cluster_ingress():
         namespace=CONF.kubernetes.namespace)
 
 
-def list_cluster_statefulsets():
+def list_cluster_statefulsets(selector=None):
+    ccp_selector = "ccp=true"
+    if selector:
+        ccp_selector += ',' + selector
     client = get_client()
     return pykube.StatefulSet.objects(client).filter(
         namespace=CONF.kubernetes.namespace,
-        selector="ccp=true")
+        selector=ccp_selector)
 
 
 def get_object_names(items):
