@@ -68,7 +68,9 @@ def get_pod_states(components=None):
         states.setdefault(ss.name, copy.deepcopy(STATE_TEMPLATE))
         states[ss.name]["pod_total"] = ss.obj["spec"]["replicas"]
         for pod in kubernetes.list_cluster_pods(ss.name):
-            if all((cont["ready"] for cont in
+            if not pod.obj.get("status", {}).get("containerStatuses"):
+                continue
+            if all((cont.get("ready", False) for cont in
                     pod.obj["status"]["containerStatuses"])):
                 states[ss.name]["pod_running"] += 1
 
