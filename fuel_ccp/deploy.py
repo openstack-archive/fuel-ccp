@@ -149,6 +149,10 @@ def parse_role(component, topology, configmaps, components_map):
 
     replicas = CONF.replicas.get(service_name)
     strategy = {'type': service.get('strategy', 'RollingUpdate')}
+    if strategy['type'] == 'RollingUpdate' and (
+                service.get("hostNetwork") or service.get("antiAffinity")):
+        strategy['rollingUpdate'] = {'maxSurge': 0,
+                                     'maxUnavailable': '50%'}
     if service.get("kind") == 'DaemonSet':
         LOG.warning("Deployment is being used instead of DaemonSet to support "
                     "updates")
