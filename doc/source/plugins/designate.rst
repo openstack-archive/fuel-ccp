@@ -25,7 +25,8 @@ next components:
   transfer (AXFR) requests;
 
 * ``designate-pool-manager`` – is a service that handles the states of the DNS
-  servers Designate manages;
+  servers Designate manages. Since mitaka replaced with ``designate-worker``
+  service;
 
 * ``designate-zone-manager`` – is a service that handles all periodic tasks
   related to the zone shard it is responsible for;
@@ -38,8 +39,26 @@ next components:
   service. Agent uses an extension of the DNS protocol to send management
   requests to the remote agent processes, where the requests will be processed.
 
-CCP components have names of components above, ``designate-sink`` and
-``designate-agent`` components are *optional*.
+CCP components comprises next services:
+
+* ``designate-api``;
+
+* ``designate-central``;
+
+* ``designate-mdns``, which contains three containers: ``designate-mdns``
+  service, ``designate-worker`` and ``designate-backend-bind9`` - container,
+  which implements bind9 backend for designate. All of them works in
+  collaboration and provide ability to create and manage zones and records;
+
+* ``designate-agent``;
+
+* ``designate-sink``;
+
+* ``designate-pool-manager``;
+
+* ``designate-zone-manager``.
+
+Three last services are optional and can't be omitted during deployment.
 
 Configuration
 ~~~~~~~~~~~~~
@@ -50,6 +69,10 @@ are: `workers` and `threads`. They are placed in
 `designate.service.<service name>.<workers or threads>` configs path. Also,
 designate CCP plugin allows to configure defaults of domain purge: `interval`,
 `batch_size` and `time threshold`.
+
+CCP designate plugin has bind9 backend implemented; it enabled by default with
+option `designate.backend`. If you want to turn off any backend, clear option's
+value - then fake backend, which has no effect for designate will be enabled.
 
 Installation
 ~~~~~~~~~~~~
@@ -71,12 +94,10 @@ installation has next steps:
      - designate-api
      - designate-central
      - designate-mdns
-     - designate-pool-manager
-     - designate-zone-manager
 
-
-   Components ``designate-sink`` and ``designate-agent`` are optional and could
-   not be deployed.
+   Components ``designate-sink``, ``designate-agent``,
+   ``designate-zone-manager`` and ``designate-pool-manager`` are optional and
+   could not be deployed.
 
 #. Fetch, build, deploy components.
 
@@ -94,7 +115,3 @@ Dashboard plugin
 Designate has horizon dashboard plugin, which allows to create and manage
 domains and records. It is already available in horizon and is activated when
 designate is on board. Domain panel is placed in ``Projects`` menu.
-
-Unfortunately, domain requires at least one server, created by designate with
-command :command:`designate server-create`, so you cannot use only horizon for
-full dns management.
