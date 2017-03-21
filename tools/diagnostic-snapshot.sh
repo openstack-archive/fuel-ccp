@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # We want to be sure that script will always give us some output,
 # even if it fails in some parts it return some information.
@@ -116,6 +116,7 @@ if [ -z ${CONFIG_FILE} ]; then
     exit 1
 fi
 
+set -x
 mkdir -p "${LOG_DIR}"/{logs,system,k8s} | exit 1
 
 ccp --config-file ${CONFIG_FILE} config dump > $LOG_DIR/ccp_config_dump.yaml
