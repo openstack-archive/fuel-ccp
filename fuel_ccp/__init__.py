@@ -17,4 +17,4 @@ import pbr.version
 
 version_info = pbr.version.VersionInfo("fuel_ccp")
 __version__ = version_info.version_string()
-dsl_version = "0.8.0"
+dsl_version = "0.9.0"

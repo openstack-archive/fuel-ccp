@@ -299,6 +299,12 @@ SERVICE_SCHEMA = {
                                     "liveness": PROBE_SCHEMA
                                 }
                             },
+                            "lifecycle": {"type": "object",
+                                          "properties":
+                                              {"PreStop": {
+                                                  "type": "object"
+                                              }}
+                                          },
                             "volumes": {
                                 "type": "array",
                                 "minItems": 1,

@@ -214,6 +214,9 @@ def serialize_daemon_container_spec(container):
         cont_spec.update(liveness_spec)
     cont_spec["securityContext"] = {"privileged":
                                     container.get("privileged", False)}
+    lifecycle = container.get("lifecycle", None)
+    if lifecycle:
+        cont_spec["lifecycle"] = lifecycle
 
     return cont_spec
 
