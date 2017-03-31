@@ -58,6 +58,7 @@ Developer docs
    docker
    dsl
    debugging
+   diagnostic_snapshot
 
 Design docs
 -----------
