@@ -33,13 +33,13 @@ class TestBaseValidation(base.TestCase):
             {'service1', 'service2'}, COMPONENTS_MAP)
 
         # validations failed
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             RuntimeError,
             "Following components do not match any definitions: srv3",
             base_validation.validate_components_names,
             {'srv3'}, COMPONENTS_MAP)
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             RuntimeError,
             "Following components do not match any definitions: service4",
             base_validation.validate_components_names,
@@ -79,7 +79,7 @@ class TestDeployValidation(base.TestCase):
         # requirements are not requested and are not deployed
         m_get_deps.return_value = {'service1', 'service2'}
         m_get_deployed.return_value = set()
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             RuntimeError,
             'Following components are also required for successful '
             'deployment: service2',
@@ -128,7 +128,7 @@ class TestSchemaValidation(base.TestCase):
 
         incorrect_permissions = ["123", "0778", "1400"]
         for perm in incorrect_permissions:
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 jsonschema.exceptions.ValidationError,
                 "'" + perm + "' does not match.*",
                 jsonschema.validate,
@@ -140,7 +140,7 @@ class TestSchemaValidation(base.TestCase):
             "secret": {
             }
         }
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             jsonschema.exceptions.ValidationError,
             "'secretName' is a required property.*",
             jsonschema.validate,

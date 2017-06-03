@@ -32,7 +32,7 @@ class TestCleanup(base.TestCase):
         # namespace is still exists
         k8s_api = mock.Mock()
         k8s_api.read_namespaced_namespace.return_value = 'ns'
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             RuntimeError, "Wasn't able to delete namespace ccp",
             cleanup._wait_for_namespace_delete, k8s_api)
 
@@ -58,7 +58,7 @@ class TestCleanup(base.TestCase):
 
         nova.servers.list.return_value = [instance]
         m_client.return_value = nova
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             RuntimeError, "Some instances were not removed "
                           "after force delete: inst1 \(1\)",
             cleanup._cleanup_servers, mock.Mock())
