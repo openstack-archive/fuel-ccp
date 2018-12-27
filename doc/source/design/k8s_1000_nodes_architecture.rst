@@ -509,7 +509,7 @@ Calico is an L3 overlay network provider for Kubernetes. It
 propagates internal addresses of containers via BGP to all
 minions and ensures connectivity between containers.
 
-Calico uses etcd as a vessel for its configuraiton information.
+Calico uses etcd as a vessel for its configuration information.
 Separate etcd cluster is recommended for Calico instead of sharing
 one with Kubernetes.
 
