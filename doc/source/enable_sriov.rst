@@ -108,7 +108,7 @@ All Neutron SR-IOV specific parameters are located in the `configs.neutron.sriov
 
 * `devices` - List. A node-specific list of SR-IOV devices. Each element of the list has 2 mandatory fields: `name` and `physnets`.
     * `name` is a name of the SR-IOV interface.
-    * `physnets` is a list of of names of physical networks a given device maps to.
+    * `physnets` is a list of names of physical networks a given device maps to.
     * If `exclude_vfs` is omitted all the VFs associated with a given device may be configured by the agent. To exclude specific VFs, add them to the `exclude_devices` parameter as shown above.
 
 A new role should be added to compute nodes: `neutron-sriov-nic-agent`.
