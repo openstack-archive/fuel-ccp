@@ -20,6 +20,6 @@ services:
     service_def: rabbitmq
 EOF
 
-tox -e venv -- python "${MY_DIR}/run_cloner.py" "${CONFIG_FILE}"  "${ZUUL_CLONER}" --cache-dir /opt/git git://git.openstack.org
+tox -e venv -- python "${MY_DIR}/run_cloner.py" "${CONFIG_FILE}"  "${ZUUL_CLONER}" --cache-dir /opt/git https://git.openstack.org
 tox -e venv -- ccp --config-file "${CONFIG_FILE}" config dump
 tox -e venv -- ccp --config-file "${CONFIG_FILE}" validate
