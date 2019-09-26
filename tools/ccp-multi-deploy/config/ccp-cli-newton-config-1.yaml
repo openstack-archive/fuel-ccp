@@ -1,8 +1,0 @@
-!include
-- ccp-configs-common.yaml
-- ccp-config-newton-sources.yaml
-- ccp-roles.yaml
-- ccp-topology-1.yaml
----
-kubernetes:
-  namespace: "ccp-newton-1"

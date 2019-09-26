@@ -1,7 +1,0 @@
-[run]
-branch = True
-source = microservices
-omit = microservices/openstack/*,microservices/tests/*
-
-[report]
-ignore_errors = True

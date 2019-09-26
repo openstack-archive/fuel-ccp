@@ -1,7 +1,0 @@
-SCHEMA = {
-    'url': {}
-}
-
-DEFAULTS = {
-    'url': {},
-}
